@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "dev": "lost-key-finder-dev",
+    "prod": "lost-key-finder-prod"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "lost-key-finder",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Lost Key Finder monorepo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11"
+  },
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "build:web": "npm run build --workspace=@lost-key-finder/web",
+    "build:api": "npm run build --workspace=@lost-key-finder/api",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "openapi": "npm run openapi --workspace=@lost-key-finder/api",
+    "generate:client": "npm run generate:client --workspace=@lost-key-finder/api"
+  },
+  "packageManager": "npm@11.12.1"
+}
