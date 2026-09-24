@@ -8,7 +8,7 @@ import { LanguageService } from '../core/language.service';
   imports: [RouterLink],
   template: `
     <section class="not-found" aria-labelledby="not-found-title">
-      <p class="eyebrow">{{ language.copy().notFoundCode }}</p>
+      <p class="eyebrow">404</p>
       <h1 id="not-found-title">{{ language.copy().notFoundTitle }}</h1>
       <a routerLink="/">{{ language.copy().notFoundLink }}</a>
     </section>

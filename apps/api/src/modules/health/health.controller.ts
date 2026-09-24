@@ -1,7 +1,11 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiServiceUnavailableResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiProperty, ApiServiceUnavailableResponse, ApiTags } from '@nestjs/swagger';
 import { FirestoreService } from '../../infrastructure/firestore/firestore.service';
-import { HealthResponseDto } from './health-response.dto';
+
+class HealthResponseDto {
+  @ApiProperty({ type: String, example: 'ok', enum: ['ok'] })
+  status!: string;
+}
 
 @ApiTags('health')
 @Controller('health')

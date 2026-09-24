@@ -1,16 +1,8 @@
 import Joi from 'joi';
 
-const requiredInProduction = Joi.string().when('NODE_ENV', {
-  is: 'production',
-  then: Joi.string().required(),
-  otherwise: Joi.string().allow('').default(''),
-});
-
 export const validationSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
   PORT: Joi.number().integer().min(1).max(65535).default(3000),
-  API_PREFIX: Joi.string().pattern(/^[a-z0-9-]+$/).default('api'),
-  API_VERSION: Joi.string().pattern(/^v\d+$/).default('v1'),
   ALLOWED_ORIGINS: Joi.string()
     .custom((value: string, helpers) => {
       const origins = value.split(',').map((origin) => origin.trim());
@@ -52,13 +44,4 @@ export const validationSchema = Joi.object({
       then: Joi.string().required(),
       otherwise: Joi.string().allow('').default(''),
     }),
-  FIRESTORE_DATABASE_NAME: Joi.string().min(1).default('lost-key-finder'),
-  SUPABASE_URL: Joi.string().uri().when('NODE_ENV', {
-    is: 'production',
-    then: Joi.string().required(),
-    otherwise: Joi.string().allow('').default(''),
-  }),
-  SUPABASE_ANON_KEY: requiredInProduction,
-  SUPABASE_JWT_AUDIENCE: requiredInProduction,
-  SUPABASE_JWT_ALGORITHM: Joi.string().valid('ES256', 'RS256').default('ES256'),
 });

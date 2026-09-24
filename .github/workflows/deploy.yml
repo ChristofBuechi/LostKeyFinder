@@ -52,8 +52,8 @@ jobs:
             --project "${{ vars.GCP_PROJECT_ID }}" \
             --region "${{ vars.GCP_REGION }}" \
             --service-account "${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}" \
-            --set-env-vars "^|^NODE_ENV=production|APP_VERSION=${{ env.DEPLOY_SHA }}|ALLOWED_ORIGINS=${{ vars.ALLOWED_ORIGINS }}|SUPABASE_URL=${{ vars.SUPABASE_URL }}|SUPABASE_JWT_AUDIENCE=${{ vars.SUPABASE_JWT_AUDIENCE }}|SUPABASE_JWT_ALGORITHM=${{ vars.SUPABASE_JWT_ALGORITHM }}" \
-            --set-secrets "FIRESTORE_MONGODB_URI=${{ vars.FIRESTORE_MONGODB_URI_SECRET }}:latest,SUPABASE_ANON_KEY=${{ vars.SUPABASE_ANON_KEY_SECRET }}:latest" \
+            --set-env-vars "^|^NODE_ENV=production|APP_VERSION=${{ env.DEPLOY_SHA }}|ALLOWED_ORIGINS=${{ vars.ALLOWED_ORIGINS }}" \
+            --set-secrets "FIRESTORE_MONGODB_URI=${{ vars.FIRESTORE_MONGODB_URI_SECRET }}:latest" \
             --quiet
       - name: Deploy Firebase Hosting
         run: npx --yes firebase-tools deploy --only hosting --project "${{ vars.GCP_PROJECT_ID }}"

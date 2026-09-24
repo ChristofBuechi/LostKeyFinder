@@ -8,7 +8,7 @@ async function verify(): Promise<void> {
   }
 
   const client = new MongoClient(uri, { tls: true, loadBalanced: true, retryWrites: false });
-  const database = client.db(process.env.FIRESTORE_DATABASE_NAME ?? 'lost-key-finder');
+  const database = client.db();
   const collection = database.collection<{ id: string; value: number }>('integrationProbes');
   const id = randomUUID();
   let connected = false;

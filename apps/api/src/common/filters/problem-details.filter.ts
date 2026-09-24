@@ -8,6 +8,17 @@ import {
 } from '@nestjs/common';
 import { FastifyReply, FastifyRequest } from 'fastify';
 
+const problems: Record<number, { name: string; title: string }> = {
+  400: { name: 'invalid-request', title: 'Invalid request' },
+  401: { name: 'unauthorized', title: 'Unauthorized' },
+  403: { name: 'forbidden', title: 'Forbidden' },
+  404: { name: 'not-found', title: 'Not found' },
+  409: { name: 'conflict', title: 'Conflict' },
+  429: { name: 'rate-limit-exceeded', title: 'Too many requests' },
+  500: { name: 'internal-server-error', title: 'Internal server error' },
+  503: { name: 'dependency-unavailable', title: 'Service unavailable' },
+};
+
 @Catch()
 export class ProblemDetailsFilter implements ExceptionFilter {
   private readonly logger = new Logger(ProblemDetailsFilter.name);
@@ -24,7 +35,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       ? (response as { message: unknown }).message
       : undefined;
     const path = new URL(request.url, 'http://localhost').pathname;
-    const problemName = this.problemName(status);
+    const problem = problems[status] ?? problems[500];
 
     if (status >= 500) {
       this.logger.error(JSON.stringify({
@@ -38,8 +49,8 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     }
 
     reply.status(status).type('application/problem+json').send({
-      type: `/problems/${problemName}`,
-      title: this.problemTitle(status),
+      type: `/problems/${problem.name}`,
+      title: problem.title,
       status,
       detail: status < 500
         ? (Array.isArray(detail) ? 'Request validation failed' : typeof detail === 'string' ? detail : undefined)
@@ -50,28 +61,4 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     });
   }
 
-  private problemName(status: number): string {
-    return ({
-      400: 'invalid-request',
-      401: 'unauthorized',
-      403: 'forbidden',
-      404: 'not-found',
-      409: 'conflict',
-      429: 'rate-limit-exceeded',
-      503: 'dependency-unavailable',
-    } as Record<number, string>)[status] ?? 'internal-server-error';
-  }
-
-  private problemTitle(status: number): string {
-    return ({
-      400: 'Invalid request',
-      401: 'Unauthorized',
-      403: 'Forbidden',
-      404: 'Not found',
-      409: 'Conflict',
-      429: 'Too many requests',
-      500: 'Internal server error',
-      503: 'Service unavailable',
-    } as Record<number, string>)[status] ?? (HttpStatus[status] ?? 'Request failed');
-  }
 }

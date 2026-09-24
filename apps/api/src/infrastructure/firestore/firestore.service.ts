@@ -11,19 +11,19 @@ export class FirestoreService implements OnModuleInit, OnApplicationShutdown {
   constructor(private readonly config: ConfigService) {}
 
   async onModuleInit(): Promise<void> {
-    const uri = this.config.get<string>('firestore.mongodbUri', '');
+    const uri = this.config.get<string>('FIRESTORE_MONGODB_URI', '');
     if (!uri) {
       this.logger.warn('Firestore connection is not configured');
       return;
     }
 
-    const options: MongoClientOptions = this.config.get('app.environment') === 'production'
+    const options: MongoClientOptions = this.config.get('NODE_ENV') === 'production'
       ? { tls: true, loadBalanced: true, retryWrites: false }
       : {};
 
     this.client = new MongoClient(uri, options);
     await this.client.connect();
-    this.database = this.client.db(this.config.get<string>('firestore.databaseName', 'lost-key-finder'));
+    this.database = this.client.db();
   }
 
   async isReady(): Promise<boolean> {
@@ -37,13 +37,6 @@ export class FirestoreService implements OnModuleInit, OnApplicationShutdown {
     } catch {
       return false;
     }
-  }
-
-  get db(): Db {
-    if (!this.database) {
-      throw new Error('Firestore connection is not ready');
-    }
-    return this.database;
   }
 
   async onApplicationShutdown(): Promise<void> {

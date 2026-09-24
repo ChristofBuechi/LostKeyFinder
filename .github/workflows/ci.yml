@@ -42,4 +42,3 @@ jobs:
       - run: npm run test:integration
         env:
           FIRESTORE_MONGODB_URI: ${{ secrets.FIRESTORE_MONGODB_URI }}
-          FIRESTORE_DATABASE_NAME: ${{ vars.FIRESTORE_DATABASE_NAME }}
