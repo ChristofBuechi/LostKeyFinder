@@ -14,6 +14,7 @@ import { healthControllerLive } from '../fn/health/health-controller-live';
 import { HealthControllerLive$Params } from '../fn/health/health-controller-live';
 import { healthControllerReady } from '../fn/health/health-controller-ready';
 import { HealthControllerReady$Params } from '../fn/health/health-controller-ready';
+import { HealthResponseDto } from '../models/health-response-dto';
 
 @Injectable({ providedIn: 'root' })
 export class HealthService extends BaseService {
@@ -22,7 +23,7 @@ export class HealthService extends BaseService {
   }
 
   /** Path part for operation `healthControllerLive()` */
-  static readonly HealthControllerLivePath = '/health/live';
+  static readonly HealthControllerLivePath = '/api/v1/health/live';
 
   /**
    * Check whether the API process is alive.
@@ -34,7 +35,7 @@ export class HealthService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  healthControllerLive$Response(params?: HealthControllerLive$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+  healthControllerLive$Response(params?: HealthControllerLive$Params, context?: HttpContext): Observable<StrictHttpResponse<HealthResponseDto>> {
     const obs = healthControllerLive(this.http, this.rootUrl, params, context);
     return obs;
   }
@@ -49,15 +50,15 @@ export class HealthService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  healthControllerLive(params?: HealthControllerLive$Params, context?: HttpContext): Observable<void> {
+  healthControllerLive(params?: HealthControllerLive$Params, context?: HttpContext): Observable<HealthResponseDto> {
     const resp = this.healthControllerLive$Response(params, context);
     return resp.pipe(
-      map((r: StrictHttpResponse<void>): void => r.body)
+      map((r: StrictHttpResponse<HealthResponseDto>): HealthResponseDto => r.body)
     );
   }
 
   /** Path part for operation `healthControllerReady()` */
-  static readonly HealthControllerReadyPath = '/health/ready';
+  static readonly HealthControllerReadyPath = '/api/v1/health/ready';
 
   /**
    * Check whether the API is ready for traffic.
@@ -69,7 +70,7 @@ export class HealthService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  healthControllerReady$Response(params?: HealthControllerReady$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+  healthControllerReady$Response(params?: HealthControllerReady$Params, context?: HttpContext): Observable<StrictHttpResponse<HealthResponseDto>> {
     const obs = healthControllerReady(this.http, this.rootUrl, params, context);
     return obs;
   }
@@ -84,10 +85,10 @@ export class HealthService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  healthControllerReady(params?: HealthControllerReady$Params, context?: HttpContext): Observable<void> {
+  healthControllerReady(params?: HealthControllerReady$Params, context?: HttpContext): Observable<HealthResponseDto> {
     const resp = this.healthControllerReady$Response(params, context);
     return resp.pipe(
-      map((r: StrictHttpResponse<void>): void => r.body)
+      map((r: StrictHttpResponse<HealthResponseDto>): HealthResponseDto => r.body)
     );
   }
 

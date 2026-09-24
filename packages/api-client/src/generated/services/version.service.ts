@@ -12,6 +12,7 @@ import { StrictHttpResponse } from '../strict-http-response';
 
 import { versionControllerVersion } from '../fn/version/version-controller-version';
 import { VersionControllerVersion$Params } from '../fn/version/version-controller-version';
+import { VersionResponseDto } from '../models/version-response-dto';
 
 @Injectable({ providedIn: 'root' })
 export class VersionService extends BaseService {
@@ -20,7 +21,7 @@ export class VersionService extends BaseService {
   }
 
   /** Path part for operation `versionControllerVersion()` */
-  static readonly VersionControllerVersionPath = '/version';
+  static readonly VersionControllerVersionPath = '/api/v1/version';
 
   /**
    * Return the running API version.
@@ -32,7 +33,7 @@ export class VersionService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  versionControllerVersion$Response(params?: VersionControllerVersion$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+  versionControllerVersion$Response(params?: VersionControllerVersion$Params, context?: HttpContext): Observable<StrictHttpResponse<VersionResponseDto>> {
     const obs = versionControllerVersion(this.http, this.rootUrl, params, context);
     return obs;
   }
@@ -47,10 +48,10 @@ export class VersionService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  versionControllerVersion(params?: VersionControllerVersion$Params, context?: HttpContext): Observable<void> {
+  versionControllerVersion(params?: VersionControllerVersion$Params, context?: HttpContext): Observable<VersionResponseDto> {
     const resp = this.versionControllerVersion$Response(params, context);
     return resp.pipe(
-      map((r: StrictHttpResponse<void>): void => r.body)
+      map((r: StrictHttpResponse<VersionResponseDto>): VersionResponseDto => r.body)
     );
   }
 

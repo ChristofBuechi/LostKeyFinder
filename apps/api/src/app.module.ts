@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { configuration } from './config/configuration';
 import { validationSchema } from './config/validation';
+import { FirestoreModule } from './infrastructure/firestore/firestore.module';
 import { HealthModule } from './modules/health/health.module';
 import { VersionModule } from './modules/version/version.module';
 
@@ -14,6 +15,7 @@ import { VersionModule } from './modules/version/version.module';
       validationSchema,
       validationOptions: { abortEarly: false, allowUnknown: true },
     }),
+    FirestoreModule,
     HealthModule,
     VersionModule,
   ],

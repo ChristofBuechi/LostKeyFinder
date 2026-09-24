@@ -10,4 +10,8 @@ export const configuration = () => ({
       .map((origin) => origin.trim())
       .filter(Boolean),
   },
+  firestore: {
+    mongodbUri: process.env.FIRESTORE_MONGODB_URI ?? '',
+    databaseName: process.env.FIRESTORE_DATABASE_NAME ?? 'lost-key-finder',
+  },
 });

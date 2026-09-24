@@ -1,11 +1,11 @@
 <a class="skip-link" href="#main-content">{{ language.copy().skip }}</a>
 
 <header class="site-header">
-  <a class="brand" routerLink="/" [attr.aria-label]="language.copy().home">
+  <a class="brand" routerLink="/">
     <span class="brand-mark" aria-hidden="true">LK</span>
     <span>Lost Key Finder</span>
   </a>
-  <button class="language-toggle" type="button" (click)="toggleLanguage()" [attr.aria-label]="language.copy().switchLabel">
+  <button class="language-toggle" type="button" (click)="toggleLanguage()" [attr.aria-label]="(language.language() === 'de' ? 'EN: ' : 'DE: ') + language.copy().switchLabel">
     {{ language.language() === 'de' ? 'EN' : 'DE' }}
   </button>
 </header>

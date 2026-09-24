@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { App } from './app';
 
 describe('App', () => {
-  it('starts in German', () => {
+  it('creates the application shell', () => {
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
     expect(TestBed.createComponent(App).componentInstance).toBeInstanceOf(App);
   });

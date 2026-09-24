@@ -84,6 +84,12 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json",
+            "prebundle": {
+              "exclude": ["@lost-key-finder/api-client"]
+            }
+          },
           "configurations": {
             "production": {
               "buildTarget": "web:build:production"
