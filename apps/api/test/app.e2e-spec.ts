@@ -5,14 +5,16 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { configureApplication } from '../src/configure-application';
 import { FirestoreService } from '../src/infrastructure/firestore/firestore.service';
+import { FirestoreServiceFake } from './support/firestore-service.fake';
 
 describe('API foundation', () => {
   let app: INestApplication;
+  const firestore = new FirestoreServiceFake();
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(FirestoreService)
-      .useValue({ isReady: jest.fn().mockResolvedValue(true) })
+      .useValue(firestore)
       .compile();
     app = module.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
     configureApplication(app as NestFastifyApplication);
@@ -22,6 +24,8 @@ describe('API foundation', () => {
 
   afterAll(async () => app.close());
 
+  beforeEach(() => firestore.setReady(true));
+
   it('serves the versioned readiness endpoint with a correlation id', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/v1/health/ready')
@@ -29,6 +33,21 @@ describe('API foundation', () => {
 
     expect(response.body).toEqual({ status: 'ok' });
     expect(response.headers['x-correlation-id']).toBeTruthy();
+  });
+
+  it('reports unavailable when Firestore is down while remaining live', async () => {
+    firestore.setReady(false);
+
+    await request(app.getHttpServer()).get('/api/v1/health/live').expect(200, { status: 'ok' });
+    const response = await request(app.getHttpServer()).get('/api/v1/health/ready').expect(503);
+
+    expect(response.body).toMatchObject({
+      type: '/problems/dependency-unavailable',
+      title: 'Service unavailable',
+      status: 503,
+      instance: '/api/v1/health/ready',
+    });
+    expect(response.body).not.toHaveProperty('detail');
   });
 
   it('does not expose an unversioned endpoint', async () => {

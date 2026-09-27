@@ -1,10 +1,13 @@
 import { Test } from '@nestjs/testing';
 import { ServiceUnavailableException } from '@nestjs/common';
 import { FirestoreService } from '../../infrastructure/firestore/firestore.service';
+import { FirestoreServiceFake } from '../../../test/support/firestore-service.fake';
 import { HealthController } from './health.controller';
 
 describe('HealthController', () => {
-  const firestore = { isReady: jest.fn().mockResolvedValue(true) };
+  const firestore = new FirestoreServiceFake();
+
+  beforeEach(() => firestore.setReady(true));
 
   async function createController(): Promise<HealthController> {
     const module = await Test.createTestingModule({
@@ -23,7 +26,7 @@ describe('HealthController', () => {
   });
 
   it('rejects readiness when Firestore is unavailable', async () => {
-    firestore.isReady.mockResolvedValueOnce(false);
+    firestore.setReady(false);
     await expect((await createController()).ready()).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 });
