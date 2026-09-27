@@ -19,7 +19,8 @@
     "test": "npm run test --workspaces --if-present",
     "test:e2e": "npm run test:e2e --workspace=@lost-key-finder/api",
     "test:integration": "npm run test:integration --workspace=@lost-key-finder/api",
-    "generate:client": "npm run generate:client --workspace=@lost-key-finder/api"
+    "generate:client": "npm run generate:client --workspace=@lost-key-finder/api",
+    "verify": "npm run generate:client && npm run lint && npm run build && npm run test && npm run test:e2e"
   },
   "packageManager": "npm@11.12.1"
 }

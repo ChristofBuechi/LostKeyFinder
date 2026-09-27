@@ -6,7 +6,7 @@ export type Language = 'de' | 'en';
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
   private readonly document = inject(DOCUMENT);
-  readonly language = signal<Language>((localStorage.getItem('language') as Language) || 'de');
+  readonly language = signal<Language>(this.readStoredLanguage());
   readonly copy = computed(() => this.language() === 'de' ? {
     skip: 'Zum Inhalt springen',
     switchLabel: 'Auf Englisch wechseln',
@@ -71,6 +71,10 @@ export class LanguageService {
       this.document.documentElement.lang = language;
       localStorage.setItem('language', language);
     });
+  }
+
+  private readStoredLanguage(): Language {
+    return localStorage.getItem('language') === 'en' ? 'en' : 'de';
   }
 
   toggle(): void {

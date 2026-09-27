@@ -54,6 +54,30 @@ describe('API foundation', () => {
     await request(app.getHttpServer()).get('/health/live').expect(404);
   });
 
+  it('serves the API version without infrastructure details', async () => {
+    const response = await request(app.getHttpServer()).get('/api/v1/version').expect(200);
+
+    expect(response.body).toEqual({ version: '0.1.0', environment: 'test' });
+  });
+
+  it('allows configured browser origins', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/health/live')
+      .set('origin', 'http://localhost:4200')
+      .expect(200);
+
+    expect(response.headers['access-control-allow-origin']).toBe('http://localhost:4200');
+  });
+
+  it('does not allow unknown browser origins', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/health/live')
+      .set('origin', 'https://attacker.example')
+      .expect(200);
+
+    expect(response.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
   it('replaces invalid correlation ids and removes query strings from problem instances', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/v1/missing?code=secret')

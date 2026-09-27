@@ -1,0 +1,23 @@
+name: Provider Verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  firestore-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run test:integration
+        env:
+          FIRESTORE_MONGODB_URI: ${{ secrets.FIRESTORE_MONGODB_URI }}

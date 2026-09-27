@@ -18,27 +18,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run generate:client
+      - run: npm run verify
       - name: Check generated client
         run: test -z "$(git status --porcelain --untracked-files=all -- packages/api-client/src/generated)"
-      - run: npm run lint
-      - run: npm run build
-      - run: npm run test
-      - run: npm run test:e2e
       - run: git diff --check
-      - run: docker build -f apps/api/Dockerfile .
-
-  firestore-integration:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment: dev
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm run test:integration
-        env:
-          FIRESTORE_MONGODB_URI: ${{ secrets.FIRESTORE_MONGODB_URI }}

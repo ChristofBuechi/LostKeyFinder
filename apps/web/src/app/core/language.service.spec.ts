@@ -8,6 +8,16 @@ describe('LanguageService', () => {
     TestBed.resetTestingModule();
   });
 
+  it('falls back to German for an unknown stored language', () => {
+    localStorage.setItem('language', 'fr');
+
+    const service = TestBed.inject(LanguageService);
+    TestBed.tick();
+
+    expect(service.language()).toBe('de');
+    expect(document.documentElement.lang).toBe('de');
+  });
+
   it('starts in German and updates the document language', () => {
     const service = TestBed.inject(LanguageService);
     TestBed.tick();
@@ -25,4 +35,5 @@ describe('LanguageService', () => {
     expect(document.documentElement.lang).toBe('en');
     expect(localStorage.getItem('language')).toBe('en');
   });
+
 });
