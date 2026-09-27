@@ -6,7 +6,8 @@ import { ProblemDetailsFilter } from './common/filters/problem-details.filter';
 export function configureApplication(app: NestFastifyApplication): void {
   const allowedOrigins = app.get(ConfigService)
     .get<string>('ALLOWED_ORIGINS', 'http://localhost:4200')
-    .split(',');
+    .split(',')
+    .map((origin) => origin.trim());
   const fastify = app.getHttpAdapter().getInstance();
 
   app.setGlobalPrefix('api/v1');

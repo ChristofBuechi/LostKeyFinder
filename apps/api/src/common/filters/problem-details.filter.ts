@@ -18,6 +18,7 @@ const problems: Record<number, { name: string; title: string }> = {
   500: { name: 'internal-server-error', title: 'Internal server error' },
   503: { name: 'dependency-unavailable', title: 'Service unavailable' },
 };
+const requestFailedProblem = { name: 'request-failed', title: 'Request failed' };
 
 @Catch()
 export class ProblemDetailsFilter implements ExceptionFilter {
@@ -31,11 +32,13 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       ? exception.getStatus()
       : HttpStatus.INTERNAL_SERVER_ERROR;
     const response = exception instanceof HttpException ? exception.getResponse() : undefined;
-    const detail = typeof response === 'object' && response !== null && 'message' in response
-      ? (response as { message: unknown }).message
-      : undefined;
+    const detail = typeof response === 'string'
+      ? response
+      : typeof response === 'object' && response !== null && 'message' in response
+        ? (response as { message: unknown }).message
+        : undefined;
     const path = new URL(request.url, 'http://localhost').pathname;
-    const problem = problems[status] ?? problems[500];
+    const problem = problems[status] ?? (status >= 500 ? problems[500] : requestFailedProblem);
 
     if (status >= 500) {
       this.logger.error(JSON.stringify({

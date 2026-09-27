@@ -16,7 +16,7 @@ export const validationSchema = Joi.object({
       })) {
         return helpers.error('string.uri');
       }
-      return value;
+      return origins.join(',');
     })
     .when('NODE_ENV', {
       is: 'production',
@@ -26,16 +26,26 @@ export const validationSchema = Joi.object({
   APP_VERSION: Joi.string().default('0.1.0'),
   FIRESTORE_MONGODB_URI: Joi.string()
     .custom((value: string, helpers) => {
-      if (!/^mongodb(\+srv)?:\/\//.test(value)) {
+      let uri: URL;
+      try {
+        uri = new URL(value);
+      } catch {
         return helpers.error('string.uri');
       }
+      if (!['mongodb:', 'mongodb+srv:'].includes(uri.protocol)) {
+        return helpers.error('string.uri');
+      }
+
       const environment = helpers.state.ancestors[0]?.NODE_ENV;
-      const decodedUri = decodeURIComponent(value);
-      if (environment === 'production'
-        && (!decodedUri.includes('authMechanism=MONGODB-OIDC')
-          || !decodedUri.includes('ENVIRONMENT:gcp')
-          || !decodedUri.includes('TOKEN_RESOURCE:FIRESTORE'))) {
-        return helpers.error('any.invalid');
+      if (environment === 'production') {
+        const properties = new Set(
+          (uri.searchParams.get('authMechanismProperties') ?? '').split(','),
+        );
+        if (uri.searchParams.get('authMechanism') !== 'MONGODB-OIDC'
+          || !properties.has('ENVIRONMENT:gcp')
+          || !properties.has('TOKEN_RESOURCE:FIRESTORE')) {
+          return helpers.error('any.invalid');
+        }
       }
       return value;
     })
