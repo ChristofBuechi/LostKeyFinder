@@ -57,6 +57,12 @@ Metadatenserver-basierte Produktions-URI funktioniert lokal nicht unverändert.
 Die normale CI und `npm run verify` bleiben unabhängig von diesem Helfer und
 benötigen weiterhin weder Google-Login noch Datenbankzugriff.
 
+Für lokale Persistenztests startet JUnit zusätzlich `mongo-java-server` mit
+In-Memory-Backend auf einem dynamischen Loopback-Port. Spring Data und der
+JVM-Treiber führen dort Mapping und CRUD aus. Die Library unterstützt keine
+Transaktionen und ersetzt keine Firestore-Index-, Parallelitäts- oder OIDC-
+Prüfung. Details stehen in `KOTLIN-FOUNDATION.md`.
+
 ## Cloud Run: Runtime-Service-Account und OIDC
 
 Der von Google bestätigte URI für den Cloud-Run-Service lautet:

@@ -1,0 +1,5 @@
+api:
+  environment: test
+logging:
+  level:
+    de.bwaldvogel.mongo: WARN

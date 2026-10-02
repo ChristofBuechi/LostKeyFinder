@@ -24,11 +24,11 @@ npm run start --workspace=@lost-key-finder/api
 
 `verify` generiert OpenAPI/Angular-Client, kompiliert Backend und Frontend und
 führt die Offline-Tests aus. Gradle/npm benötigen beim ersten Lauf Downloadzugriff;
-die Tests benötigen keine Datenbank, Docker, Credentials oder externe Provider.
+die Tests benötigen keine externe Datenbank, Docker, Credentials oder externe Provider.
 Das Backend-`lint`-Kommando verwendet ktlint 1.8.0;
 das Frontend verwendet weiterhin ESLint.
 
-JUnit deckt aktuell 14 Foundation-/Konfigurationsszenarien ab; der separate
+JUnit deckt aktuell 19 Foundation-/Konfigurations-/Persistenzszenarien ab; der separate
 OpenAPI-Export prüft zusätzlich den öffentlichen Vertrag. JaCoCo misst als
 Ausgangsbasis 93 % Instruction- und 74 % Branch-Coverage. `npm run test` erzwingt
 90 % Instruction- und 70 % Branch-Coverage für den gesamten produktiven
@@ -40,6 +40,30 @@ Ohne Mongo-Konfiguration verwendet der lokale Start `localhost:27017/dev1`;
 Liveness funktioniert, Readiness bleibt ohne Datenbank negativ. Für reine Tests
 werden die Mongo-Autokonfigurationen durch das Testprofil `offline` ausgeschaltet.
 Ein Fake ersetzt den Mongo-Health-Contributor, nicht den Controller.
+
+### Lokale Persistenz-Integrationstests
+
+`mongo-java-server` 1.47.0 ist ausschließlich eine Testabhängigkeit. Das Profil
+`inmemory` verwendet einen `MemoryBackend`-Server auf `127.0.0.1` mit dynamischem
+Port. Ein `DynamicPropertyRegistrar` setzt dessen URI für Spring Boots normale
+Mongo-Autokonfiguration. Damit laufen der echte JVM-Treiber, `MongoTemplate` und
+der Actuator-Mongo-Health-Contributor. Der Testserver wird beim Schließen des
+Spring-Kontexts heruntergefahren; Dokumente werden vor/nach jedem Test entfernt.
+
+Die fünf Tests prüfen Kotlin/BSON-Mapping (Datum, Enum, Binärdaten), gefilterte
+Queries, bedingte Updates, Löschen und Readiness. Sie laufen automatisch in
+`npm run test` und `npm run verify`, ohne Docker, mongod-Binary oder Credentials.
+
+Version 1.47.0 unterstützt nur das ältere Handshake-Kommando `isMaster`.
+Eine kleine, ausschließlich testseitige Backend-Erweiterung leitet `hello`
+darauf um, damit Spring Boot 4 seinen unveränderten Mongo-Healthcheck ausführen
+kann. Diese Anpassung ist keine Simulation von Authentifizierung, Transaktionen
+oder Firestore-Semantik.
+
+Die vorhandenen `offline`-Fake-Tests bleiben für Fehler-/HTTP-Szenarien und den
+OpenAPI-Export erhalten. Transaktionen werden nicht gegen den In-Memory-Server
+getestet, da die Library sie nicht unterstützt. Echte Firestore-Verifikation
+bleibt separat erforderlich.
 
 ## API-Vertrag
 

@@ -26,6 +26,9 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.1.1")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testImplementation("de.bwaldvogel:mongo-java-server:1.47.0")
+    // MemoryBackend's extension API exposes Netty Channel (otherwise runtime-only).
+    testImplementation("io.netty:netty-transport")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
