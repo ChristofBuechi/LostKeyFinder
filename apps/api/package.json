@@ -11,6 +11,8 @@
     "test:e2e": "./gradlew httpTest",
     "test:integration": "./gradlew integrationTest",
     "test:coverage": "./gradlew jacocoTestReport",
+    "firestore:verify": "node scripts/firestore-dev.mjs verify",
+    "firestore:start": "node scripts/firestore-dev.mjs start",
     "openapi": "./gradlew exportOpenApi",
     "generate:client": "npm run openapi && tsx scripts/generate-client.ts"
   },
