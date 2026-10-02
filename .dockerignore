@@ -3,6 +3,8 @@
 .angular
 **/dist
 **/node_modules
+**/.gradle
+**/build
 **/.env*
 coverage
 docs

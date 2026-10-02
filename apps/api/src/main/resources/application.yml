@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: lost-key-finder-api
+  mongodb:
+    uri: ${FIRESTORE_MONGODB_URI:mongodb://localhost:27017/dev1}
+  data:
+    mongodb:
+      auto-index-creation: false
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+server:
+  port: ${PORT:3000}
+  error:
+    include-message: never
+    include-stacktrace: never
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,mongo
+api:
+  version: ${APP_VERSION:0.1.0}
+  environment: ${NODE_ENV:development}
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:4200}
+springdoc:
+  writer-with-order-by-keys: true
+  api-docs:
+    version: OPENAPI_3_0
+  paths-to-match: /api/v1/**

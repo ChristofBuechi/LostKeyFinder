@@ -5,6 +5,8 @@ dist/
 .env.*.local
 coverage/
 .idea/
+.gradle/
+build/
 apps/api/openapi.json
 packages/api-client/openapi.json
 .firebaserc
