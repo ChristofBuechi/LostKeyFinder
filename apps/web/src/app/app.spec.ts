@@ -4,8 +4,18 @@ import { provideRouter } from '@angular/router';
 import { App } from './app';
 
 describe('App', () => {
-  it('starts in German', () => {
+  it('creates the application shell', () => {
+    localStorage.clear();
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
-    expect(TestBed.createComponent(App).componentInstance).toBeInstanceOf(App);
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance).toBeInstanceOf(App);
+    expect(fixture.nativeElement.querySelector('.skip-link').getAttribute('href'))
+      .toBe('#main-content');
+    expect(fixture.nativeElement.querySelector('main#main-content').getAttribute('tabindex'))
+      .toBe('-1');
+    expect(fixture.nativeElement.querySelector('.language-toggle').getAttribute('aria-label'))
+      .toContain('Auf Englisch wechseln');
   });
 });

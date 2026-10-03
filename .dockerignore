@@ -1,0 +1,11 @@
+.git
+.github
+.angular
+**/dist
+**/node_modules
+**/.gradle
+**/build
+**/.env*
+coverage
+docs
+gha-creds-*.json

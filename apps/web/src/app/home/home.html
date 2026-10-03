@@ -8,11 +8,15 @@
       <a class="text-link" href="#for-finders">{{ language.copy().found }} <span aria-hidden="true">↗</span></a>
     </div>
   </div>
-  <aside class="hero-note" aria-label="Produktversprechen">
+  <aside class="hero-note" [attr.aria-label]="language.copy().promiseLabel">
     <span class="note-number">01</span>
     <p>{{ language.copy().promise }}</p>
   </aside>
 </section>
+
+<p class="service-status" aria-live="polite">
+  {{ language.copy()[apiStatus()] }}
+</p>
 
 <section class="steps" id="how-it-works" aria-labelledby="steps-title">
   <div class="section-heading">

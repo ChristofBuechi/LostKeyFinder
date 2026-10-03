@@ -7,23 +7,24 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
+import { HealthResponseDto } from '../../models/health-response-dto';
 
 export interface HealthControllerReady$Params {
 }
 
-export function healthControllerReady(http: HttpClient, rootUrl: string, params?: HealthControllerReady$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+export function healthControllerReady(http: HttpClient, rootUrl: string, params?: HealthControllerReady$Params, context?: HttpContext): Observable<StrictHttpResponse<HealthResponseDto>> {
   const rb = new RequestBuilder(rootUrl, healthControllerReady.PATH, 'get');
   if (params) {
   }
 
   return http.request(
-    rb.build({ responseType: 'text', accept: '*/*', context })
+    rb.build({ responseType: 'json', accept: 'application/json', context })
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return (r as HttpResponse<any>).clone({ body: undefined }) as StrictHttpResponse<void>;
+      return r as StrictHttpResponse<HealthResponseDto>;
     })
   );
 }
 
-healthControllerReady.PATH = '/health/ready';
+healthControllerReady.PATH = '/api/v1/health/ready';

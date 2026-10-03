@@ -17,8 +17,10 @@
     "build:api": "npm run build --workspace=@lost-key-finder/api",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "openapi": "npm run openapi --workspace=@lost-key-finder/api",
-    "generate:client": "npm run generate:client --workspace=@lost-key-finder/api"
+    "test:http": "npm run test:http --workspace=@lost-key-finder/api",
+    "test:integration": "npm run test:integration --workspace=@lost-key-finder/api",
+    "generate:client": "npm run generate:client --workspace=@lost-key-finder/api",
+    "verify": "npm run generate:client && npm run lint && npm run build && npm run test"
   },
   "packageManager": "npm@11.12.1"
 }

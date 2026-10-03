@@ -21,12 +21,14 @@ h2 { max-width: 18ch; margin-bottom: 0; color: var(--ink); font-family: Georgia,
 .step-card { min-height: 13rem; padding: 1.5rem; background: var(--paper); }
 .step-card-accent { background: var(--ink); color: var(--paper); }
 .step-card span { color: var(--signal); font-size: .75rem; font-weight: 800; letter-spacing: .1em; }
+.step-card-accent span { color: #e87a68; }
 .step-card h3 { margin: 3.5rem 0 .65rem; font-size: 1.35rem; }
 .step-card p { max-width: 22rem; margin-bottom: 0; color: var(--muted); line-height: 1.5; }
 .step-card-accent p { color: #bab8b0; }
 .finder-strip { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; align-items: end; width: min(100% - 3rem, 76rem); margin: 0 auto; padding: 2.5rem 0 5rem; border-top: 1px solid var(--line); }
 .finder-strip h2 { font-size: clamp(2rem, 4vw, 3rem); }
 .finder-strip > p:last-child { max-width: 17rem; margin-bottom: .35rem; color: var(--muted); line-height: 1.5; }
+.service-status { width: min(100% - 3rem, 76rem); margin: -3rem auto 3rem; color: var(--muted); font-size: .8rem; }
 
 @media (max-width: 700px) {
   .hero { grid-template-columns: 1fr; gap: 2.5rem; min-height: auto; padding-block: 4rem 5rem; }

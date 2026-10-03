@@ -1,0 +1,37 @@
+spring:
+  profiles:
+    default: dev
+  application:
+    name: lost-key-finder-api
+  data:
+    mongodb:
+      auto-index-creation: false
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+server:
+  port: ${PORT:3000}
+  error:
+    include-message: never
+    include-stacktrace: never
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,mongo
+api:
+  version: ${APP_VERSION:0.1.0}
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:4200}
+springdoc:
+  writer-with-order-by-keys: true
+  api-docs:
+    version: OPENAPI_3_0
+  paths-to-match: /api/v1/**

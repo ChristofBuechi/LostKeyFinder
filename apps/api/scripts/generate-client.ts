@@ -14,6 +14,8 @@ async function generate(): Promise<void> {
     'false',
     '--index-file',
     'true',
+    '--templates',
+    '../../packages/api-client/templates',
   ], { stdio: 'inherit' });
 }
 

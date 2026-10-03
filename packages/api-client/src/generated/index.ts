@@ -6,6 +6,8 @@ export { RequestBuilder } from './request-builder';
 export type { StrictHttpResponse } from './strict-http-response';
 export { Api } from './api';
 
+export type { HealthResponseDto } from './models/health-response-dto';
+export type { VersionResponseDto } from './models/version-response-dto';
 export { BaseService } from './base-service';
 export { HealthService } from './services/health.service';
 export { VersionService } from './services/version.service';

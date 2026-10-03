@@ -1,19 +1,13 @@
-FROM node:24-bookworm-slim AS build
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /workspace
-COPY package.json package-lock.json ./
-COPY apps/api/package.json apps/api/package.json
-COPY apps/web/package.json apps/web/package.json
-COPY packages/api-client/package.json packages/api-client/package.json
-RUN npm ci
-COPY tsconfig.base.json .nvmrc ./
-COPY apps/api apps/api
-RUN npm run build:api
+COPY apps/api/gradlew apps/api/settings.gradle.kts apps/api/build.gradle.kts ./
+COPY apps/api/gradle ./gradle
+COPY apps/api/src ./src
+RUN chmod +x gradlew && ./gradlew --no-daemon bootJar
 
-FROM node:24-bookworm-slim
+FROM eclipse-temurin:25-jre
 WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=build /workspace/node_modules ./node_modules
-COPY --from=build /workspace/apps/api/dist ./apps/api/dist
-COPY --from=build /workspace/apps/api/package.json ./apps/api/package.json
+COPY --from=build /workspace/build/libs/api.jar ./api.jar
+USER 10001:10001
 EXPOSE 3000
-CMD ["node", "apps/api/dist/src/main.js"]
+ENTRYPOINT ["java", "-jar", "/app/api.jar"]

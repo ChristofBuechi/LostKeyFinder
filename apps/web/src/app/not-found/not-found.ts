@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { LanguageService } from '../core/language.service';
 
 @Component({
   selector: 'app-not-found',
@@ -8,8 +9,8 @@ import { RouterLink } from '@angular/router';
   template: `
     <section class="not-found" aria-labelledby="not-found-title">
       <p class="eyebrow">404</p>
-      <h1 id="not-found-title">Diese Seite ist nicht zurückzufinden.</h1>
-      <a routerLink="/">Zur Startseite</a>
+      <h1 id="not-found-title">{{ language.copy().notFoundTitle }}</h1>
+      <a routerLink="/">{{ language.copy().notFoundLink }}</a>
     </section>
    `,
   styles: [`
@@ -19,4 +20,6 @@ import { RouterLink } from '@angular/router';
     a { color: var(--ink); font-weight: 750; text-decoration-color: var(--signal); text-underline-offset: .3rem; }
    `],
 })
-export class NotFound {}
+export class NotFound {
+  protected readonly language = inject(LanguageService);
+}

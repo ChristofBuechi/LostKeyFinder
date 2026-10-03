@@ -1,14 +1,15 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 
 export type Language = 'de' | 'en';
 
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
-  readonly language = signal<Language>('de');
+  private readonly document = inject(DOCUMENT);
+  readonly language = signal<Language>(this.readStoredLanguage());
   readonly copy = computed(() => this.language() === 'de' ? {
     skip: 'Zum Inhalt springen',
-    home: 'Lost Key Finder Startseite',
-    switchLabel: 'Switch to English',
+    switchLabel: 'Auf Englisch wechseln',
     languageName: 'Deutsch · English',
     footer: 'Verloren ist nicht für immer.',
     eyebrow: 'Sicher zurückgeben',
@@ -28,10 +29,15 @@ export class LanguageService {
     finderEyebrow: 'Für Finder',
     finderTitle: 'Du hast etwas gefunden?',
     finderText: 'Scanne den Tag. Wir kümmern uns um den sicheren ersten Kontakt.',
+    promiseLabel: 'Produktversprechen',
+    checking: 'Verbindung wird geprüft',
+    available: 'Dienst verfügbar',
+    unavailable: 'Dienst vorübergehend nicht verfügbar',
+    notFoundTitle: 'Diese Seite ist nicht zurückzufinden.',
+    notFoundLink: 'Zur Startseite',
   } : {
     skip: 'Skip to content',
-    home: 'Lost Key Finder home',
-    switchLabel: 'Zu Deutsch wechseln',
+    switchLabel: 'Switch to German',
     languageName: 'English · Deutsch',
     footer: 'Lost does not have to mean gone forever.',
     eyebrow: 'Return with confidence',
@@ -51,9 +57,28 @@ export class LanguageService {
     finderEyebrow: 'For finders',
     finderTitle: 'Found something?',
     finderText: 'Scan the tag. We take care of the safe first contact.',
+    promiseLabel: 'Product promise',
+    checking: 'Checking connection',
+    available: 'Service available',
+    unavailable: 'Service temporarily unavailable',
+    notFoundTitle: 'This page could not be found.',
+    notFoundLink: 'Back to home',
   });
+
+  constructor() {
+    effect(() => {
+      const language = this.language();
+      this.document.documentElement.lang = language;
+      localStorage.setItem('language', language);
+    });
+  }
+
+  private readStoredLanguage(): Language {
+    return localStorage.getItem('language') === 'en' ? 'en' : 'de';
+  }
 
   toggle(): void {
     this.language.update((current) => current === 'de' ? 'en' : 'de');
   }
+
 }
