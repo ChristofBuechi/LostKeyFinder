@@ -1,5 +1,6 @@
 api:
   environment: test
+  allowed-origins: http://localhost:4200, https://second.example
 logging:
   level:
     de.bwaldvogel.mongo: WARN

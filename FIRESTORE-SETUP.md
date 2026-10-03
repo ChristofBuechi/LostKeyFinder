@@ -51,13 +51,14 @@ Readiness (`200`, `{"status":"ok"}`).
 
 Das lokale Token gilt üblicherweise etwa eine Stunde. Der Helfer erneuert es bei
 jedem Aufruf; für längere lokale Sessions den Backendprozess neu starten.
-`NODE_ENV` wird für diesen lokalen Start auf `development` gesetzt. Der GCP-
+`SPRING_PROFILES_ACTIVE` wird für diesen lokalen Start auf `dev` gesetzt; die API
+meldet weiterhin die Umgebung `development`. Der GCP-
 Metadatenserver-basierte Produktions-URI funktioniert lokal nicht unverändert.
 
 Die normale CI und `npm run verify` bleiben unabhängig von diesem Helfer und
-benötigen weiterhin weder Google-Login noch Datenbankzugriff.
+verwenden das Profil `ci` und benötigen weder Google-Login noch eine externe Datenbank.
 
-Für lokale Persistenztests startet JUnit zusätzlich `mongo-java-server` mit
+Für die Spring-Kontexttests startet JUnit unter `ci` automatisch `mongo-java-server` mit
 In-Memory-Backend auf einem dynamischen Loopback-Port. Spring Data und der
 JVM-Treiber führen dort Mapping und CRUD aus. Die Library unterstützt keine
 Transaktionen und ersetzt keine Firestore-Index-, Parallelitäts- oder OIDC-
@@ -97,9 +98,12 @@ dessen Name in `FIRESTORE_MONGODB_URI_SECRET` hinterlegt wird. Die Runtime benö
 zusätzlich Secret-Zugriff auf genau diesen Eintrag. Es werden keine Service-
 Account-JSON-Schlüssel benötigt.
 
-`NODE_ENV=production` aktiviert die vorhandene Prüfung auf TLS,
-`loadBalanced=true`, `retryWrites=false` und GCP-OIDC. Dies gilt auch für das
-Dev-Deployment auf Cloud Run.
+Der Deployment-Workflow setzt `SPRING_PROFILES_ACTIVE=dev` für Dev und `prod`
+für Produktion. Beide Profile benötigen `FIRESTORE_MONGODB_URI`; `prod` benötigt
+zusätzlich `ALLOWED_ORIGINS` und erzwingt TLS, `loadBalanced=true`,
+`retryWrites=false` und GCP-OIDC. Auch das Dev-Deployment verwendet den
+Cloud-Run-OIDC-URI; lokal erlaubt `dev` das kurzlebige PLAIN-Access-Token.
+`NODE_ENV` wählt kein Backendprofil und beeinflusst diese Prüfung nicht.
 
 ## Indizes und Transaktionen
 

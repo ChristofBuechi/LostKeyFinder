@@ -27,7 +27,7 @@ const result = spawnSync('./gradlew', [mode === 'verify' ? 'integrationTest' : '
   stdio: 'inherit',
   env: {
     ...process.env,
-    NODE_ENV: mode === 'verify' ? 'test' : 'development',
+    SPRING_PROFILES_ACTIVE: 'dev',
     FIRESTORE_MONGODB_URI: uri.toString(),
   },
 });

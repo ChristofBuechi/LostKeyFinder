@@ -7,10 +7,10 @@ import org.junit.jupiter.api.Test
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.TestComponent
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Import
-import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
@@ -26,8 +26,8 @@ import kotlin.test.assertTrue
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("offline", "http-contract-test")
-@Import(OfflineConfiguration::class, FailureController::class)
+@ActiveProfiles("ci")
+@Import(InMemoryMongoConfiguration::class, HealthFakeConfiguration::class, FailureController::class)
 class FoundationHttpTest {
     @Autowired lateinit var mvc: MockMvc
 
@@ -39,8 +39,10 @@ class FoundationHttpTest {
         mongo.ready = true
     }
 
-    @Test fun `offline context never instantiates a real Mongo client`() {
-        assertTrue(context.getBeansOfType(com.mongodb.client.MongoClient::class.java).isEmpty())
+    @Test fun `CI context uses the embedded Mongo server`() {
+        val client = context.getBean(com.mongodb.client.MongoClient::class.java)
+        val ping = client.getDatabase("foundation").runCommand(org.bson.Document("ping", 1))
+        kotlin.test.assertEquals(1.0, ping.getDouble("ok"))
     }
 
     @Test fun `valid correlation IDs are retained and MDC is cleared after the request`() {
@@ -139,7 +141,7 @@ data class TestCommand(
 )
 
 @RestController
-@Profile("http-contract-test")
+@TestComponent
 class FailureController {
     @GetMapping("/api/v1/test/conflict")
     fun conflict(): Nothing = throw ResponseStatusException(HttpStatus.CONFLICT, "Operation already exists")

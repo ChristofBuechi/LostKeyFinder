@@ -52,7 +52,7 @@ tasks.register<Test>("httpTest") {
 }
 
 val exportOpenApi by tasks.registering(Test::class) {
-    description = "Export the real Spring MVC OpenAPI contract without a database or HTTP server"
+    description = "Export the real Spring MVC OpenAPI contract without an external database or HTTP server"
     testClassesDirs =
         sourceSets.test
             .get()

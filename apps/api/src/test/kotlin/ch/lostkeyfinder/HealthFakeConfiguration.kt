@@ -12,7 +12,7 @@ class MongoHealthFake : HealthIndicator {
 }
 
 @TestConfiguration(proxyBeanMethods = false)
-class OfflineConfiguration {
-    @Bean("mongo")
+class HealthFakeConfiguration {
+    @Bean("mongoHealthContributor")
     fun mongoHealthFake() = MongoHealthFake()
 }

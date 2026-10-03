@@ -56,10 +56,29 @@ class ConfigurationTest {
         }
     }
 
+    @Test fun `production profile requires a connection URI`() {
+        val environment = MockEnvironment().apply { setActiveProfiles("prod") }
+        assertFailsWith<IllegalArgumentException> {
+            MongoConfiguration().mongoSettings(environment).customize(MongoClientSettings.builder())
+        }
+    }
+
+    @Test fun `production profile enforces OIDC even when legacy environment says development`() {
+        val environment =
+            MockEnvironment()
+                .withProperty("spring.mongodb.uri", "mongodb://localhost:27017/dev1?tls=true&loadBalanced=true&retryWrites=false")
+                .withProperty("api.environment", "development")
+                .withProperty("NODE_ENV", "development")
+                .apply { setActiveProfiles("prod") }
+        assertFailsWith<IllegalArgumentException> {
+            MongoConfiguration().mongoSettings(environment).customize(MongoClientSettings.builder())
+        }
+    }
+
     private fun validateMongo(uri: String) {
-        val environment = MockEnvironment().withProperty("spring.mongodb.uri", uri)
+        val environment = MockEnvironment().withProperty("spring.mongodb.uri", uri).apply { setActiveProfiles("prod") }
         MongoConfiguration()
-            .mongoSettings(ApiProperties(environment = "production"), environment)
+            .mongoSettings(environment)
             .customize(MongoClientSettings.builder())
     }
 }

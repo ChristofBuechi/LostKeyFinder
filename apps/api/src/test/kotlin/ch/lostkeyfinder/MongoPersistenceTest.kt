@@ -26,7 +26,7 @@ import org.springframework.data.mongodb.core.mapping.Document as MongoDocument
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("inmemory")
+@ActiveProfiles("ci")
 @Import(InMemoryMongoConfiguration::class)
 class MongoPersistenceTest {
     @Autowired lateinit var template: MongoTemplate

@@ -14,12 +14,12 @@ import kotlin.test.assertEquals
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("offline")
-@Import(OfflineConfiguration::class)
+@ActiveProfiles("ci")
+@Import(InMemoryMongoConfiguration::class)
 class OpenApiExportTest {
     @Autowired lateinit var mvc: MockMvc
 
-    @Test fun `export real contract without opening a network port`() {
+    @Test fun `export real contract without opening an HTTP port`() {
         val json =
             mvc
                 .get("/v3/api-docs")

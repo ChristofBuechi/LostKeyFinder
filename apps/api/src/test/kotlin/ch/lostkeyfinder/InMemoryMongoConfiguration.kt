@@ -6,9 +6,11 @@ import de.bwaldvogel.mongo.bson.Document
 import io.netty.channel.Channel
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Profile
 import org.springframework.test.context.DynamicPropertyRegistrar
 
 @TestConfiguration(proxyBeanMethods = false)
+@Profile("ci")
 class InMemoryMongoConfiguration {
     @Bean(destroyMethod = "shutdown")
     fun mongoServer(): MongoServer =
@@ -22,7 +24,6 @@ class InMemoryMongoConfiguration {
             registry.add("spring.mongodb.uri") {
                 "${server.connectionString}/foundation?directConnection=true&retryWrites=false&serverSelectionTimeoutMS=3000"
             }
-            registry.add("api.environment") { "test" }
         }
 }
 

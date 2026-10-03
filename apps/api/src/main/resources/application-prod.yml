@@ -1,0 +1,6 @@
+spring:
+  mongodb:
+    uri: ${FIRESTORE_MONGODB_URI}
+api:
+  environment: production
+  allowed-origins: ${ALLOWED_ORIGINS}

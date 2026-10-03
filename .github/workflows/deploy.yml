@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      SPRING_PROFILE: ${{ github.event_name == 'workflow_run' && 'dev' || inputs.environment }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -52,7 +53,7 @@ jobs:
             --project "${{ vars.GCP_PROJECT_ID }}" \
             --region "${{ vars.GCP_REGION }}" \
             --service-account "${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}" \
-            --set-env-vars "^|^NODE_ENV=production|APP_VERSION=${{ env.DEPLOY_SHA }}|ALLOWED_ORIGINS=${{ vars.ALLOWED_ORIGINS }}" \
+            --set-env-vars "^|^SPRING_PROFILES_ACTIVE=${{ env.SPRING_PROFILE }}|APP_VERSION=${{ env.DEPLOY_SHA }}|ALLOWED_ORIGINS=${{ vars.ALLOWED_ORIGINS }}" \
             --set-secrets "FIRESTORE_MONGODB_URI=${{ vars.FIRESTORE_MONGODB_URI_SECRET }}:latest" \
             --quiet
       - name: Deploy Firebase Hosting

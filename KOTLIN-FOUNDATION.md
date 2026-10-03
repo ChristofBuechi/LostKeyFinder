@@ -19,7 +19,7 @@ durch JVM-Treiber und Spring-Standards ersetzt. `docs/` ist unverändert.
 ```bash
 npm ci
 npm run verify
-npm run start --workspace=@lost-key-finder/api
+npm run firestore:start --workspace=@lost-key-finder/api
 ```
 
 `verify` generiert OpenAPI/Angular-Client, kompiliert Backend und Frontend und
@@ -28,23 +28,38 @@ die Tests benötigen keine externe Datenbank, Docker, Credentials oder externe P
 Das Backend-`lint`-Kommando verwendet ktlint 1.8.0;
 das Frontend verwendet weiterhin ESLint.
 
-JUnit deckt aktuell 19 Foundation-/Konfigurations-/Persistenzszenarien ab; der separate
+JUnit deckt aktuell 21 Foundation-/Konfigurations-/Persistenzszenarien ab; der separate
 OpenAPI-Export prüft zusätzlich den öffentlichen Vertrag. JaCoCo misst als
 Ausgangsbasis 93 % Instruction- und 74 % Branch-Coverage. `npm run test` erzwingt
 90 % Instruction- und 70 % Branch-Coverage für den gesamten produktiven
 Backendcode. `npm run test:coverage --workspace=@lost-key-finder/api` erzeugt
 HTML/XML-Reports unter `apps/api/build/reports/jacoco/test`.
 
+### Spring-Profile
+
+| Profil | Datenbank | Verwendung |
+| --- | --- | --- |
+| `ci` | Automatisch gestarteter In-Memory-Server | JUnit/MockMvc, OpenAPI-Export und normale CI |
+| `dev` | Firestore-Dev-Datenbank, URI aus `FIRESTORE_MONGODB_URI` | Lokaler Start oder Dev-Deployment |
+| `prod` | Firestore-Produktionsdatenbank, URI aus `FIRESTORE_MONGODB_URI` | Produktionsdeployment mit GCP-OIDC |
+
+`application.yml` enthält gemeinsame Einstellungen; `application-dev.yml` und
+`application-prod.yml` liegen im Hauptcode. `application-ci.yml` und der Server
+liegen ausschließlich im Test-Classpath. Die API-Umgebungswerte bleiben
+`test`, `development` und `production`.
+
 Spring Boot liest Umgebungsvariablen, lädt aber `.env` nicht automatisch.
-Ohne Mongo-Konfiguration verwendet der lokale Start `localhost:27017/dev1`;
-Liveness funktioniert, Readiness bleibt ohne Datenbank negativ. Für reine Tests
-werden die Mongo-Autokonfigurationen durch das Testprofil `offline` ausgeschaltet.
-Ein Fake ersetzt den Mongo-Health-Contributor, nicht den Controller.
+Ohne explizites Profil ist `dev` der Standard. `dev` und `prod` benötigen einen
+expliziten URI; es gibt keinen stillen Fallback auf `localhost:27017`.
+`firestore:start` holt lokale Credentials und setzt `SPRING_PROFILES_ACTIVE=dev`.
+Ein direkter `bootRun` benötigt den URI bereits im Environment.
+`prod` benötigt zusätzlich `ALLOWED_ORIGINS`. `NODE_ENV` steuert das Backend
+nicht mehr; Cloud Run setzt das Profil passend zum Deployment auf `dev`/`prod`.
 
 ### Lokale Persistenz-Integrationstests
 
 `mongo-java-server` 1.47.0 ist ausschließlich eine Testabhängigkeit. Das Profil
-`inmemory` verwendet einen `MemoryBackend`-Server auf `127.0.0.1` mit dynamischem
+`ci` verwendet einen `MemoryBackend`-Server auf `127.0.0.1` mit dynamischem
 Port. Ein `DynamicPropertyRegistrar` setzt dessen URI für Spring Boots normale
 Mongo-Autokonfiguration. Damit laufen der echte JVM-Treiber, `MongoTemplate` und
 der Actuator-Mongo-Health-Contributor. Der Testserver wird beim Schließen des
@@ -60,8 +75,12 @@ darauf um, damit Spring Boot 4 seinen unveränderten Mongo-Healthcheck ausführe
 kann. Diese Anpassung ist keine Simulation von Authentifizierung, Transaktionen
 oder Firestore-Semantik.
 
-Die vorhandenen `offline`-Fake-Tests bleiben für Fehler-/HTTP-Szenarien und den
-OpenAPI-Export erhalten. Transaktionen werden nicht gegen den In-Memory-Server
+Alle Spring-Kontexttests verwenden `ci` und importieren die In-Memory-Konfiguration.
+HTTP-Fehlerszenarien ersetzen gezielt den Mongo-Health-Contributor durch einen Fake;
+Mongo-Client und Mapping bleiben echt. Der OpenAPI-Export verwendet den echten
+Mongo-Contributor. Testcontroller werden explizit importiert und nicht automatisch
+gescannt; es gibt kein zusätzliches Testprofil.
+Transaktionen werden nicht gegen den In-Memory-Server
 getestet, da die Library sie nicht unterstützt. Echte Firestore-Verifikation
 bleibt separat erforderlich.
 
@@ -76,7 +95,7 @@ bleibt separat erforderlich.
 Die Readiness verwendet die Actuator-Gruppe `readinessState,mongo`.
 Nur der Health-Actuator-Endpunkt ist exponiert; Details bleiben verborgen.
 Die bisherigen OpenAPI-Operation-IDs bleiben erhalten. Der Export erfolgt mit
-MockMvc ohne Netzwerkport; keine statische, von Hand gepflegte OpenAPI-Datei.
+MockMvc ohne HTTP-Port; keine statische, von Hand gepflegte OpenAPI-Datei.
 
 ## MongoDB
 
@@ -84,7 +103,7 @@ Spring Boot verwaltet Client, Pool, Mapping und Shutdown. Spring Data stellt
 `MongoTemplate` und Repositories bereit. `MongoTransactionManager` aktiviert
 Spring-Transaktionen. Automatische Indexerstellung ist ausgeschaltet.
 
-Bei `NODE_ENV=production` wird die Verbindungszeichenfolge mit dem echten
+Beim Profil `prod` wird die Verbindungszeichenfolge mit dem echten
 MongoDB-Treiber geparst und auf TLS, `loadBalanced=true`, `retryWrites=false` und
 GCP-OIDC mit `TOKEN_RESOURCE:FIRESTORE` geprüft. Ein fehlender produktiver URI
 führt zu einem Startfehler.
@@ -112,6 +131,7 @@ Parallelitätsinvarianten benötigen weiterhin echte Provider-Verifikation.
 
 Der Cloud-Run-Service ist mit diesem Branch noch nicht deployt.
 
-Der lokale Multi-Stage-Docker-Build und Containerstart sind verifiziert:
+Der lokale Multi-Stage-Docker-Build und Containerstart wurden vor der Profilaufteilung verifiziert:
 Liveness liefert `200`, Readiness ohne Datenbank `503`, der Version-Endpunkt
-liefert den erwarteten Vertrag. Der Container läuft als `10001:10001` ohne Root.
+lieferte den erwarteten Vertrag. Der Container läuft als `10001:10001` ohne Root.
+Mit der Profilaufteilung benötigt auch der Containerstart einen expliziten Mongo-URI.
