@@ -8,3 +8,4 @@
 **/.env*
 coverage
 docs
+gha-creds-*.json

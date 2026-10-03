@@ -36,7 +36,7 @@ Probe-Dokumente liegen in `integrationProbes`.
 Backend mit echter Dev-Datenbank starten:
 
 ```bash
-npm run firestore:start --workspace=@lost-key-finder/api
+npm run start:dev --workspace=@lost-key-finder/api
 ```
 
 Danach prüfen:
@@ -76,9 +76,8 @@ Dieser URI enthält kein Passwort und kein Access Token. Der JVM-Treiber erhält
 und erneuert die Credentials über die Cloud-Run-Service-Identität. Spring Boot
 liest ihn aus `FIRESTORE_MONGODB_URI`; es ist kein eigener OIDC-Callback nötig.
 
-Für Cloud Run fehlt aktuell noch ein dedizierter Runtime-Service-Account. Die
-folgenden Provisionierungsbefehle sind eine Anleitung und wurden hier nicht
-ausgeführt:
+Die Runtime-Identität verwendet ausschließlich Datenzugriff auf `dev1`.
+Die folgenden Befehle beschreiben die dafür nötigen Rechte:
 
 ```bash
 gcloud iam service-accounts create lost-key-finder-api \
@@ -92,11 +91,10 @@ gcloud projects add-iam-policy-binding lost-key-finder-dev \
 ```
 
 Den Service Account anschließend beim Cloud-Run-Deployment als Service Identity
-setzen. Der bestehende Deployment-Workflow erwartet seinen Namen in
-`GCP_RUNTIME_SERVICE_ACCOUNT` und den URI über einen Secret-Manager-Eintrag,
-dessen Name in `FIRESTORE_MONGODB_URI_SECRET` hinterlegt wird. Die Runtime benötigt
-zusätzlich Secret-Zugriff auf genau diesen Eintrag. Es werden keine Service-
-Account-JSON-Schlüssel benötigt.
+setzen. Der Deployment-Workflow erwartet seinen Namen in der GitHub-Environment-
+Variable `GCP_RUNTIME_SERVICE_ACCOUNT` und den passwortlosen OIDC-URI in
+`FIRESTORE_MONGODB_URI`. Dieser URI benötigt keinen Secret Manager. Es werden
+keine Service-Account-JSON-Schlüssel benötigt.
 
 Der Deployment-Workflow setzt `SPRING_PROFILES_ACTIVE=dev` für Dev und `prod`
 für Produktion. Beide Profile benötigen `FIRESTORE_MONGODB_URI`; `prod` benötigt
@@ -105,6 +103,45 @@ zusätzlich `ALLOWED_ORIGINS` und erzwingt TLS, `loadBalanced=true`,
 Cloud-Run-OIDC-URI; lokal erlaubt `dev` das kurzlebige PLAIN-Access-Token.
 `NODE_ENV` wählt kein Backendprofil und beeinflusst diese Prüfung nicht.
 
+## GitHub Actions für Dev
+
+Im Projekt `lost-key-finder-dev` sind eingerichtet:
+
+| Ressource | Zweck |
+| --- | --- |
+| Artifact Registry `europe-west6/lost-key-finder` | API-Containerimages |
+| `lost-key-finder-api@lost-key-finder-dev.iam.gserviceaccount.com` | Cloud-Run-Runtime, Datenzugriff nur auf `dev1` |
+| `github-provider@lost-key-finder-dev.iam.gserviceaccount.com` | Firestore-Verifikation, Datenzugriff nur auf `dev1` |
+| `github-deploy@lost-key-finder-dev.iam.gserviceaccount.com` | Images schreiben, Cloud Run und Hosting deployen, Runtime-Service-Account zuweisen |
+| WIF-Pool `github`, Provider `lost-key-finder` | Kurzlebige GitHub-OIDC-Authentifizierung |
+
+WIF akzeptiert ausschließlich die numerischen IDs dieses Repositorys/Owners,
+das Environment `dev`, den Branch `main` und die beiden konkreten Workflows
+`deploy.yml`/`provider-verification.yml`. Die Workflows können jeweils nur ihre
+eigene Deployment-/Provider-Identität verwenden. Die Runtime-Identität kann
+nicht direkt von GitHub impersoniert werden.
+
+Das GitHub-Environment `dev` erlaubt nur `main`. Seine Variablen sind
+`GCP_PROJECT_ID`, `GCP_REGION`, `ARTIFACT_REPOSITORY`,
+`GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_DEPLOY_SERVICE_ACCOUNT`,
+`GCP_PROVIDER_SERVICE_ACCOUNT`, `GCP_RUNTIME_SERVICE_ACCOUNT`,
+`FIRESTORE_MONGODB_URI` und `ALLOWED_ORIGINS`. Keine davon enthält ein Passwort
+oder Access Token. Die temporäre Auth-Datei der GitHub-Action wird weder
+versioniert noch in den Docker-Build-Kontext übernommen.
+
+Nach Merge und erfolgreicher `main`-Push-CI deployt der vorhandene Workflow
+automatisch nach Dev und prüft Readiness und Version über Firebase Hosting.
+Der Cloud-Run-Service wird beim ersten Deployment erstellt (maximal zwei
+Instanzen). Der manuelle Provider-Workflow ist nach Merge über `main` ausführbar:
+
+```bash
+gh workflow run provider-verification.yml --ref main
+```
+
+Der PR bleibt bis zur manuellen Prüfung offen. Cloud-Run-OIDC und WIF sind erst
+nach erfolgreichen Remote-Läufen funktional abgenommen. Ein Prod-Environment
+und produktive Cloud-Ressourcen werden separat eingerichtet.
+
 ## Indizes und Transaktionen
 
 - Automatische Indexerstellung durch Spring Data bleibt ausgeschaltet.
@@ -112,5 +149,6 @@ Cloud-Run-OIDC-URI; lokal erlaubt `dev` das kurzlebige PLAIN-Access-Token.
   und durch eine separate administrative Identität angelegt.
 - Der erfolgreiche Smoke-Test ersetzt keine Parallelitäts- oder Indexprüfung.
 - Die Cloud-Run-OIDC-Verbindung muss nach Deployment separat verifiziert werden.
-- Ein kurzlebiges lokales Token gehört nicht in GitHub Secrets. Für den manuellen
-  Provider-Workflow ist eine separate CI-Authentifizierung einzurichten.
+- Ein kurzlebiges lokales Token gehört nicht in GitHub Secrets. Der manuelle
+  Provider-Workflow authentifiziert sich über WIF und verwendet denselben
+  `firestore:verify`-Helfer wie lokal.

@@ -5,10 +5,10 @@
   "scripts": {
     "build": "./gradlew bootJar",
     "start": "./gradlew bootRun",
-    "start:dev": "./gradlew bootRun",
+    "start:dev": "npm run firestore:start",
     "lint": "./gradlew ktlintCheck",
     "test": "./gradlew test jacocoTestCoverageVerification",
-    "test:e2e": "./gradlew httpTest",
+    "test:http": "./gradlew httpTest",
     "test:integration": "./gradlew integrationTest",
     "test:coverage": "./gradlew jacocoTestReport",
     "firestore:verify": "node scripts/firestore-dev.mjs verify",

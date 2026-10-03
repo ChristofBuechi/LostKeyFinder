@@ -260,7 +260,7 @@ Generated-Client-Drift prüfen
 npm run lint
 npm run build
 npm run test
-npm run test:e2e
+npm run test:http
 git diff --check
 ```
 
@@ -297,7 +297,7 @@ Das Root-`package.json` erhält:
 
 ```json
 {
-  "verify": "npm run generate:client && npm run lint && npm run build && npm run test && npm run test:e2e"
+  "verify": "npm run generate:client && npm run lint && npm run build && npm run test"
 }
 ```
 

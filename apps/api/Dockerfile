@@ -7,7 +7,6 @@ RUN chmod +x gradlew && ./gradlew --no-daemon bootJar
 
 FROM eclipse-temurin:25-jre
 WORKDIR /app
-ENV NODE_ENV=production
 COPY --from=build /workspace/build/libs/api.jar ./api.jar
 USER 10001:10001
 EXPOSE 3000

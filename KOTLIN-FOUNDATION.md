@@ -19,7 +19,7 @@ durch JVM-Treiber und Spring-Standards ersetzt. `docs/` ist unverändert.
 ```bash
 npm ci
 npm run verify
-npm run firestore:start --workspace=@lost-key-finder/api
+npm run start:dev --workspace=@lost-key-finder/api
 ```
 
 `verify` generiert OpenAPI/Angular-Client, kompiliert Backend und Frontend und
@@ -27,6 +27,10 @@ führt die Offline-Tests aus. Gradle/npm benötigen beim ersten Lauf Downloadzug
 die Tests benötigen keine externe Datenbank, Docker, Credentials oder externe Provider.
 Das Backend-`lint`-Kommando verwendet ktlint 1.8.0;
 das Frontend verwendet weiterhin ESLint.
+
+`verify` führt die HTTP-Vertragstests bereits über `test` aus, nicht nochmals
+separat. `npm run test:http` führt nur diese Tests gezielt aus; Browser-E2E-Tests
+sind damit nicht gemeint. `start:dev` delegiert an den bestehenden Firestore-Helfer.
 
 JUnit deckt aktuell 21 Foundation-/Konfigurations-/Persistenzszenarien ab; der separate
 OpenAPI-Export prüft zusätzlich den öffentlichen Vertrag. JaCoCo misst als

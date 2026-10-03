@@ -19,10 +19,13 @@ permissions:
 jobs:
   deploy:
     if: >-
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'
+      && github.event.workflow_run.head_repository.full_name == github.repository)
       || github.event_name == 'workflow_dispatch'
     environment: ${{ github.event_name == 'workflow_run' && 'dev' || inputs.environment }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
       SPRING_PROFILE: ${{ github.event_name == 'workflow_run' && 'dev' || inputs.environment }}
@@ -36,14 +39,17 @@ jobs:
           cache: npm
       - uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.GCP_PROJECT_ID }}
       - uses: google-github-actions/setup-gcloud@v2
       - run: npm ci
       - run: npm run build:web
       - name: Build and push API image
         env:
           IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPOSITORY }}/api:${{ env.DEPLOY_SHA }}
+          FIRESTORE_MONGODB_URI: ${{ vars.FIRESTORE_MONGODB_URI }}
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
         run: |
           gcloud auth configure-docker "${{ vars.GCP_REGION }}-docker.pkg.dev" --quiet
           docker build -f apps/api/Dockerfile -t "$IMAGE" .
@@ -53,8 +59,23 @@ jobs:
             --project "${{ vars.GCP_PROJECT_ID }}" \
             --region "${{ vars.GCP_REGION }}" \
             --service-account "${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}" \
-            --set-env-vars "^|^SPRING_PROFILES_ACTIVE=${{ env.SPRING_PROFILE }}|APP_VERSION=${{ env.DEPLOY_SHA }}|ALLOWED_ORIGINS=${{ vars.ALLOWED_ORIGINS }}" \
-            --set-secrets "FIRESTORE_MONGODB_URI=${{ vars.FIRESTORE_MONGODB_URI_SECRET }}:latest" \
+            --set-env-vars "^|^SPRING_PROFILES_ACTIVE=${{ env.SPRING_PROFILE }}|APP_VERSION=${{ env.DEPLOY_SHA }}|ALLOWED_ORIGINS=${ALLOWED_ORIGINS}|FIRESTORE_MONGODB_URI=${FIRESTORE_MONGODB_URI}" \
+            --port 3000 \
+            --max-instances 2 \
+            --allow-unauthenticated \
             --quiet
       - name: Deploy Firebase Hosting
-        run: npx --yes firebase-tools deploy --only hosting --project "${{ vars.GCP_PROJECT_ID }}"
+        run: npx --yes firebase-tools@15.31.0 deploy --only hosting --project "${{ vars.GCP_PROJECT_ID }}"
+      - name: Verify deployed API through Hosting
+        env:
+          HOSTING_URL: https://${{ vars.GCP_PROJECT_ID }}.web.app
+        run: |
+          curl --fail --retry 10 --retry-delay 3 --retry-all-errors "$HOSTING_URL/api/v1/health/ready"
+          node --input-type=module -e '
+            import assert from "node:assert/strict";
+            const response = await fetch(process.env.HOSTING_URL + "/api/v1/version");
+            assert.equal(response.status, 200);
+            const version = await response.json();
+            assert.equal(version.version, process.env.DEPLOY_SHA);
+            assert.equal(version.environment, process.env.SPRING_PROFILE === "dev" ? "development" : "production");
+          '
