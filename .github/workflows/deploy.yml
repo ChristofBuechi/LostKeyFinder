@@ -50,6 +50,8 @@ jobs:
           IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPOSITORY }}/api:${{ env.DEPLOY_SHA }}
           FIRESTORE_MONGODB_URI: ${{ vars.FIRESTORE_MONGODB_URI }}
           ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
         run: |
           gcloud auth configure-docker "${{ vars.GCP_REGION }}-docker.pkg.dev" --quiet
           docker build -f apps/api/Dockerfile -t "$IMAGE" .
@@ -59,7 +61,7 @@ jobs:
             --project "${{ vars.GCP_PROJECT_ID }}" \
             --region "${{ vars.GCP_REGION }}" \
             --service-account "${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}" \
-            --set-env-vars "^|^SPRING_PROFILES_ACTIVE=${{ env.SPRING_PROFILE }}|APP_VERSION=${{ env.DEPLOY_SHA }}|ALLOWED_ORIGINS=${ALLOWED_ORIGINS}|FIRESTORE_MONGODB_URI=${FIRESTORE_MONGODB_URI}" \
+            --set-env-vars "^|^SPRING_PROFILES_ACTIVE=${{ env.SPRING_PROFILE }}|APP_VERSION=${{ env.DEPLOY_SHA }}|ALLOWED_ORIGINS=${ALLOWED_ORIGINS}|FIRESTORE_MONGODB_URI=${FIRESTORE_MONGODB_URI}|SUPABASE_URL=${SUPABASE_URL}|SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY}|SUPABASE_JWT_AUDIENCE=authenticated|SUPABASE_JWT_ALGORITHM=ES256" \
             --port 3000 \
             --max-instances 2 \
             --allow-unauthenticated \

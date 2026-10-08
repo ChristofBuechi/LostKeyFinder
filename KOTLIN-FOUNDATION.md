@@ -158,6 +158,17 @@ Publishable Key. Ohne Dev-Projekt bleibt die lokale Supabase-URL `localhost:5432
 öffentliche Endpunkte starten ohne Identity-Aufruf, ein erfolgreicher Login ist
 damit noch nicht möglich. Ein leerer Key erlaubt keine neue Benutzeranlage.
 
+Lokale Supabase-Werte können in der ignorierten `.env.dev.local` liegen. Der
+Firestore-Dev-Helfer lässt sich vom Repository-Root mit diesen Werten starten:
+
+```bash
+node --env-file=.env.dev.local apps/api/scripts/firestore-dev.mjs start
+```
+
+Das Deployment liest `SUPABASE_URL` und `SUPABASE_PUBLISHABLE_KEY` aus den
+GitHub-Environment-Variablen für `dev` beziehungsweise `prod` und übergibt sie
+an Cloud Run. Jedes Environment benötigt die Werte seines eigenen Projekts.
+
 Die CI startet einen lokalen JWKS-/User-Server mit frisch generiertem ES256-Key
 und signierten Test-JWTs. Sie prüft Signatur/Claims, E-Mail-Bestätigung,
 Statusentzug, Providerfehler und parallele Anlage über die echte Security-Kette.
