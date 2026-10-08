@@ -11,6 +11,8 @@ import org.springframework.test.web.servlet.get
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -33,7 +35,18 @@ class OpenApiExportTest {
                 .build()
         val document = mapper.readTree(json) as tools.jackson.databind.node.ObjectNode
         document.remove("servers")
-        assertEquals(setOf("/api/v1/health/live", "/api/v1/health/ready", "/api/v1/version"), document["paths"].propertyNames().toSet())
+        val me = document["paths"]["/api/v1/me"]["get"]
+        assertEquals("UserController_me", me["operationId"].asString())
+        assertTrue(me["security"][0].has("bearerAuth"))
+        assertFalse(me.has("parameters"))
+        assertEquals<Set<String>>(
+            setOf("id", "email", "status", "createdAt", "updatedAt"),
+            document["components"]["schemas"]["CurrentUserResponse"]["required"].values().map { it.asString() }.toSet(),
+        )
+        assertEquals(
+            setOf("/api/v1/health/live", "/api/v1/health/ready", "/api/v1/version", "/api/v1/me"),
+            document["paths"].propertyNames().toSet(),
+        )
         Files.writeString(Path.of("openapi.json"), mapper.writerWithDefaultPrettyPrinter().writeValueAsString(document))
     }
 }

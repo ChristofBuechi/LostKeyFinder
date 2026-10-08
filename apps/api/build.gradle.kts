@@ -21,6 +21,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+    implementation("org.springframework.boot:spring-boot-starter-restclient")
+    implementation("com.ibm.icu:icu4j:78.3")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.1.1")
@@ -39,7 +42,7 @@ kotlin {
     }
 }
 tasks.withType<Test> { useJUnitPlatform() }
-tasks.test { exclude("**/OpenApiExportTest.class", "**/FirestoreIntegrationTest.class") }
+tasks.test { exclude("**/OpenApiExportTest.class", "**/Firestore*IntegrationTest.class") }
 
 tasks.register<Test>("httpTest") {
     description = "Offline MVC contract tests using real Spring configuration and fake health contributors"
@@ -48,7 +51,7 @@ tasks.register<Test>("httpTest") {
             .get()
             .output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
-    include("**/FoundationHttpTest.class")
+    include("**/*HttpTest.class")
 }
 
 val exportOpenApi by tasks.registering(Test::class) {
@@ -70,7 +73,7 @@ tasks.register<Test>("integrationTest") {
             .get()
             .output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
-    include("**/FirestoreIntegrationTest.class")
+    include("**/Firestore*IntegrationTest.class")
     outputs.upToDateWhen { false }
 }
 

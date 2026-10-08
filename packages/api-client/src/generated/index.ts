@@ -6,15 +6,19 @@ export { RequestBuilder } from './request-builder';
 export type { StrictHttpResponse } from './strict-http-response';
 export { Api } from './api';
 
+export type { CurrentUserResponse } from './models/current-user-response';
 export type { HealthResponseDto } from './models/health-response-dto';
 export type { VersionResponseDto } from './models/version-response-dto';
 export { BaseService } from './base-service';
 export { HealthService } from './services/health.service';
+export { UsersService } from './services/users.service';
 export { VersionService } from './services/version.service';
 
 export type { HealthControllerLive$Params as HealthControllerLive$Params } from './fn/health/health-controller-live';
 export { healthControllerLive as healthControllerLive } from './fn/health/health-controller-live';
 export type { HealthControllerReady$Params as HealthControllerReady$Params } from './fn/health/health-controller-ready';
 export { healthControllerReady as healthControllerReady } from './fn/health/health-controller-ready';
+export type { UserControllerMe$Params as UserControllerMe$Params } from './fn/users/user-controller-me';
+export { userControllerMe as userControllerMe } from './fn/users/user-controller-me';
 export type { VersionControllerVersion$Params as VersionControllerVersion$Params } from './fn/version/version-controller-version';
 export { versionControllerVersion as versionControllerVersion } from './fn/version/version-controller-version';

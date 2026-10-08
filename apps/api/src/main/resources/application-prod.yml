@@ -4,3 +4,8 @@ spring:
 api:
   environment: production
   allowed-origins: ${ALLOWED_ORIGINS}
+identity:
+  supabase-url: ${SUPABASE_URL}
+  publishable-key: ${SUPABASE_PUBLISHABLE_KEY}
+  audience: ${SUPABASE_JWT_AUDIENCE:authenticated}
+  algorithm: ${SUPABASE_JWT_ALGORITHM:ES256}
