@@ -1,0 +1,29 @@
+<section class="auth-panel" aria-labelledby="login-title">
+  <h1 id="login-title">{{ language.copy().loginTitle }}</h1>
+  <p>{{ language.copy().loginIntro }}</p>
+  @if (!auth.configured) {
+    <p role="status">{{ language.copy().authUnavailable }}</p>
+  } @else {
+    <form (submit)="send($event)" novalidate>
+      <label for="email">{{ language.copy().email }}</label>
+      <input id="email" type="email" autocomplete="email" inputmode="email" autocapitalize="none"
+        [formField]="loginForm.email"
+        [attr.aria-invalid]="loginForm.email().touched() && loginForm.email().invalid() ? 'true' : null"
+        aria-describedby="email-hint email-error">
+      <p id="email-hint">{{ language.copy().emailHint }}</p>
+      <p id="email-error" class="field-error">
+        @if (loginForm.email().touched() && loginForm.email().invalid()) {
+          {{ language.copy().emailInvalid }}
+        }
+      </p>
+      <button type="submit" [disabled]="loginForm().submitting()">
+        {{ loginForm().submitting() ? language.copy().sendingLink : language.copy().sendLink }}
+      </button>
+      <p role="status">
+        @if (status() === 'sent') { {{ language.copy().linkSent }} }
+        @if (status() === 'failed') { {{ language.copy().linkFailed }} }
+      </p>
+    </form>
+  }
+  @if (auth.signedIn()) { <a routerLink="/account">{{ language.copy().account }}</a> }
+</section>

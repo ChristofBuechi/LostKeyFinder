@@ -11,3 +11,4 @@ apps/api/openapi.json
 packages/api-client/openapi.json
 .firebaserc
 gha-creds-*.json
+/apps/web/public/auth-config.json

@@ -1,0 +1,17 @@
+<section class="auth-panel" aria-labelledby="account-title">
+  <h1 id="account-title">{{ language.copy().account }}</h1>
+  <p role="status">
+    @if (loading()) { {{ language.copy().accountLoading }} }
+    @if (error(); as errorKey) { {{ language.copy()[errorKey] }} }
+  </p>
+  @if (user(); as currentUser) {
+    <p>{{ language.copy().accountIntro }}</p>
+    <dl><dt>{{ language.copy().email }}</dt><dd>{{ currentUser.email }}</dd></dl>
+    <p>{{ language.copy().accountEmpty }}</p>
+  }
+  @if (error() === 'accountFailed') {
+    <button type="button" (click)="load()" [disabled]="loading()">{{ language.copy().retry }}</button>
+  }
+  @if (error() === 'sessionExpired') { <a routerLink="/login">{{ language.copy().backToLogin }}</a> }
+  <button type="button" (click)="logout()" [disabled]="signingOut()">{{ language.copy().logout }}</button>
+</section>

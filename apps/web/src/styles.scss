@@ -15,3 +15,19 @@ html { scroll-behavior: smooth; }
 body { min-width: 320px; margin: 0; background: var(--paper); }
 button, a { -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 3px solid var(--signal); outline-offset: 4px; }
+
+.auth-panel {
+  max-width: 38rem;
+  margin: 4rem auto;
+  padding: 2rem;
+  line-height: 1.6;
+  h1 { font-size: clamp(2rem, 5vw, 3rem); line-height: 1.15; }
+  label { display: block; font-weight: 600; }
+  input { width: 100%; padding: .8rem; border: 1px solid var(--muted); border-radius: .25rem; font: inherit; }
+  input[aria-invalid="true"] { border: 2px solid var(--signal); }
+  button { padding: .8rem 1.2rem; border: 0; border-radius: .25rem; background: var(--ink); color: var(--paper); font: inherit; cursor: pointer; }
+  button:disabled { opacity: .6; cursor: wait; }
+  a { color: var(--signal); }
+  dd { margin: 0; overflow-wrap: anywhere; }
+  .field-error { color: var(--signal); }
+}

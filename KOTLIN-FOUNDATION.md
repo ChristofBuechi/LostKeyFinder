@@ -172,26 +172,36 @@ an Cloud Run. Jedes Environment benötigt die Werte seines eigenen Projekts.
 Die CI startet einen lokalen JWKS-/User-Server mit frisch generiertem ES256-Key
 und signierten Test-JWTs. Sie prüft Signatur/Claims, E-Mail-Bestätigung,
 Statusentzug, Providerfehler und parallele Anlage über die echte Security-Kette.
-Frontend-Magic-Link, Refresh/Logout und echte Supabase-Abnahme folgen nach
-Einrichtung des Dev-Projekts; Phase 2 ist damit noch nicht vollständig abgenommen.
+Das Angular-Frontend ergänzt PKCE-Magic-Link, Callback, geschützte Kontoseite,
+automatischen Session-Refresh und Logout. Der Callback entfernt Query und Fragment
+vor Konfigurationsabruf, SDK-Initialisierung und Routing; Firebase setzt dort
+`Cache-Control: no-store` und `Referrer-Policy: no-referrer`. Bearer-Tokens gehen
+ausschließlich an die eigene versionierte API, nicht an fremde Origins.
 
-### Status Phase 2: teilweise umgesetzt
+Das Supabase-SDK wird dynamisch geladen. `prebuild` erzeugt eine ignorierte
+`apps/web/public/auth-config.json` aus den Umgebungswerten; nur URL und Publishable
+Key werden ausgeliefert. Der Deployment-Workflow verlangt beide Werte.
+`npm run start --workspace=@lost-key-finder/web` liest dafür lokal
+`.env.dev.local`. Ohne Konfiguration bleiben öffentliche Seiten verfügbar und
+die Login-Seite zeigt die fehlende Verfügbarkeit an.
 
-Der Owner-Identity-PR liefert den Backend-Teil, nicht die vollständige Phase 2.
-Für deren Abschluss bleiben offen:
+### Status Phase 2: implementiert und lokal mit echten Providern geprüft
 
-- Supabase-Dev-Projekt anbinden und erlaubte Callback-URLs konfigurieren;
-- Angular-Magic-Link-Login, sichere Callback-Verarbeitung und geschützte Kontoseite;
-- Session-Refresh und Logout im Browser;
-- End-to-End-Abnahme gegen echtes Supabase und das Dev-Deployment.
+Am 8. Oktober 2026 lief der vollständige Owner-Login im lokalen Browser gegen
+echtes Supabase und die Firestore-Dev-Datenbank erfolgreich. Session-Refresh,
+Reload, Replay-Ablehnung, Logout und `401` ohne Token wurden ebenfalls geprüft.
+Die Firestore-Integrationstests sind erfolgreich. Das Frontend enthält 24 Tests;
+die Login-Seite erreichte im mobilen Lighthouse-Snapshot 100 Accessibility-Punkte.
 
-Offline-Tests mit lokalem Identity-Server ersetzen diese Provider- und
-Browser-Abnahme nicht. Echte Firestore-Tests werden separat ausgeführt.
+Die vollständige Dev-Deployment-Abnahme bleibt offen: PR mergen, automatisch
+nach Dev deployen und denselben Login über Firebase Hosting prüfen. Der lokale
+Provider-Test ersetzt diese letzte Abnahme nicht. Details und reproduzierbare
+Schritte stehen in [Phase-2-Verifikation](docs/phase-2-verification.md).
 
 ## Weiterer Ausbau
 
 - Fachbezogene Repository-/Provider-Interfaces erst mit den jeweiligen Use Cases.
-- Supabase-Dev-Projekt einrichten und den Owner-Login im Frontend ergänzen.
+- Phase 2 über Firebase Hosting abnehmen, danach Tags und QR-Auflösung ergänzen.
 - Keine zusätzlichen Reactive-, Queue- oder Native-Build-Schichten.
 - Kotlin-Tests übernehmen die bisherigen Verträge aus `TESTING-PLAN.md`;
   Nest-/Jest-spezifische Beispiele dieses Plans sind historische Referenz.
