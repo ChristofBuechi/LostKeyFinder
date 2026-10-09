@@ -185,7 +185,7 @@ Key werden ausgeliefert. Der Deployment-Workflow verlangt beide Werte.
 `.env.dev.local`. Ohne Konfiguration bleiben öffentliche Seiten verfügbar und
 die Login-Seite zeigt die fehlende Verfügbarkeit an.
 
-### Status Phase 2: implementiert und lokal mit echten Providern geprüft
+### Status Phase 2: auf Dev abgenommen
 
 Am 8. Oktober 2026 lief der vollständige Owner-Login im lokalen Browser gegen
 echtes Supabase und die Firestore-Dev-Datenbank erfolgreich. Session-Refresh,
@@ -198,23 +198,25 @@ Einlesens des Response-Bodys. Bei Timeout startet Angular mit leerer
 Auth-Konfiguration; öffentliche Seiten bleiben verfügbar. Regressionstests
 decken hängende Requests und Response-Bodies ab.
 
-Die vollständige Dev-Deployment-Abnahme bleibt offen: PR mergen, automatisch
-nach Dev deployen und denselben Login über Firebase Hosting prüfen. Der lokale
-Provider-Test ersetzt diese letzte Abnahme nicht. Details und reproduzierbare
-Schritte stehen in [Phase-2-Verifikation](docs/phase-2-verification.md).
+PR #3 wurde am 9. Oktober 2026 gemergt und erfolgreich nach Dev deployt.
+Der Owner-Login über Firebase Hosting, echter SDK-Refresh, Reload, Replay-Ablehnung,
+Logout und `401` ohne Token sind geprüft. Site URL, Hosting-Redirect und
+Callback-Header `no-store`/`no-referrer` sind praktisch verifiziert.
+Details und reproduzierbare Schritte stehen in
+[Phase-2-Verifikation](docs/phase-2-verification.md).
 
 ## Weiterer Ausbau
 
 - Fachbezogene Repository-/Provider-Interfaces erst mit den jeweiligen Use Cases.
-- Phase 2 über Firebase Hosting abnehmen, danach Tags und QR-Auflösung ergänzen.
+- Phase 3 (noch nicht begonnen): Tags und öffentliche QR-Auflösung ergänzen.
 - Keine zusätzlichen Reactive-, Queue- oder Native-Build-Schichten.
 - Kotlin-Tests übernehmen die bisherigen Verträge aus `TESTING-PLAN.md`;
   Nest-/Jest-spezifische Beispiele dieses Plans sind historische Referenz.
 - Weitere fachliche Queries/Indizes gegen echtes Firestore prüfen.
 
 Die Foundation aus PR #2 ist nach Dev deployt: Firebase Hosting, Cloud Run und
-Firestore-OIDC sind verifiziert. Die neue Owner-Implementierung liegt auf
-`feature/owner-identity` und ist noch nicht deployt.
+Firestore-OIDC sind verifiziert. Die Owner-Implementierung aus PR #3 ist ebenfalls
+nach Dev deployt und auf Commit `f01a8aa6797fde1a310cce314e23e712102f473b` abgenommen.
 
 Der lokale Multi-Stage-Docker-Build und Containerstart wurden vor der Profilaufteilung verifiziert:
 Liveness liefert `200`, Readiness ohne Datenbank `503`, der Version-Endpunkt

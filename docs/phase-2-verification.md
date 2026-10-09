@@ -1,10 +1,10 @@
 # Phase 2: Owner-Identität – Verifikation
 
-## Stand am 8. Oktober 2026
+## Stand am 9. Oktober 2026
 
-Die Implementierung ist vollständig im Owner-Identity-Branch vorhanden. Der
-lokale End-to-End-Ablauf wurde mit echtem Supabase und echtem Firestore geprüft.
-Die Abnahme auf dem deployten Dev-Host bleibt bis Merge und Deployment offen.
+PR #3 ist gemergt und nach Dev deployt. Der End-to-End-Ablauf wurde lokal und
+über Firebase Hosting mit echtem Supabase und echtem Firestore geprüft.
+Phase 2 ist auf dem Dev-System abgenommen.
 
 ## Implementiert
 
@@ -89,13 +89,31 @@ Bei eingebautem Supabase-Mailversand eine Team-E-Mail verwenden. Der Owner-PKCE-
 verlangt denselben Browser und dieselbe Origin; der spätere geräteübergreifende
 Finder-Flow ist Teil von Phase 5.
 
-## Noch offene Dev-Abnahme
+## Erfolgreiche Dev-Abnahme am 9. Oktober 2026
 
-- [ ] PR mergen und automatisches Dev-Deployment erfolgreich abschließen.
-- [ ] Site URL und Hosting-Redirect im Supabase-Dashboard bestätigen.
-- [ ] Auf `https://lost-key-finder-dev.web.app/login` anmelden, Link im selben Browser
+- [x] PR mergen und automatisches Dev-Deployment erfolgreich abschließen.
+- [x] Site URL und erlaubten Hosting-Redirect praktisch verifizieren.
+- [x] Auf `https://lost-key-finder-dev.web.app/login` anmelden, Link im selben Browser
   öffnen und Kontoseite, Refresh/Reload, Replay-Ablehnung und Logout prüfen.
-- [ ] Callback-Header `Cache-Control: no-store` und `Referrer-Policy: no-referrer`
+- [x] Callback-Header `Cache-Control: no-store` und `Referrer-Policy: no-referrer`
   auf dem echten Hosting-Host verifizieren.
 
-Erst nach diesen Punkten ist Phase 2 auf dem deployten Dev-System vollständig abgenommen.
+- Deployter Commit: `f01a8aa6797fde1a310cce314e23e712102f473b`.
+- [CI erfolgreich](https://github.com/ChristofBuechi/LostKeyFinder/actions/runs/37888966146).
+- [Deployment erfolgreich](https://github.com/ChristofBuechi/LostKeyFinder/actions/runs/37889145446).
+- Version meldet den erwarteten Commit und `development`; Readiness liefert `200`.
+- Öffentliche Auth-Konfiguration enthält die erwartete Supabase-URL und den
+  Publishable Key und wird mit `no-store` ausgeliefert.
+- Echter Magic Link führt über den Hosting-Callback zur Kontoseite; `/me` liefert `200`.
+- SDK-Refresh wurde durch abgelaufene lokale Session-Metadaten erzwungen:
+  danach neues Access Token, zukünftige Ablaufzeit und derselbe lokale Benutzer
+  bei erfolgreichem `/me`-Abruf nach Reload. Keine Tokenwerte wurden aufgezeichnet.
+- Wiederverwendung des Links zeigt den vorgesehenen Fehlerzustand; die URL bleibt sauber.
+- Logout entfernt die gespeicherte Session, führt zur Anmeldung und hinterlässt
+  keine Auth-Cookies. `/me` ohne Token liefert `401`.
+- Ein Aufruf des verbrauchten Links ohne expliziten `redirect_to` bestätigt den
+  Supabase-Default-Redirect auf `https://lost-key-finder-dev.web.app/`; der
+  explizite Callback-Redirect ist durch den erfolgreichen Login bestätigt.
+
+Phase 2 ist abgeschlossen; es verbleiben keine offenen Punkte dieser Dev-Abnahme.
+Phase 3 (Tags und öffentliche QR-Auflösung) ist noch nicht begonnen.
