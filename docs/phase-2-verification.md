@@ -30,10 +30,16 @@ npm run firestore:verify --workspace=@lost-key-finder/api
 ```
 
 `verify` prüft OpenAPI/Client-Generierung, Lint, Backend-/Frontend-Build,
-Backend-Tests mit Coverage-Gate und 24 Frontend-Tests. Die Owner-Frontend-Tests
+Backend-Tests mit Coverage-Gate und Frontend-Tests. Die Owner-Frontend-Tests
 decken URL-Bereinigung, Replay-Ablehnung, Sessionwechsel, Logoutfehler,
 Token-Origin-Begrenzung, Formularvalidierung, Sprache, Route Guard und
 serverseitige Zugriffsverweigerung ab.
+
+Am 9. Oktober wurde das GitHub-Review-Feedback zum Anwendungsstart umgesetzt:
+Der Abruf von `auth-config.json` hat ein Fünf-Sekunden-Limit, das bis zum Ende
+des Response-Bodys aktiv bleibt. Zusätzliche Regressionstests prüfen
+Erfolg, hängende Anfrage, hängenden Body und Fehler-Fallback. Die Zeitbegrenzung
+verwendet die native API `AbortSignal.timeout(5000)` statt eigener Timerverwaltung.
 
 Der getrennte Firestore-Lauf prüft echte Transaktionen, User-Mapping, Unique-Index,
 parallele Anlage und lokalen Statusentzug. Sein Identity-Server ist ein Testdouble;

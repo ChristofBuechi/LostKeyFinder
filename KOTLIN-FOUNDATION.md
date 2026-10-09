@@ -190,8 +190,13 @@ die Login-Seite zeigt die fehlende Verfügbarkeit an.
 Am 8. Oktober 2026 lief der vollständige Owner-Login im lokalen Browser gegen
 echtes Supabase und die Firestore-Dev-Datenbank erfolgreich. Session-Refresh,
 Reload, Replay-Ablehnung, Logout und `401` ohne Token wurden ebenfalls geprüft.
-Die Firestore-Integrationstests sind erfolgreich. Das Frontend enthält 24 Tests;
+Die Firestore-Integrationstests sind erfolgreich;
 die Login-Seite erreichte im mobilen Lighthouse-Snapshot 100 Accessibility-Punkte.
+
+Der Konfigurationsabruf ist auf fünf Sekunden begrenzt, einschließlich des
+Einlesens des Response-Bodys. Bei Timeout startet Angular mit leerer
+Auth-Konfiguration; öffentliche Seiten bleiben verfügbar. Regressionstests
+decken hängende Requests und Response-Bodies ab.
 
 Die vollständige Dev-Deployment-Abnahme bleibt offen: PR mergen, automatisch
 nach Dev deployen und denselben Login über Firebase Hosting prüfen. Der lokale
