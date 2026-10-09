@@ -121,6 +121,11 @@ das Environment `dev`, den Branch `main` und die beiden konkreten Workflows
 eigene Deployment-/Provider-Identität verwenden. Die Runtime-Identität kann
 nicht direkt von GitHub impersoniert werden.
 
+GitHub verwendet den unveränderlichen Subject-Prefix
+`repo:ChristofBuechi@2494089/LostKeyFinder@1398628425`. Die WIF-Bedingung prüft
+den vollständigen Subject mit `:environment:dev`; ein Vergleich mit dem älteren
+Subject ohne IDs würde beide Workflows ablehnen.
+
 Das GitHub-Environment `dev` erlaubt nur `main`. Seine Variablen sind
 `GCP_PROJECT_ID`, `GCP_REGION`, `ARTIFACT_REPOSITORY`,
 `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_DEPLOY_SERVICE_ACCOUNT`,
@@ -138,9 +143,35 @@ Instanzen). Der manuelle Provider-Workflow ist nach Merge über `main` ausführb
 gh workflow run provider-verification.yml --ref main
 ```
 
-Der PR bleibt bis zur manuellen Prüfung offen. Cloud-Run-OIDC und WIF sind erst
-nach erfolgreichen Remote-Läufen funktional abgenommen. Ein Prod-Environment
-und produktive Cloud-Ressourcen werden separat eingerichtet.
+PR #2 ist gemergt. Deployment und Provider-Verifikation waren nach der
+Subject-Korrektur erfolgreich:
+
+- Deployment: https://github.com/ChristofBuechi/LostKeyFinder/actions/runs/37116036775
+- Provider-Test: https://github.com/ChristofBuechi/LostKeyFinder/actions/runs/37147868578
+- Hosting/API: https://lost-key-finder-dev.web.app
+
+Readiness und Version sind über Hosting verifiziert, damit auch die
+Cloud-Run-OIDC-Verbindung. Ein Prod-Environment und produktive Cloud-Ressourcen
+werden separat eingerichtet.
+
+### User-Index
+
+Vor dem ersten Owner-Deployment ist `users.supabaseUserId` eindeutig zu indizieren.
+Der Index ist in `dev1` angelegt; Runtime und Provider-Test erstellen keine Indizes.
+Die administrative Identität verwendet dafür:
+
+```bash
+gcloud firestore indexes composite create \
+  --project=lost-key-finder-dev --database=dev1 \
+  --collection-group=users --query-scope=collection-group \
+  --api-scope=mongodb-compatible-api --density=dense --unique \
+  --field-config=field-path=supabaseUserId,order=ascending
+```
+
+`FirestoreUserIntegrationTest` prüft Query/Mapping, parallele Erstzugriffe,
+abgelehnte Duplikate und Statusentzug. Er löscht ausschließlich seine zufällig
+erzeugten Test-Subjects. JWTs und `/user`-Antworten stammen dabei vom lokalen
+Testserver; die echte Supabase-Anbindung ist dadurch nicht abgenommen.
 
 ## Indizes und Transaktionen
 

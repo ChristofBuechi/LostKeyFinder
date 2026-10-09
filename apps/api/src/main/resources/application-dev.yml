@@ -3,3 +3,8 @@ spring:
     uri: ${FIRESTORE_MONGODB_URI}
 api:
   environment: development
+identity:
+  supabase-url: ${SUPABASE_URL:http://localhost:54321}
+  publishable-key: ${SUPABASE_PUBLISHABLE_KEY:}
+  audience: ${SUPABASE_JWT_AUDIENCE:authenticated}
+  algorithm: ${SUPABASE_JWT_ALGORITHM:ES256}

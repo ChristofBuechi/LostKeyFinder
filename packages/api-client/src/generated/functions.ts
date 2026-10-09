@@ -5,5 +5,7 @@ export type { HealthControllerLive$Params as HealthControllerLive$Params } from 
 export { healthControllerLive as healthControllerLive } from './fn/health/health-controller-live';
 export type { HealthControllerReady$Params as HealthControllerReady$Params } from './fn/health/health-controller-ready';
 export { healthControllerReady as healthControllerReady } from './fn/health/health-controller-ready';
+export type { UserControllerMe$Params as UserControllerMe$Params } from './fn/users/user-controller-me';
+export { userControllerMe as userControllerMe } from './fn/users/user-controller-me';
 export type { VersionControllerVersion$Params as VersionControllerVersion$Params } from './fn/version/version-controller-version';
 export { versionControllerVersion as versionControllerVersion } from './fn/version/version-controller-version';
