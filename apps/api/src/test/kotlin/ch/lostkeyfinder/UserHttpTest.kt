@@ -88,10 +88,19 @@ class UserHttpTest {
                 identity.token(issuedAt = Instant.now().plusSeconds(120)),
                 identity.token(authTime = null),
                 identity.token(authTime = Instant.now().plusSeconds(120).epochSecond),
+                identity.token(authTime = Instant.now().minusSeconds(30 * 24 * 60 * 60L).epochSecond),
             )
         for (token in invalid) mvc.get("/api/v1/me") { header("Authorization", "Bearer $token") }.andExpect { status { isUnauthorized() } }
         assertEquals(0, identity.userRequests.get())
         assertEquals(0L, template.count(Query(), User::class.java))
+    }
+
+    @Test fun `refreshed tokens cannot extend the maximum session age`() {
+        val token = identity.token(authTime = Instant.now().minusSeconds(29 * 24 * 60 * 60L).epochSecond)
+        mvc.get("/api/v1/me") { header("Authorization", "Bearer $token") }.andExpect { status { isOk() } }
+        val expiredSession = identity.token(authTime = Instant.now().minusSeconds(31 * 24 * 60 * 60L).epochSecond)
+        mvc.get("/api/v1/me") { header("Authorization", "Bearer $expiredSession") }.andExpect { status { isUnauthorized() } }
+        assertEquals(1, identity.userRequests.get())
     }
 
     @Test fun `first access provisions a normalized user and repeated access preserves identity and timestamps`() {

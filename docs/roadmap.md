@@ -2,7 +2,7 @@
 
 ## Reihenfolge
 
-1. **Fundament:** Angular, NestJS, Supabase Auth, Firestore-Anbindung, OpenAPI und getrennte `dev`/`prod`-Umgebungen.
+1. **Fundament:** Angular, Kotlin/Spring Boot, Firebase Authentication, Firestore-Anbindung, OpenAPI und getrennte `dev`/`prod`-Umgebungen.
 2. **Tag und Identität:** Magic-Link-Login, kostenlose UUID-v4-Tags, QR-Route und Backup-Einladungen.
 3. **Fund und Chat:** Finder-Draft, geräteübergreifende Bestätigung, private Text-Chats, optionale bereinigte Bilder und Benachrichtigungen.
 4. **Payment:** CHF 10.00 über die im Mollie-Live-Profil freigeschalteten Zahlungsarten, Reconciliation und Access Grant.

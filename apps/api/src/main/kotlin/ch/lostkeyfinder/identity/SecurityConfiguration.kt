@@ -18,6 +18,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.servlet.HandlerExceptionResolver
+import java.time.Duration
 import java.time.Instant
 
 @Configuration(proxyBeanMethods = false)
@@ -50,7 +51,8 @@ class SecurityConfiguration {
                 JwtClaimValidator<Instant>("exp") { true },
                 JwtClaimValidator<Instant>("iat") { !it.isAfter(Instant.now()) },
                 JwtClaimValidator<Any>("auth_time") { value ->
-                    value is Number && value.toLong() <= Instant.now().epochSecond
+                    value is Number && value.toLong() in
+                        (Instant.now().epochSecond - Duration.ofDays(30).seconds + 1)..Instant.now().epochSecond
                 },
                 JwtClaimValidator<String>("sub") { value ->
                     value.isNotBlank() && value.length <= 128

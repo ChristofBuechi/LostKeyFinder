@@ -1,11 +1,6 @@
 # Kotlin / Spring Boot Foundation
 
-> Auth-Stand: Firebase Authentication. Einrichtung, Indexanpassung und Ablösung der älteren Supabase-/PKCE-Angaben: [Firebase-Umstellung](docs/firebase-auth-migration.md).
-
-Seit PR #2 ersetzt das Kotlin-Backend die bisherige
-NestJS-Implementierung. Die Anforderungen in `docs/` bleiben die fachliche
-Referenz; dort genannte Node-Treiber und NestJS-Bausteine werden auf diesem Branch
-durch JVM-Treiber und Spring-Standards ersetzt. `docs/` ist unverändert.
+Das Backend verwendet Kotlin/Spring Boot. Fachliche Anforderungen und Firebase-Architektur stehen in `docs/`; Implementierung und Pläne verwenden dieselben JVM-Standards.
 
 ## Stack
 
@@ -35,7 +30,7 @@ das Frontend verwendet weiterhin ESLint.
 separat. `npm run test:http` führt nur diese Tests gezielt aus; Browser-E2E-Tests
 sind damit nicht gemeint. `start:dev` delegiert an den bestehenden Firestore-Helfer.
 
-JUnit deckt aktuell 33 Foundation-/Konfigurations-/Persistenz-/Identitätsszenarien ab; der separate
+JUnit deckt Foundation-, Konfigurations-, Persistenz- und Identitätsszenarien ab; der separate
 OpenAPI-Export prüft zusätzlich den öffentlichen Vertrag. JaCoCo misst als
 Ausgangsbasis 93 % Instruction- und 74 % Branch-Coverage. `npm run test` erzwingt
 90 % Instruction- und 70 % Branch-Coverage für den gesamten produktiven
@@ -126,86 +121,23 @@ FIRESTORE_MONGODB_URI='...' npm run test:integration
 Diese expliziten Tests prüfen eine Spring-Data-Session-Transaktion sowie die
 User-Query, parallele Erst-Anlage, den Unique-Index und lokalen Benutzerstatus
 mit Cleanup gegen Firestore. Sie sind nicht Bestandteil der Offline-CI. Der
-User-Test verwendet einen lokalen Identity-Server, keine echte Supabase-Instanz.
+User-Test verwendet einen lokalen Identity-Server, keine echte Firebase-Auth-Instanz.
 
-## Owner-Identität: erster Backend-Use-Case
+## Owner-Identität
 
-`users/User.kt` enthält UUID-v4-Identität, Supabase-Referenz, normalisierte E-Mail,
-Zeitstempel und die Zustände `ACTIVE`, `DISABLED`, `DELETING`. `UserService`
-verwendet direkt `MongoTemplate`; es gibt keine zusätzliche Repository-Abstraktion.
+`users/User.kt` enthält lokale UUID-v4-ID, Firebase-UID, normalisierte E-Mail, Zeitstempel und die Zustände `ACTIVE`, `DISABLED`, `DELETING`. `UserService` verwendet direkt `MongoTemplate`. E-Mail-Adressen verbinden keine Konten.
 
-Spring Security prüft die konfigurierte JWT-Signatur, Issuer, Audience, `exp`,
-optionales `nbf` und UUID-v4-`sub`. Neue fachliche `/api/v1/**`-Endpunkte sind
-standardmäßig geschützt; Health und Version bleiben öffentlich. Auth-Fehler
-verwenden den bestehenden Problem-Details-Vertrag samt Correlation-ID und
-erzeugen keine Session-Cookies.
+Spring Security prüft RS256, Google-JWKS, Firebase-Projekt-Issuer/-Audience, `exp`, optionales `nbf`, `iat`, `auth_time` und nicht leere Firebase-UID bis 128 Zeichen. Die API erzwingt maximal 30 Tage seit `auth_time`; SDK-Refresh verlängert diese Frist nicht. `/api/v1/**` ist standardmässig geschützt, Health und Version sind öffentlich. Auth-Fehler verwenden sichere Problem Details ohne Auth-Cookies.
 
-Beim ersten Zugriff auf `/me` prüft der Identity-Adapter Supabase `/auth/v1/user`:
-ID und E-Mail müssen zum signierten JWT passen, `email_confirmed_at` muss gesetzt
-sein. Editierbares `user_metadata.email_verified` reicht nicht. Ein Upsert mit
-Unique-Index auf `supabaseUserId` hält parallele Erstzugriffe idempotent.
-Bestehende Benutzer werden bei jedem Request aus Mongo gelesen; deaktivierte
-oder löschende Accounts erhalten sofort `403`, auch mit einer JWT-Rollenangabe.
-Die API liefert keine Supabase-ID und kein rohes Mongo-Dokument.
+Bei der ersten Anlage prüft `FirebaseIdentity` über `accounts:lookup` UID und bestätigte E-Mail gegen das signierte Token. Upsert und Unique-Index auf `firebaseUserId` sichern parallele Anlage. Bestehende Benutzer werden bei jedem Request aus Mongo gelesen; `DISABLED` und `DELETING` ergeben sofort `403`. Firebase-Widerruf wird für bestehende lokale Konten nicht pro Request abgefragt; sofortiger fachlicher Zugriffsentzug erfolgt über den lokalen Status. Die öffentliche API liefert weder Firebase-UID noch rohe Mongo-Dokumente.
 
-`identity/EmailNormalization.kt` setzt `email-normalization-v1` um. ICU4J liefert
-UTS #46 statt des älteren Java-IDNA-2003; auch numerische Hosts werden passend zu
-Nodes `domainToASCII` kanonisiert. Format- und Längenregeln werden anschließend
-auf der normalisierten Adresse geprüft.
+`identity/EmailNormalization.kt` implementiert die gemeinsame Normalisierung mit ICU4J/UTS #46, numerischen Hosts und Format-/Längenprüfungen.
 
-Für eine echte Supabase-Anbindung werden `SUPABASE_URL`,
-`SUPABASE_PUBLISHABLE_KEY`, optional `SUPABASE_JWT_AUDIENCE` (`authenticated`)
-und `SUPABASE_JWT_ALGORITHM` (`ES256`) gesetzt. `prod` verlangt HTTPS und einen
-Publishable Key. Ohne Dev-Projekt bleibt die lokale Supabase-URL `localhost:54321`;
-öffentliche Endpunkte starten ohne Identity-Aufruf, ein erfolgreicher Login ist
-damit noch nicht möglich. Ein leerer Key erlaubt keine neue Benutzeranlage.
+Backend-Konfiguration: `FIREBASE_PROJECT_ID` und `FIREBASE_API_KEY`; das Frontend benötigt zusätzlich `FIREBASE_AUTH_DOMAIN` und `FIREBASE_APP_ID`. `prod` verlangt die offiziellen Google-Verifikationsendpunkte und einen Key. Ein fehlender Dev-Key erlaubt keine neue Kontoanlage.
 
-Lokale Supabase-Werte können in der ignorierten `.env.dev.local` liegen. Der
-Firestore-Dev-Helfer lässt sich vom Repository-Root mit diesen Werten starten:
+Der Angular-Client lädt das Firebase-SDK dynamisch und erzeugt öffentliche Runtime-Konfiguration im Prebuild. Der lokale Web-Start liest `.env.dev.local`; der Backend-Helfer kann mit `node --env-file=.env.dev.local apps/api/scripts/firestore-dev.mjs start` gestartet werden. Die CI verwendet einen lokalen JWKS-/User-Server mit frisch erzeugtem RSA-Key und Firebase-artigen Claims.
 
-```bash
-node --env-file=.env.dev.local apps/api/scripts/firestore-dev.mjs start
-```
-
-Das Deployment liest `SUPABASE_URL` und `SUPABASE_PUBLISHABLE_KEY` aus den
-GitHub-Environment-Variablen für `dev` beziehungsweise `prod` und übergibt sie
-an Cloud Run. Jedes Environment benötigt die Werte seines eigenen Projekts.
-
-Die CI startet einen lokalen JWKS-/User-Server mit frisch generiertem ES256-Key
-und signierten Test-JWTs. Sie prüft Signatur/Claims, E-Mail-Bestätigung,
-Statusentzug, Providerfehler und parallele Anlage über die echte Security-Kette.
-Das Angular-Frontend ergänzt PKCE-Magic-Link, Callback, geschützte Kontoseite,
-automatischen Session-Refresh und Logout. Der Callback entfernt Query und Fragment
-vor Konfigurationsabruf, SDK-Initialisierung und Routing; Firebase setzt dort
-`Cache-Control: no-store` und `Referrer-Policy: no-referrer`. Bearer-Tokens gehen
-ausschließlich an die eigene versionierte API, nicht an fremde Origins.
-
-Das Supabase-SDK wird dynamisch geladen. `prebuild` erzeugt eine ignorierte
-`apps/web/public/auth-config.json` aus den Umgebungswerten; nur URL und Publishable
-Key werden ausgeliefert. Der Deployment-Workflow verlangt beide Werte.
-`npm run start --workspace=@lost-key-finder/web` liest dafür lokal
-`.env.dev.local`. Ohne Konfiguration bleiben öffentliche Seiten verfügbar und
-die Login-Seite zeigt die fehlende Verfügbarkeit an.
-
-### Status Phase 2: auf Dev abgenommen
-
-Am 8. Oktober 2026 lief der vollständige Owner-Login im lokalen Browser gegen
-echtes Supabase und die Firestore-Dev-Datenbank erfolgreich. Session-Refresh,
-Reload, Replay-Ablehnung, Logout und `401` ohne Token wurden ebenfalls geprüft.
-Die Firestore-Integrationstests sind erfolgreich;
-die Login-Seite erreichte im mobilen Lighthouse-Snapshot 100 Accessibility-Punkte.
-
-Der Konfigurationsabruf ist auf fünf Sekunden begrenzt, einschließlich des
-Einlesens des Response-Bodys. Bei Timeout startet Angular mit leerer
-Auth-Konfiguration; öffentliche Seiten bleiben verfügbar. Regressionstests
-decken hängende Requests und Response-Bodies ab.
-
-PR #3 wurde am 9. Oktober 2026 gemergt und erfolgreich nach Dev deployt.
-Der Owner-Login über Firebase Hosting, echter SDK-Refresh, Reload, Replay-Ablehnung,
-Logout und `401` ohne Token sind geprüft. Site URL, Hosting-Redirect und
-Callback-Header `no-store`/`no-referrer` sind praktisch verifiziert.
-Details und reproduzierbare Schritte stehen in
-[Phase-2-Verifikation](docs/phase-2-verification.md).
+Details: [Firebase-Einrichtung](docs/firebase-auth-setup.md), [Abnahmestand](docs/phase-2-verification.md). Ältere Provider-Abnahmen sind kein Nachweis einer erfolgreichen Firebase-Live-Anmeldung.
 
 ## Weiterer Ausbau
 
@@ -213,7 +145,7 @@ Details und reproduzierbare Schritte stehen in
 - Phase 3 (noch nicht begonnen): Tags und öffentliche QR-Auflösung ergänzen.
 - Keine zusätzlichen Reactive-, Queue- oder Native-Build-Schichten.
 - Kotlin-Tests übernehmen die bisherigen Verträge aus `TESTING-PLAN.md`;
-  Nest-/Jest-spezifische Beispiele dieses Plans sind historische Referenz.
+  JUnit/MockMvc und Angular/Vitest prüfen die jeweiligen Verträge.
 - Weitere fachliche Queries/Indizes gegen echtes Firestore prüfen.
 
 Die Foundation aus PR #2 ist nach Dev deployt: Firebase Hosting, Cloud Run und

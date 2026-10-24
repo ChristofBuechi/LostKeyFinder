@@ -13,22 +13,22 @@ Die Anwendung verwendet ausschliesslich Firebase Authentication für Benutzeride
 - Mollie und der Mailanbieter für fachliche E-Mails bleiben bestehen. Firebase Authentication ersetzt keine Zahlungsabwicklung oder allgemeinen Benachrichtigungsversand.
 - Dieser Plan beschreibt die nächsten Arbeiten. Die Erstellung dieser Datei führt weder Deployments noch Ressourcenlöschungen aus.
 
-## Ausgangslage
+## Umsetzungsstand am 24. Oktober 2026
 
-Im lokalen Arbeitsstand wurden Firebase-SDK, E-Mail-Link-Anmeldung, Callback, ID-Token-Übergabe, Backend-Verifikation, `firebaseUserId`, Konfigurationsgenerator und Deployment-Workflow bereits vorbereitet. Der Supabase-Identity-Adapter wurde durch einen Firebase-Adapter ersetzt.
+Code, Deployment-Konfiguration und aktive Architektur-/Test-/Fachpläne sind auf Firebase ausgerichtet. Die API begrenzt Sitzungen auf 30 Tage; der Konfigurationsgenerator und die Runtime behandeln unvollständige Werte sicher. Der ursprüngliche PR-Commit bestand GitHub-CI; die weiteren Änderungen wurden lokal erneut mit `npm run verify` geprüft.
 
-Zuletzt bestanden 30 Frontend- und 33 Backend-Tests sowie Lint, Backend-Coverage-Prüfung und beide Produktionsbuilds. Der Angular-Produktionsbuild lief wegen eines lokalen nativen Cache-Absturzes erfolgreich mit `CI=true` und deaktiviertem lokalen Cache. Diese Ergebnisse ersetzen keine Abnahme gegen die echten Firebase-Projekte.
+Dev ist für Firebase Authentication vorbereitet: Web-App registriert, E-Mail-Link-Anmeldung und Domains konfiguriert, lokale/GitHub-Werte hinterlegt, neuer Unique-Index bereit und alter Index entfernt. Zwei echte Firestore-Integrationstests und ein echter Firebase-REST-/Backend-Durchstich samt Token-Refresh sind erfolgreich. Die temporären Testdaten wurden entfernt; ein zuvor vorhandenes Altdokument bleibt erhalten.
 
-Cloud-Konfigurationen, Datenbankindizes und externe Ressourcen wurden noch nicht vollständig inventarisiert oder geändert. Mehrere aktive Planungsdokumente enthalten weiterhin alte Supabase- und PKCE-Vorgaben; ein vorangestellter Hinweis allein genügt für den Abschluss nicht.
+Noch offen: Mail-/Browser-/Hosting-Abnahme, Dev-Deployment, Abrechnung/Quoten, Prod-Projekt/-Environment/-Rollout und externe Stilllegung. Eine vollständige Aufstellung des Anbieterprojekts und seiner Ressourcen ist noch nötig. Ausführlicher Nachweis: [Phase-2-Verifikation](phase-2-verification.md).
 
 ## 1. Bestand aufnehmen und offene Auth-Regeln festlegen
 
-- [ ] Den aktuellen Git-Diff prüfen und den bereits vorbereiteten Stand als Grundlage verwenden.
+- [x] Den aktuellen Git-Diff prüfen und den bereits vorbereiteten Stand als Grundlage verwenden.
 - [ ] Für Dev und Prod Projekt-IDs, Web-App-IDs, Hosting-Domains, Cloud-Run-Service, Firestore-Datenbank und zuständige Service Accounts erfassen.
 - [ ] Supabase-Projekt-IDs und ausschliesslich diesem Projekt zugeordnete Ressourcen erfassen: Auth, Datenbank, Storage, Functions, Webhooks, OAuth-Anbindungen, SMTP, Domains und Abrechnung. Fehlende Konten bedeuten nicht automatisch, dass alle anderen Ressourcen leer sind.
 - [ ] Vorhandene lokale Testdatensätze und Indizes in Firestore prüfen. Keine Kontenmigration einplanen; etwaige Testreste gezielt behandeln.
-- [ ] Alte Fristen explizit auf Firebase abbilden: Die bisher geplanten vier Stunden für Magic Links und 30 Tage für Sitzungen dürfen nicht ungeprüft als Firebase-Verhalten dokumentiert werden.
-- [ ] Entscheiden und dokumentieren, ob eine feste maximale Sitzungsdauer benötigt wird. Falls 30 Tage verbindlich bleiben, serverseitig anhand einer verifizierten Anmeldezeit durchsetzen; ansonsten Firebase-Sitzungsverhalten übernehmen.
+- [x] Alte Fristen explizit auf Firebase abbilden: Die bisher geplanten vier Stunden für Magic Links und 30 Tage für Sitzungen dürfen nicht ungeprüft als Firebase-Verhalten dokumentiert werden.
+- [x] Entscheiden und dokumentieren, ob eine feste maximale Sitzungsdauer benötigt wird. Falls 30 Tage verbindlich bleiben, serverseitig anhand einer verifizierten Anmeldezeit durchsetzen; ansonsten Firebase-Sitzungsverhalten übernehmen.
 - [ ] Verantwortlichkeit für Supportbenutzer und deren Berechtigungsvergabe auf Firebase-UIDs festlegen. Eine Authentifizierung allein verleiht keine Supportrechte.
 
 **Ergebnis:** Eine eindeutige Konfiguration je Umgebung und dokumentierte Regeln für Link-, Session- und Draft-Laufzeiten.
@@ -56,13 +56,13 @@ Zuerst Dev vorbereiten; die gleiche geprüfte Konfiguration danach getrennt für
 | `FIREBASE_AUTH_DOMAIN` | `.env.dev.local` | Je Umgebung für den Web-Build setzen |
 | `FIREBASE_APP_ID` | `.env.dev.local` | Je Umgebung für den Web-Build setzen |
 
-- [ ] `.env.example`, lokale Startbefehle und Build-Anleitung auf Vollständigkeit prüfen.
-- [ ] Den Generator `apps/web/scripts/write-auth-config.mjs` mit vollständiger, leerer und unvollständiger Konfiguration prüfen. Teilkonfiguration muss verständlich scheitern.
-- [ ] Der Deploy-Workflow muss alle vier erforderlichen Web-Werte vor dem Build validieren; Backend und Frontend müssen dasselbe Firebase-Projekt verwenden.
-- [ ] `auth-config.json` ausschliesslich mit öffentlicher Webkonfiguration erzeugen. Service-Account-Schlüssel und administrative Zugangsdaten dürfen dort nie erscheinen.
-- [ ] Fehlende Auth-Konfiguration darf öffentliche Seiten weiter zulassen, aber geschützten Zugriff nicht ermöglichen.
+- [x] `.env.example`, lokale Startbefehle und Build-Anleitung auf Vollständigkeit prüfen.
+- [x] Den Generator `apps/web/scripts/write-auth-config.mjs` mit vollständiger, leerer und unvollständiger Konfiguration prüfen. Teilkonfiguration muss verständlich scheitern.
+- [x] Der Deploy-Workflow muss alle vier erforderlichen Web-Werte vor dem Build validieren; Backend und Frontend müssen dasselbe Firebase-Projekt verwenden.
+- [x] `auth-config.json` ausschliesslich mit öffentlicher Webkonfiguration erzeugen. Service-Account-Schlüssel und administrative Zugangsdaten dürfen dort nie erscheinen.
+- [x] Fehlende Auth-Konfiguration darf öffentliche Seiten weiter zulassen, aber geschützten Zugriff nicht ermöglichen.
 - [ ] Cloud-Run-Konfiguration, Hosting-Rewrites, CORS und Callback-Header für beide Umgebungen prüfen. Callback und Auth-Konfiguration dürfen nicht zwischengespeichert werden; Callback setzt `Referrer-Policy: no-referrer`.
-- [ ] Vorhandene Provider-Verifikation um eine dokumentierte Firebase-Live-Abnahme ergänzen; Offline-Tests weiterhin ohne echte Cloud-Zugangsdaten ausführen.
+- [x] Vorhandene Provider-Verifikation um eine dokumentierte Firebase-Live-Abnahme ergänzen; Offline-Tests weiterhin ohne echte Cloud-Zugangsdaten ausführen.
 
 **Ergebnis:** Builds und Deployments sind reproduzierbar und enthalten keine unbeabsichtigte Dev-/Prod-Vermischung.
 
@@ -70,46 +70,46 @@ Zuerst Dev vorbereiten; die gleiche geprüfte Konfiguration danach getrennt für
 
 ### Angular
 
-- [ ] Ausschliesslich Firebase-SDK für Versand, Einlösung, Sitzungswiederherstellung, Token-Refresh und Logout verwenden.
-- [ ] Callback bereinigt Query und Fragment synchron vor Konfigurationsabruf und SDK-Initialisierung; nur erforderliche Linkfelder bleiben vorübergehend im Speicher.
-- [ ] E-Mail für denselben Browser lokal speichern und nach erfolgreicher Einlösung entfernen; niemals in der Callback-URL übertragen.
-- [ ] Auf einem zweiten Gerät die E-Mail erneut abfragen. Fehler, abgelaufene Links, Wiederverwendung und Neuladen des bereinigten Callbacks verständlich behandeln.
-- [ ] Für API-Aufrufe jeweils aktuelle ID-Tokens verwenden und ausschliesslich an erlaubte API-Ziele senden.
+- [x] Ausschliesslich Firebase-SDK für Versand, Einlösung, Sitzungswiederherstellung, Token-Refresh und Logout verwenden.
+- [x] Callback bereinigt Query und Fragment synchron vor Konfigurationsabruf und SDK-Initialisierung; nur erforderliche Linkfelder bleiben vorübergehend im Speicher.
+- [x] E-Mail für denselben Browser lokal speichern und nach erfolgreicher Einlösung entfernen; niemals in der Callback-URL übertragen.
+- [x] Auf einem zweiten Gerät die E-Mail erneut abfragen. Fehler, abgelaufene Links, Wiederverwendung und Neuladen des bereinigten Callbacks verständlich behandeln.
+- [x] Für API-Aufrufe jeweils aktuelle ID-Tokens verwenden und ausschliesslich an erlaubte API-Ziele senden.
 - [ ] Alte Supabase-Storage-Einträge und gegebenenfalls Service-Worker-/Browser-Caches gezielt bereinigen, sofern tatsächlich vorhanden. Kein pauschales `localStorage.clear()`, das andere Einstellungen löscht.
 
 ### Kotlin / Spring Boot
 
-- [ ] RS256-Signatur, Google-JWKS, projektbezogenen Issuer, Audience, Ablauf, Ausstellungszeit, Anmeldezeit und gültige Firebase-UID prüfen.
-- [ ] Firebase-UIDs als Strings bis 128 Zeichen behandeln; nur lokale Konto-IDs bleiben UUIDs.
-- [ ] Beim erstmaligen Provisionieren UID und bestätigte E-Mail über den Firebase-Adapter prüfen; bei Providerfehlern kein Konto anlegen und keine internen Details ausgeben.
-- [ ] Fachliche Berechtigungen und lokaler Status werden bei jedem Zugriff geprüft. E-Mail und frei gesetzte Claims führen nicht automatisch zu Kontozusammenführung oder Berechtigungen.
-- [ ] Den Umgang mit Firebase-Sperrung, Löschung und Token-Widerruf festlegen. Reine JWT-Signaturprüfung erkennt Widerruf nicht sofort; erforderlichenfalls zusätzliche Status-/Widerrufsprüfung einbauen.
-- [ ] Supabase-Adapter, Imports, Endpunkte, Konfigurationsklassen, alte Test-Fixtures und ungenutzte spezifische Hilfsfunktionen entfernen.
-- [ ] `@supabase/supabase-js` und alle ausschliesslich dafür benötigten direkten oder transitiven Pakete aus Manifest und Lockfile entfernen. Allgemeine OAuth-/PKCE-Abhängigkeiten anderer Werkzeuge nicht blind löschen.
+- [x] RS256-Signatur, Google-JWKS, projektbezogenen Issuer, Audience, Ablauf, Ausstellungszeit, Anmeldezeit und gültige Firebase-UID prüfen.
+- [x] Firebase-UIDs als Strings bis 128 Zeichen behandeln; nur lokale Konto-IDs bleiben UUIDs.
+- [x] Beim erstmaligen Provisionieren UID und bestätigte E-Mail über den Firebase-Adapter prüfen; bei Providerfehlern kein Konto anlegen und keine internen Details ausgeben.
+- [x] Fachliche Berechtigungen und lokaler Status werden bei jedem Zugriff geprüft. E-Mail und frei gesetzte Claims führen nicht automatisch zu Kontozusammenführung oder Berechtigungen.
+- [x] Den Umgang mit Firebase-Sperrung, Löschung und Token-Widerruf festlegen. Reine JWT-Signaturprüfung erkennt Widerruf nicht sofort; erforderlichenfalls zusätzliche Status-/Widerrufsprüfung einbauen.
+- [x] Supabase-Adapter, Imports, Endpunkte, Konfigurationsklassen, alte Test-Fixtures und ungenutzte spezifische Hilfsfunktionen entfernen.
+- [x] `@supabase/supabase-js` und alle ausschliesslich dafür benötigten direkten oder transitiven Pakete aus Manifest und Lockfile entfernen. Allgemeine OAuth-/PKCE-Abhängigkeiten anderer Werkzeuge nicht blind löschen.
 
 **Ergebnis:** Kein aktiver Anwendungspfad und kein Test benötigt Supabase.
 
 ## 5. Firestore-Indizes und Tests vorbereiten
 
-- [ ] Eindeutigen Index auf `users.firebaseUserId` separat administrativ anlegen und dessen Bereitschaft prüfen. Runtime erzeugt keine Indizes.
-- [ ] Zwei unterschiedliche Firebase-UIDs mit derselben E-Mail müssen getrennte lokale Identitäten bleiben.
-- [ ] Ein eventuell bestehender eindeutiger Index auf `supabaseUserId` wird vor Freischaltung neuer Konten entfernt; fehlende Werte könnten sonst neue Kontoanlagen blockieren.
+- [x] Eindeutigen Index auf `users.firebaseUserId` separat administrativ anlegen und dessen Bereitschaft prüfen. Runtime erzeugt keine Indizes.
+- [x] Zwei unterschiedliche Firebase-UIDs mit derselben E-Mail müssen getrennte lokale Identitäten bleiben.
+- [x] Ein eventuell bestehender eindeutiger Index auf `supabaseUserId` wird vor Freischaltung neuer Konten entfernt; fehlende Werte könnten sonst neue Kontoanlagen blockieren.
 - [ ] Falls Testdokumente das alte Feld verwenden, deren Herkunft und weitere Referenzen prüfen und sie gezielt entfernen oder die Testdaten neu erstellen. Keine breit angelegte Löschung produktiver Collections.
-- [ ] Den echten Firestore-Integrationstest für paralleles Provisionieren, Eindeutigkeit und lokale Kontosperren ausführen.
+- [x] Den echten Firestore-Integrationstest für paralleles Provisionieren, Eindeutigkeit und lokale Kontosperren ausführen.
 
 **Ergebnis:** Mehrere neue Firebase-Konten lassen sich anlegen; parallele Erstzugriffe erzeugen pro UID genau ein lokales Konto.
 
 ## 6. Geplante Fachabläufe vollständig auf Firebase ausrichten
 
-Diese Anpassungen sind Voraussetzung für eine konsistente Planung. Noch nicht vorhandene Produktfunktionen werden dadurch nicht stillschweigend als fertig erklärt.
+Die folgenden Häkchen belegen ausschliesslich die überarbeitete Fachplanung. Finder, Einladungen, Chats, Support und Löschkaskade sind weiterhin spätere Produktfeatures und dadurch nicht als implementiert erklärt.
 
-- [ ] Finder-Draft: Supabase-PKCE-Verifier und Backend-Session-Exchange aus dem Entwurf entfernen. Draft weiterhin mit Ablauf und eigenständigem, nicht erratbarem Statuszugang absichern.
-- [ ] Finder-Completion: Firebase-Link im Client einlösen; das Backend akzeptiert den Draft nur mit gültiger Firebase-Identität und exakt passender normalisierter, bestätigter E-Mail.
-- [ ] Entwurf für geräteübergreifende Draft-Zuordnung, Schutz vor falschem Draft, Replay und abgelaufener Meldung konkret festlegen und vor Implementierung prüfen.
-- [ ] Backup-Einladungen: bestehende Prüfung auf passende bestätigte E-Mail und lokale Mitgliedschaft beibehalten; technische Identitätsreferenzen auf Firebase umstellen.
-- [ ] Chats, Ownership, Support und Audit verwenden lokale fachliche IDs beziehungsweise die explizit zugeordnete Firebase-Identität.
-- [ ] Account-Löschung: Supabase-Admin-Löschung durch Firebase-Admin-Löschung mit minimalen IAM-Rechten ersetzen. Lokalen Zugriff sofort entziehen; vorhandene wiederaufnehmbare Kaskade und Löschledger beibehalten.
-- [ ] Allgemeine Benachrichtigungen und Einladungsmails bleiben beim vorgesehenen Mailanbieter. Gegebenenfalls bisher nur für Supabase eingerichtete SMTP-Zugänge später entfernen.
+- [x] Finder-Draft: Supabase-PKCE-Verifier und Backend-Session-Exchange aus dem Entwurf entfernen. Draft weiterhin mit Ablauf und eigenständigem, nicht erratbarem Statuszugang absichern.
+- [x] Finder-Completion: Firebase-Link im Client einlösen; das Backend akzeptiert den Draft nur mit gültiger Firebase-Identität und exakt passender normalisierter, bestätigter E-Mail.
+- [x] Entwurf für geräteübergreifende Draft-Zuordnung, Schutz vor falschem Draft, Replay und abgelaufener Meldung konkret festlegen und vor Implementierung prüfen.
+- [x] Backup-Einladungen: bestehende Prüfung auf passende bestätigte E-Mail und lokale Mitgliedschaft beibehalten; technische Identitätsreferenzen auf Firebase umstellen.
+- [x] Chats, Ownership, Support und Audit verwenden lokale fachliche IDs beziehungsweise die explizit zugeordnete Firebase-Identität.
+- [x] Account-Löschung: Supabase-Admin-Löschung durch Firebase-Admin-Löschung mit minimalen IAM-Rechten ersetzen. Lokalen Zugriff sofort entziehen; vorhandene wiederaufnehmbare Kaskade und Löschledger beibehalten.
+- [x] Allgemeine Benachrichtigungen und Einladungsmails bleiben beim vorgesehenen Mailanbieter. Gegebenenfalls bisher nur für Supabase eingerichtete SMTP-Zugänge später entfernen.
 
 **Ergebnis:** Keine zukünftige Funktion setzt mehr Supabase voraus. Finder-Completion und Löschkaskade erhalten eigene Abnahmen, sobald sie implementiert werden.
 
@@ -117,13 +117,13 @@ Diese Anpassungen sind Voraussetzung für eine konsistente Planung. Noch nicht v
 
 Mindestens folgende Dateien inhaltlich überarbeiten, statt lediglich einen neuen Hinweis voranzustellen:
 
-- [ ] `docs/architecture.md`: Firebase-Identität, Kotlin/Spring Boot als tatsächliches Backend, Tokenprüfung, Sessionregeln, Finder-Ablauf und neue Konfiguration beschreiben.
-- [ ] `docs/implementation-plan.md`: alle Phasen, Voraussetzungen, Felder, Testfälle, Löschschritte und Auth-Endpunkte aktualisieren.
-- [ ] `docs/roadmap.md`, `docs/key-tag-lifecycle.md`, `docs/privacy-and-compliance.md`: Anbieter, Identitätslebenszyklus, Löschung und akzeptierte US-Verarbeitung korrekt abbilden.
-- [ ] `KOTLIN-FOUNDATION.md`, `TESTING-PLAN.md`, `FIRESTORE-SETUP.md`: aktuelle Implementierung, Testgrenzen und Indizes dokumentieren; unbestätigte Aussagen zu bereits angelegten Firebase-Indizes entfernen.
-- [ ] `docs/phase-2-verification.md`: alten Nachweis aus der aktiven Dokumentation entfernen und durch eine echte Firebase-Abnahme ersetzen. Keine historischen Ergebnisse nachträglich als Firebase-Tests ausgeben.
-- [ ] `docs/firebase-auth-migration.md`: nach Abschluss als Firebase-Einrichtungsanleitung neu benennen, Übergangshinweise entfernen und alle Verweise anpassen.
-- [ ] Aktive Datenschutz-/Betriebsunterlagen auf Firebase/Google und den vorgesehenen Mailanbieter aktualisieren.
+- [x] `docs/architecture.md`: Firebase-Identität, Kotlin/Spring Boot als tatsächliches Backend, Tokenprüfung, Sessionregeln, Finder-Ablauf und neue Konfiguration beschreiben.
+- [x] `docs/implementation-plan.md`: alle Phasen, Voraussetzungen, Felder, Testfälle, Löschschritte und Auth-Endpunkte aktualisieren.
+- [x] `docs/roadmap.md`, `docs/key-tag-lifecycle.md`, `docs/privacy-and-compliance.md`: Anbieter, Identitätslebenszyklus, Löschung und akzeptierte US-Verarbeitung korrekt abbilden.
+- [x] `KOTLIN-FOUNDATION.md`, `TESTING-PLAN.md`, `FIRESTORE-SETUP.md`: aktuelle Implementierung, Testgrenzen und Indizes dokumentieren; unbestätigte Aussagen zu bereits angelegten Firebase-Indizes entfernen.
+- [x] `docs/phase-2-verification.md`: alten Nachweis aus der aktiven Dokumentation entfernen und durch den echten Firebase-REST-/Backend-Nachweis ersetzen; Browser-/Hosting-Abnahme bleibt separat offen. Keine historischen Ergebnisse nachträglich als Firebase-Tests ausgeben.
+- [x] `docs/firebase-auth-setup.md`: nach Abschluss als Firebase-Einrichtungsanleitung neu benennen, Übergangshinweise entfernen und alle Verweise anpassen.
+- [x] Aktive Datenschutz-/Betriebsunterlagen auf Firebase/Google und den vorgesehenen Mailanbieter aktualisieren.
 
 Historische Git-Commits bleiben erhalten. Vollständiges Entfernen bedeutet keine Abhängigkeit im aktuellen Repository oder Betrieb; die Git-Historie wird dafür nicht umgeschrieben.
 
@@ -132,10 +132,10 @@ Historische Git-Commits bleiben erhalten. Vollständiges Entfernen bedeutet kein
 ### Automatisch
 
 - [ ] Saubere Installation mit `npm ci` durchführen und Dependency-Baum auf Supabase-Pakete prüfen.
-- [ ] `npm run lint`, `npm run build`, `npm run test`, `npm run test:http` und `npm run generate:client` ausführen; generierte Änderungen prüfen.
-- [ ] Falls der dokumentierte lokale Angular-Cache-Absturz auftritt, den Produktionsbuild mit `CI=true NG_BUILD_MAX_WORKERS=2 npm run build:web` prüfen; dafür keine fachlichen Änderungen einbauen.
-- [ ] `npm run test:integration` mit explizit konfigurierter Dev-Firestore-Verbindung ausführen. Vorher erforderliche Indizes bereitstellen.
-- [ ] Tests decken fremde Projekte, falsche Signaturen, fehlende/abgelaufene Claims, nicht bestätigte E-Mail, Providerfehler, Kontosperren und paralleles Provisionieren ab.
+- [x] `npm run lint`, `npm run build`, `npm run test`, `npm run test:http` und `npm run generate:client` ausführen; generierte Änderungen prüfen.
+- [x] Falls der dokumentierte lokale Angular-Cache-Absturz auftritt, den Produktionsbuild mit `CI=true NG_BUILD_MAX_WORKERS=2 npm run build:web` prüfen; dafür keine fachlichen Änderungen einbauen.
+- [x] `npm run test:integration` mit explizit konfigurierter Dev-Firestore-Verbindung ausführen. Vorher erforderliche Indizes bereitstellen.
+- [x] Tests decken fremde Projekte, falsche Signaturen, fehlende/abgelaufene Claims, nicht bestätigte E-Mail, Providerfehler, Kontosperren und paralleles Provisionieren ab.
 
 ### Gegen echte Dienste
 

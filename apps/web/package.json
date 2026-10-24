@@ -9,7 +9,9 @@
     "prebuild": "node scripts/write-auth-config.mjs",
     "lint": "eslint \"src/**/*.{ts,html}\"",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:config": "node --test scripts/write-auth-config.spec.mjs",
+    "pretest": "npm run test:config"
   },
   "private": true,
   "packageManager": "npm@11.12.1",

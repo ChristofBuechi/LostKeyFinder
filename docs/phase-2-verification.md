@@ -1,121 +1,63 @@
-# Phase 2: Owner-Identität – Verifikation
+# Phase 2: Firebase-Owner-Identität – Verifikation
 
-> Auth-Stand: Firebase Authentication. Einrichtung, Indexanpassung und Ablösung der älteren Supabase-/PKCE-Angaben: [Firebase-Umstellung](firebase-auth-migration.md).
+## Stand
 
-## Stand am 9. Oktober 2026
+Der Firebase-Featurebranch ersetzt den bisherigen Auth-Anbieter. Frühere Provider-Abnahmen belegen den neuen Anbieter nicht; deren Nachweise bleiben in der Git-Historie. Ein echter REST-/Backend-Durchstich ist erfolgreich; vollständige Mail-/Browser-/Hosting-Abnahme bleibt offen.
 
-PR #3 ist gemergt und nach Dev deployt. Der End-to-End-Ablauf wurde lokal und
-über Firebase Hosting mit echtem Supabase und echtem Firestore geprüft.
-Phase 2 ist auf dem Dev-System abgenommen.
-
-## Implementiert
-
-- Supabase-Owner-Magic-Link mit PKCE und Registrierung neuer Owner.
-- Callback `/auth/callback`: Query und Fragment werden synchron vor dem ersten
-  asynchronen Aufruf entfernt; der Code wird nur einmal ausgetauscht.
-- Kein automatisches SDK-Auslesen der URL, keine Auth-Cookies, keine Anzeige
-  oder Anwendungslogs mit Providerfehlerdetails oder Sessiondaten.
-- Geschützte Route `/account` mit generiertem Client für `GET /api/v1/me`.
-- Tokens nur für die eigene versionierte API; keine Weitergabe an fremde Origins.
-- Session-Persistenz, SDK-Auto-Refresh, Logout und Reaktion auf Sessionende.
-- Deutsche und englische Texte, zugeordnete Formlabels, sichtbare Validierung,
-  Statusregionen und Fokus auf den Hauptinhalt nach Navigation.
-- Runtime-Auth-Konfiguration pro Environment; nur Publishable Key und Projekt-URL
-  gelangen in den Browser. Callback und Konfiguration werden nicht gecacht.
-
-## Automatisierte Prüfungen
+## Automatisierte Prüfung
 
 ```bash
 npm run verify
+npm run test:http
 git diff --check
-npm run firestore:verify --workspace=@lost-key-finder/api
 ```
 
-`verify` prüft OpenAPI/Client-Generierung, Lint, Backend-/Frontend-Build,
-Backend-Tests mit Coverage-Gate und Frontend-Tests. Die Owner-Frontend-Tests
-decken URL-Bereinigung, Replay-Ablehnung, Sessionwechsel, Logoutfehler,
-Token-Origin-Begrenzung, Formularvalidierung, Sprache, Route Guard und
-serverseitige Zugriffsverweigerung ab.
+Die Offline-Tests prüfen Firebase-RS256-JWTs und Claims, normalisierte bestätigte E-Mail, UID-Abgleich, Providerfehler, lokale Sperren, parallele Anlage, maximale API-Sitzungsdauer, Callback-Bereinigung, E-Mail-Eingabe auf einem zweiten Gerät, Replay, SDK-Refresh, Logout und Begrenzung der Token-Ziele. Der Build-Konfigurationsgenerator sowie ungültige Runtime-Konfigurationen werden separat geprüft.
 
-Am 9. Oktober wurde das GitHub-Review-Feedback zum Anwendungsstart umgesetzt:
-Der Abruf von `auth-config.json` hat ein Fünf-Sekunden-Limit, das bis zum Ende
-des Response-Bodys aktiv bleibt. Zusätzliche Regressionstests prüfen
-Erfolg, hängende Anfrage, hängenden Body und Fehler-Fallback. Die Zeitbegrenzung
-verwendet die native API `AbortSignal.timeout(5000)` statt eigener Timerverwaltung.
+CI des ursprünglichen Firebase-Commits `10055e3` war erfolgreich. Neuere Änderungen benötigen eine erneute erfolgreiche CI.
 
-Der getrennte Firestore-Lauf prüft echte Transaktionen, User-Mapping, Unique-Index,
-parallele Anlage und lokalen Statusentzug. Sein Identity-Server ist ein Testdouble;
-er ersetzt nicht den nachfolgenden Supabase-Browsertest.
+## Lokaler Start
 
-## Erfolgreicher lokaler Provider-/Browsertest
-
-Supabase-Projekt: `dsxefugwxpkfgmdmysev`; Firestore: `lost-key-finder-dev/dev1`.
-Der vom Benutzer bereitgestellte frische Magic Link wurde im Browser geöffnet,
-der den PKCE-Verifier beim Versand gespeichert hatte.
-
-- Versandanfrage von Supabase mit `200` akzeptiert.
-- Frischer Link erzeugt echte ES256-Session; Backend verifiziert Supabase-Identität
-  und bestätigte E-Mail und legt den lokalen Benutzer in Firestore an.
-- Kontoseite zeigt den erfolgreichen `/me`-Abruf.
-- Erzwungener SDK-Refresh und anschließender `/me`-Abruf erfolgreich.
-- Browser-Reload stellt die Sitzung und Kontoseite wieder her.
-- Wiederverwendung desselben Links wird abgelehnt; Fehlerparameter werden entfernt.
-- Ein zuvor ungültiger/abgelaufener Link wird ebenfalls sicher abgelehnt.
-- Logout entfernt die gespeicherte Session und führt zur Login-Seite.
-- `/me` ohne Token liefert `401` und `Cache-Control: no-cache, no-store, ...`.
-- Keine Auth-Cookies; keine Tokens, E-Mail oder Callback-Codes in den inspizierten
-  lokalen API-Logs. Mongo protokolliert lediglich den technischen Benutzernamen
-  `access_token` mit verborgenem Passwort.
-- Deutsch/Englisch im Browser geprüft; auf 390px Breite kein horizontaler Overflow.
-- Mobile Lighthouse-Snapshot-Prüfung der Login-Seite: Accessibility 100,
-  Best Practices 100, SEO 100. Das ersetzt keinen manuellen Screenreader-Test.
-
-Es werden keine Magic Links, Codes oder Session-Tokens in diesem Dokument gespeichert.
-
-## Lokal starten
-
-Supabase-Werte in der ignorierten `.env.dev.local` hinterlegen, dann in zwei Terminals:
+Die vier Werte aus [Firebase-Einrichtung](firebase-auth-setup.md) in `.env.dev.local` setzen. Danach in zwei Terminals:
 
 ```bash
 node --env-file=.env.dev.local apps/api/scripts/firestore-dev.mjs start
 npm run start --workspace=@lost-key-finder/web
 ```
 
-In Supabase unter Authentication → URL Configuration:
+## Firestore-Integration
 
-- Site URL: `https://lost-key-finder-dev.web.app`
-- Redirect URLs: `http://localhost:4200/auth/callback` und
-  `https://lost-key-finder-dev.web.app/auth/callback`
+```bash
+npm run firestore:verify --workspace=@lost-key-finder/api
+```
 
-Bei eingebautem Supabase-Mailversand eine Team-E-Mail verwenden. Der Owner-PKCE-Flow
-verlangt denselben Browser und dieselbe Origin; der spätere geräteübergreifende
-Finder-Flow ist Teil von Phase 5.
+Der explizite Provider-Lauf prüft echte Transaktionen, Mapping, Unique-Index, parallele Anlage und lokalen Status mit Cleanup. Der Identity-Server bleibt dabei ein Testdouble.
 
-## Erfolgreiche Dev-Abnahme am 9. Oktober 2026
+## Erfolgreicher Dev-Durchstich am 24. Oktober 2026
 
-- [x] PR mergen und automatisches Dev-Deployment erfolgreich abschließen.
-- [x] Site URL und erlaubten Hosting-Redirect praktisch verifizieren.
-- [x] Auf `https://lost-key-finder-dev.web.app/login` anmelden, Link im selben Browser
-  öffnen und Kontoseite, Refresh/Reload, Replay-Ablehnung und Logout prüfen.
-- [x] Callback-Header `Cache-Control: no-store` und `Referrer-Policy: no-referrer`
-  auf dem echten Hosting-Host verifizieren.
+- Firebase-Web-App im Projekt `lost-key-finder-dev` registriert und Authentication initialisiert.
+- E-Mail-Link-Anmeldung aktiviert; `localhost`, `lost-key-finder-dev.web.app` und `lost-key-finder-dev.firebaseapp.com` erlaubt.
+- Vier Firebase-Werte lokal und drei öffentliche Build-Werte im GitHub-Environment `dev` hinterlegt; der Workflow übernimmt die Projekt-ID aus `GCP_PROJECT_ID`.
+- Neuer eindeutiger `firebaseUserId`-Index `READY`; bisheriger Identity-Index entfernt. Ein lokales Altdokument blieb unverändert erhalten.
+- Beide echten Firestore-Integrationstests erfolgreich: Transaktion sowie Unique-Index, parallele Provisionierung und lokaler Status. Der erste Lauf während der Indexumstellung schlug noch fehl; nach wirksamer Entfernung des alten Indexes war die Wiederholung erfolgreich.
+- Für eine zufällige Testadresse unter der reservierten Domain `example.invalid` per administrativem `returnOobLink` einen echten Firebase-Link erzeugt. Es wurde keine E-Mail versendet.
+- Link per Firebase-REST eingelöst; bestätigte E-Mail und ID-Token gegen die lokale API auf Port 3301 geprüft. Google-JWKS, `accounts:lookup` und Provisionierung in echtem Dev-Firestore funktionierten.
+- Echten Refresh-Token bei Google eingelöst; erneuter `/api/v1/me`-Aufruf lieferte dieselbe lokale Benutzer-ID.
+- Erneute Linkeinlösung abgelehnt; `/me` ohne Token lieferte `401`.
+- Temporäres Firebase-Testkonto und ausschliesslich sein lokales Firestore-Dokument danach gelöscht. Kein Link und kein Token wurde im Repository gespeichert.
 
-- Deployter Commit: `f01a8aa6797fde1a310cce314e23e712102f473b`.
-- [CI erfolgreich](https://github.com/ChristofBuechi/LostKeyFinder/actions/runs/37888966146).
-- [Deployment erfolgreich](https://github.com/ChristofBuechi/LostKeyFinder/actions/runs/37889145446).
-- Version meldet den erwarteten Commit und `development`; Readiness liefert `200`.
-- Öffentliche Auth-Konfiguration enthält die erwartete Supabase-URL und den
-  Publishable Key und wird mit `no-store` ausgeliefert.
-- Echter Magic Link führt über den Hosting-Callback zur Kontoseite; `/me` liefert `200`.
-- SDK-Refresh wurde durch abgelaufene lokale Session-Metadaten erzwungen:
-  danach neues Access Token, zukünftige Ablaufzeit und derselbe lokale Benutzer
-  bei erfolgreichem `/me`-Abruf nach Reload. Keine Tokenwerte wurden aufgezeichnet.
-- Wiederverwendung des Links zeigt den vorgesehenen Fehlerzustand; die URL bleibt sauber.
-- Logout entfernt die gespeicherte Session, führt zur Anmeldung und hinterlässt
-  keine Auth-Cookies. `/me` ohne Token liefert `401`.
-- Ein Aufruf des verbrauchten Links ohne expliziten `redirect_to` bestätigt den
-  Supabase-Default-Redirect auf `https://lost-key-finder-dev.web.app/`; der
-  explizite Callback-Redirect ist durch den erfolgreichen Login bestätigt.
+Dies beweist den Provider-/Backend-Vertrag, nicht E-Mail-Zustellung, Angular-SDK-Verhalten im echten Browser oder das Hosting-Deployment. Es wurde kein Prod-Projekt angelegt und kein Deployment ausgelöst. Die lesende Projektliste enthält derzeit nur Dev; GitHub besitzt noch kein `prod`-Environment. Die Billing-Abfrage war wegen deaktivierter Cloud Billing API nicht verfügbar; Abrechnung und Versandquoten bleiben separat zu prüfen.
 
-Phase 2 ist abgeschlossen; es verbleiben keine offenen Punkte dieser Dev-Abnahme.
-Phase 3 (Tags und öffentliche QR-Auflösung) ist noch nicht begonnen.
+## Ausstehende Firebase-Live-Abnahme
+
+- [ ] Dev-Frontend und Dev-API mit passender Firebase-Konfiguration ausrollen.
+- [ ] Neues und bestehendes Firebase-Konto, mehrere Konten und `/api/v1/me` prüfen.
+- [ ] Link im selben Browser und auf einem zweiten Gerät öffnen; im zweiten Fall E-Mail erneut eingeben.
+- [ ] Falsche E-Mail, ungültigen/abgelaufenen und bereits eingelösten Link ablehnen.
+- [ ] Browserneustart, Token-Refresh und Logout über Tabs prüfen.
+- [ ] Lokale Sperre sofort wirksam; Provider-Widerruf entsprechend der dokumentierten Grenze.
+- [ ] Callback mit `no-store`/`no-referrer`; URL nach Einlösung bereinigt.
+- [ ] Keine Auth-Credentials oder Inhalte in API-Logs; keine Tokens an fremde API-Origins.
+- [ ] Ohne Token liefert `/api/v1/me` ein sicheres `401`-Problem.
+
+Nach Durchführung Commit, Umgebung, Datum und Ergebnis dokumentieren. Keine E-Mail-Adressen, Links, Codes oder Tokens in den Nachweis aufnehmen.

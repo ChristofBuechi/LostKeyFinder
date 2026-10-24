@@ -157,7 +157,7 @@ werden separat eingerichtet.
 ### User-Index
 
 Vor dem ersten Owner-Deployment ist `users.firebaseUserId` eindeutig zu indizieren.
-Der Firebase-Index muss vor dem Deployment in `dev1` angelegt bzw. geprüft werden;
+Der Firebase-Index ist seit dem 24. Oktober 2026 in `dev1` angelegt und `READY`;
 Runtime und Provider-Test erstellen keine Indizes.
 Die administrative Identität verwendet dafür:
 
@@ -185,6 +185,7 @@ Testserver; die echte Firebase-Auth-Anbindung ist dadurch nicht abgenommen.
   Provider-Workflow authentifiziert sich über WIF und verwendet denselben
   `firestore:verify`-Helfer wie lokal.
 
-Es bestehen keine Supabase-Konten; eine Kontenmigration entfällt. Einen eventuell
-bereits vorhandenen eindeutigen Index auf `supabaseUserId` vor dem Deployment
-entfernen; siehe [Firebase-Einrichtung](docs/firebase-auth-migration.md).
+Dev-Stand vom 24. Oktober 2026: Der bisherige Identity-Index wurde entfernt,
+der eindeutige Index auf `firebaseUserId` ist bereit. Ein vorhandenes lokales
+Altdokument bleibt unverändert erhalten und wird keiner neuen Identität zugeordnet.
+Die beiden Firestore-Integrationstests sind nach der Indexanpassung erfolgreich.

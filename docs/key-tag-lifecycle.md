@@ -43,4 +43,4 @@ Jeder logische Checkout besitzt einen stabilen Idempotency-Key. Nach einem unkla
 
 ## Account-Löschung
 
-Die Löschung legt vor jeder destruktiven Aktion ein dauerhaftes Löschledger an, entzieht sofort den Zugriff und wird im auslösenden HTTP-Request idempotent abgearbeitet. Nach einem Teilfehler kann Support denselben Vorgang fortsetzen. Aktive Fälle eigener Primary-Owner-Tags werden abgeschlossen, diese Tags auf `RETIRED` gesetzt, Backup-Rechte an fremden Tags entfernt und Owner- sowie Finder-Identitätsreferenzen eindeutig pseudonymisiert. Die Supabase-Identität und das lokale Benutzerkonto werden zuletzt gelöscht.
+Die Löschung legt vor jeder destruktiven Aktion ein dauerhaftes Löschledger an, entzieht sofort den Zugriff und wird im auslösenden HTTP-Request idempotent abgearbeitet. Nach einem Teilfehler kann Support denselben Vorgang fortsetzen. Aktive Fälle eigener Primary-Owner-Tags werden abgeschlossen, diese Tags auf `RETIRED` gesetzt, Backup-Rechte an fremden Tags entfernt und Owner- sowie Finder-Identitätsreferenzen eindeutig pseudonymisiert. Die Firebase-Identität und das lokale Benutzerkonto werden zuletzt gelöscht.
