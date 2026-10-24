@@ -1,5 +1,7 @@
 # Architektur
 
+> Auth-Stand: Firebase Authentication. Einrichtung, Indexanpassung und Ablösung der älteren Supabase-/PKCE-Angaben: [Firebase-Umstellung](firebase-auth-migration.md).
+
 ## Stack
 
 | Bereich | Entscheidung |

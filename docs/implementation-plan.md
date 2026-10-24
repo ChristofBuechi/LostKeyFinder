@@ -1,5 +1,7 @@
 # Implementierungsplan Phase 1
 
+> Auth-Stand: Firebase Authentication. Einrichtung, Indexanpassung und Ablösung der älteren Supabase-/PKCE-Angaben: [Firebase-Umstellung](firebase-auth-migration.md).
+
 ## Ziel und Leitplanken
 
 Dieser Plan setzt die in den übrigen Dokumenten beschriebene Phase 1 als modularen NestJS-Monolithen und Angular-Anwendung um. Der bestehende HTML-/LocalStorage-Prototyp ist keine technische Grundlage und wird nicht migriert.

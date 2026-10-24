@@ -1,5 +1,7 @@
 # Kotlin / Spring Boot Foundation
 
+> Auth-Stand: Firebase Authentication. Einrichtung, Indexanpassung und Ablösung der älteren Supabase-/PKCE-Angaben: [Firebase-Umstellung](docs/firebase-auth-migration.md).
+
 Seit PR #2 ersetzt das Kotlin-Backend die bisherige
 NestJS-Implementierung. Die Anforderungen in `docs/` bleiben die fachliche
 Referenz; dort genannte Node-Treiber und NestJS-Bausteine werden auf diesem Branch

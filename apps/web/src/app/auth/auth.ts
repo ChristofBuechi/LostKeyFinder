@@ -1,27 +1,28 @@
 import { DestroyRef, Injectable, InjectionToken, inject, signal } from '@angular/core';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { FirebaseOptions } from 'firebase/app';
 import { AuthCallbackData } from './auth-callback';
 
-export interface AuthConfiguration {
-  url: string;
-  publishableKey: string;
-}
+export type AuthConfiguration = Pick<FirebaseOptions, 'apiKey' | 'authDomain' | 'projectId' | 'appId'>;
 
 export const AUTH_CONFIGURATION = new InjectionToken<AuthConfiguration>('Auth configuration', {
-  providedIn: 'root', factory: () => ({ url: '', publishableKey: '' }),
+  providedIn: 'root', factory: () => ({}),
 });
 export const AUTH_CALLBACK = new InjectionToken<AuthCallbackData>('Consumed Auth callback', {
-  providedIn: 'root', factory: () => ({ code: '', failed: true }),
+  providedIn: 'root', factory: () => ({ link: '', failed: true }),
 });
-export const AUTH_CLIENT = new InjectionToken<Promise<SupabaseClient | null>>('Supabase Auth client', {
+export const AUTH_CLIENT = new InjectionToken('Firebase Auth client', {
   providedIn: 'root',
   factory: () => {
     const config = inject(AUTH_CONFIGURATION);
-    return config.url && config.publishableKey ? import('@supabase/supabase-js').then(({ createClient }) => createClient(config.url, config.publishableKey, {
-      auth: { flowType: 'pkce', detectSessionInUrl: false, persistSession: true, autoRefreshToken: true },
-    })) : Promise.resolve(null);
+    return config.apiKey && config.authDomain && config.projectId && config.appId
+      ? Promise.all([import('firebase/app'), import('firebase/auth')]).then(([app, sdk]) => {
+        const auth = sdk.getAuth(app.getApps().length ? app.getApp() : app.initializeApp(config));
+        return { auth, sdk };
+      }) : Promise.resolve(null);
   },
 });
+
+const emailStorageKey = 'firebaseEmailForSignIn';
 
 @Injectable({ providedIn: 'root' })
 export class Auth {
@@ -29,62 +30,68 @@ export class Auth {
   private readonly callback = inject(AUTH_CALLBACK);
   private readonly signedInState = signal(false);
   readonly signedIn = this.signedInState.asReadonly();
-  readonly configured = !!inject(AUTH_CONFIGURATION).url && !!inject(AUTH_CONFIGURATION).publishableKey;
+  private readonly configuration = inject(AUTH_CONFIGURATION);
+  readonly configured = !!(this.configuration.apiKey && this.configuration.authDomain &&
+    this.configuration.projectId && this.configuration.appId);
+  readonly needsEmail = signal(false);
   readonly ready: Promise<void>;
 
   constructor() {
-    this.ready = this.initialize(inject(DestroyRef)).catch(() => {
-      this.signedInState.set(false);
-    });
+    this.ready = this.initialize(inject(DestroyRef)).catch(() => this.signedInState.set(false));
   }
 
   private async initialize(destroyRef: DestroyRef): Promise<void> {
     const client = await this.client;
     if (!client || destroyRef.destroyed) return;
-    const subscription = client.auth.onAuthStateChange((_event, session) => {
-      this.signedInState.set(!!session);
-    }).data.subscription;
-    destroyRef.onDestroy(() => subscription.unsubscribe());
-    await this.accessToken();
+    const unsubscribe = client.sdk.onIdTokenChanged(client.auth, user => this.signedInState.set(!!user));
+    destroyRef.onDestroy(unsubscribe);
+    await client.auth.authStateReady();
+    this.signedInState.set(!!client.auth.currentUser);
   }
 
   async sendLink(email: string): Promise<void> {
     const client = await this.client;
     if (!client) throw new Error('Auth unavailable');
-    const { error } = await client.auth.signInWithOtp({
-      email: email.trim(),
-      options: { shouldCreateUser: true, emailRedirectTo: `${location.origin}/auth/callback` },
-    });
-    if (error) throw new Error('Link delivery failed');
+    try {
+      // Persist before sending so a successful link can always be completed here.
+      localStorage.setItem(emailStorageKey, email.trim());
+      await client.sdk.sendSignInLinkToEmail(client.auth, email.trim(), {
+        url: `${location.origin}/auth/callback`, handleCodeInApp: true,
+      });
+    } catch { throw new Error('Link delivery failed'); }
   }
 
-  async completeCallback(): Promise<void> {
-    const { code, failed } = this.callback;
-    this.callback.code = '';
-    this.callback.failed = true;
-    if (failed || !code) throw new Error('Invalid callback');
+  async completeCallback(email?: string): Promise<void> {
     await this.ready;
     const client = await this.client;
-    if (!client) throw new Error('Auth unavailable');
-    const { data, error } = await client.auth.exchangeCodeForSession(code);
-    if (error || !data.session) throw new Error('Invalid callback');
-    this.signedInState.set(true);
+    const { link, failed } = this.callback;
+    if (!client || failed || !client.sdk.isSignInWithEmailLink(client.auth, link)) throw new Error('Invalid callback');
+    const address = email?.trim() || localStorage.getItem(emailStorageKey);
+    if (!address) {
+      this.needsEmail.set(true);
+      return;
+    }
+    this.callback.link = '';
+    this.callback.failed = true;
+    try {
+      await client.sdk.signInWithEmailLink(client.auth, address, link);
+      localStorage.removeItem(emailStorageKey);
+      this.needsEmail.set(false);
+      this.signedInState.set(true);
+    } catch { throw new Error('Invalid callback'); }
   }
 
   async accessToken(): Promise<string | null> {
+    await this.ready;
     const client = await this.client;
-    if (!client) return null;
-    const { data, error } = await client.auth.getSession();
-    if (error) throw new Error('Session unavailable');
-    this.signedInState.set(!!data.session);
-    return data.session?.access_token ?? null;
+    return client?.auth.currentUser?.getIdToken() ?? null;
   }
 
   async signOut(): Promise<void> {
     const client = await this.client;
     if (!client) return;
-    const { error } = await client.auth.signOut({ scope: 'local' });
-    if (error) throw new Error('Logout failed');
+    try { await client.sdk.signOut(client.auth); }
+    catch { throw new Error('Logout failed'); }
     this.signedInState.set(false);
   }
 }

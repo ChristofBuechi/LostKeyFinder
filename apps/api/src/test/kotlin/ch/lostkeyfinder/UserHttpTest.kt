@@ -5,8 +5,7 @@ import ch.lostkeyfinder.users.UserStatus
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.crypto.MACSigner
-import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.gen.ECKeyGenerator
+import com.nimbusds.jose.jwk.gen.RSAKeyGenerator
 import com.nimbusds.jwt.SignedJWT
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -47,7 +46,7 @@ class UserHttpTest {
 
     @BeforeEach fun reset() {
         template.remove(Query(), User::class.java)
-        template.indexOps(User::class.java).createIndex(Index().on("supabaseUserId", Sort.Direction.ASC).unique())
+        template.indexOps(User::class.java).createIndex(Index().on("firebaseUserId", Sort.Direction.ASC).unique())
         identity.reset()
     }
 
@@ -64,7 +63,7 @@ class UserHttpTest {
     }
 
     @Test fun `signature issuer audience time and subject are all enforced`() {
-        val otherKey = ECKeyGenerator(Curve.P_256).generate()
+        val otherKey = RSAKeyGenerator(2048).generate()
         val valid = SignedJWT.parse(identity.token())
         val symmetric =
             SignedJWT(
@@ -83,7 +82,12 @@ class UserHttpTest {
                 identity.token(expires = null),
                 identity.token(notBefore = Instant.now().plusSeconds(120)),
                 identity.token(subject = null),
-                identity.token(subject = "invalid-uuid"),
+                identity.token(subject = ""),
+                identity.token(subject = "x".repeat(129)),
+                identity.token(issuedAt = null),
+                identity.token(issuedAt = Instant.now().plusSeconds(120)),
+                identity.token(authTime = null),
+                identity.token(authTime = Instant.now().plusSeconds(120).epochSecond),
             )
         for (token in invalid) mvc.get("/api/v1/me") { header("Authorization", "Bearer $token") }.andExpect { status { isUnauthorized() } }
         assertEquals(0, identity.userRequests.get())
@@ -91,7 +95,7 @@ class UserHttpTest {
     }
 
     @Test fun `first access provisions a normalized user and repeated access preserves identity and timestamps`() {
-        val token = identity.token()
+        val token = identity.token(subject = "firebase-uid-without-uuid-format")
         val first =
             mvc
                 .get("/api/v1/me") { header("Authorization", "Bearer $token") }
@@ -100,7 +104,7 @@ class UserHttpTest {
                     jsonPath("$.email") { value("owner@example.com") }
                     jsonPath("$.status") { value("ACTIVE") }
                     jsonPath("$._id") { doesNotExist() }
-                    jsonPath("$.supabaseUserId") { doesNotExist() }
+                    jsonPath("$.firebaseUserId") { doesNotExist() }
                     header { doesNotExist("Set-Cookie") }
                 }.andReturn()
                 .response.contentAsString

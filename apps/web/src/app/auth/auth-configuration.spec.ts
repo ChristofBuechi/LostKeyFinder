@@ -3,7 +3,7 @@ import { loadAuthConfiguration } from './auth-configuration';
 
 describe('Bounded Auth configuration loading', () => {
   const fetchMock = vi.fn<typeof fetch>();
-  const emptyConfiguration = { url: '', publishableKey: '' };
+  const emptyConfiguration = {};
   let controller: AbortController;
 
   beforeEach(() => {
@@ -18,7 +18,7 @@ describe('Bounded Auth configuration loading', () => {
   });
 
   it('loads configuration with a five-second native timeout', async () => {
-    const configuration = { url: 'https://example.supabase.co', publishableKey: 'sb_publishable_test' };
+    const configuration = { projectId: 'test', apiKey: 'test-key', authDomain: 'test.firebaseapp.com', appId: 'test-app' };
     fetchMock.mockResolvedValue(new Response(JSON.stringify(configuration)));
     expect(await loadAuthConfiguration()).toEqual(configuration);
     expect(AbortSignal.timeout).toHaveBeenCalledWith(5000);

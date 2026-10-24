@@ -1,5 +1,7 @@
 # Phase 2: Owner-Identität – Verifikation
 
+> Auth-Stand: Firebase Authentication. Einrichtung, Indexanpassung und Ablösung der älteren Supabase-/PKCE-Angaben: [Firebase-Umstellung](firebase-auth-migration.md).
+
 ## Stand am 9. Oktober 2026
 
 PR #3 ist gemergt und nach Dev deployt. Der End-to-End-Ablauf wurde lokal und

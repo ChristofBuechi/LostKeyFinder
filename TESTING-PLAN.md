@@ -1,5 +1,7 @@
 # Testing- und Mocking-Plan
 
+> Auth-Stand: Firebase Authentication. Einrichtung, Indexanpassung und Ablösung der älteren Supabase-/PKCE-Angaben: [Firebase-Umstellung](docs/firebase-auth-migration.md).
+
 ## Ziel
 
 Die verpflichtende lokale Prüfung und GitHub-CI laufen ohne Firestore, Supabase,

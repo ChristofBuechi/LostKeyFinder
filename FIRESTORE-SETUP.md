@@ -156,8 +156,9 @@ werden separat eingerichtet.
 
 ### User-Index
 
-Vor dem ersten Owner-Deployment ist `users.supabaseUserId` eindeutig zu indizieren.
-Der Index ist in `dev1` angelegt; Runtime und Provider-Test erstellen keine Indizes.
+Vor dem ersten Owner-Deployment ist `users.firebaseUserId` eindeutig zu indizieren.
+Der Firebase-Index muss vor dem Deployment in `dev1` angelegt bzw. geprüft werden;
+Runtime und Provider-Test erstellen keine Indizes.
 Die administrative Identität verwendet dafür:
 
 ```bash
@@ -165,13 +166,13 @@ gcloud firestore indexes composite create \
   --project=lost-key-finder-dev --database=dev1 \
   --collection-group=users --query-scope=collection-group \
   --api-scope=mongodb-compatible-api --density=dense --unique \
-  --field-config=field-path=supabaseUserId,order=ascending
+  --field-config=field-path=firebaseUserId,order=ascending
 ```
 
 `FirestoreUserIntegrationTest` prüft Query/Mapping, parallele Erstzugriffe,
 abgelehnte Duplikate und Statusentzug. Er löscht ausschließlich seine zufällig
-erzeugten Test-Subjects. JWTs und `/user`-Antworten stammen dabei vom lokalen
-Testserver; die echte Supabase-Anbindung ist dadurch nicht abgenommen.
+erzeugten Test-Subjects. JWTs und `accounts:lookup`-Antworten stammen dabei vom lokalen
+Testserver; die echte Firebase-Auth-Anbindung ist dadurch nicht abgenommen.
 
 ## Indizes und Transaktionen
 
@@ -183,3 +184,7 @@ Testserver; die echte Supabase-Anbindung ist dadurch nicht abgenommen.
 - Ein kurzlebiges lokales Token gehört nicht in GitHub Secrets. Der manuelle
   Provider-Workflow authentifiziert sich über WIF und verwendet denselben
   `firestore:verify`-Helfer wie lokal.
+
+Es bestehen keine Supabase-Konten; eine Kontenmigration entfällt. Einen eventuell
+bereits vorhandenen eindeutigen Index auf `supabaseUserId` vor dem Deployment
+entfernen; siehe [Firebase-Einrichtung](docs/firebase-auth-migration.md).

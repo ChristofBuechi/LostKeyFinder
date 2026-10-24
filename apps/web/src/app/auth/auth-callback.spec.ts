@@ -2,11 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { consumeAuthCallback } from './auth-callback';
 
 describe('Auth callback URL hygiene', () => {
-  it('captures a PKCE code once and removes all query and fragment data before other work', () => {
+  it('captures a Firebase link once and removes all query and fragment data before other work', () => {
     const replaceState = vi.fn();
-    const result = consumeAuthCallback({ pathname: '/auth/callback', search: '?code=one-time-code&flowId=private', hash: '' } as Location,
+    const result = consumeAuthCallback({ origin: 'https://example.com', pathname: '/auth/callback', search: '?mode=signIn&apiKey=test&oobCode=one-time-code&flowId=private', hash: '' } as Location,
       { replaceState } as unknown as History);
-    expect(result).toEqual({ code: 'one-time-code', failed: false });
+    expect(result).toEqual({ link: 'https://example.com/auth/callback?apiKey=test&oobCode=one-time-code&mode=signIn', failed: false });
     expect(replaceState).toHaveBeenCalledExactlyOnceWith(null, '', '/auth/callback');
   });
 

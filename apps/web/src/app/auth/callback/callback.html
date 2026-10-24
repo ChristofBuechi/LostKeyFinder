@@ -1,5 +1,12 @@
 <section class="auth-panel" aria-labelledby="callback-title">
   <h1 id="callback-title">{{ language.copy().loginTitle }}</h1>
-  <p role="status">{{ failed() ? language.copy().callbackFailed : language.copy().callbackChecking }}</p>
+  <p role="status">{{ failed() ? language.copy().callbackFailed : auth.needsEmail() ? language.copy().callbackEmailNeeded : language.copy().callbackChecking }}</p>
+  @if (auth.needsEmail() && !failed()) {
+    <form (ngSubmit)="complete()">
+      <label for="callback-email">{{ language.copy().email }}</label>
+      <input id="callback-email" name="email" type="email" autocomplete="email" spellcheck="false" required [(ngModel)]="email">
+      <button type="submit">{{ language.copy().confirm }}</button>
+    </form>
+  }
   @if (failed()) { <a routerLink="/login">{{ language.copy().backToLogin }}</a> }
 </section>

@@ -8,5 +8,5 @@ export async function loadAuthConfiguration(): Promise<AuthConfiguration> {
   } catch {
     // Public pages remain available when Auth configuration cannot be loaded.
   }
-  return { url: '', publishableKey: '' };
+  return {};
 }

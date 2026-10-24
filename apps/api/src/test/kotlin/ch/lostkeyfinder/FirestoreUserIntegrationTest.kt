@@ -1,8 +1,8 @@
 package ch.lostkeyfinder
 
+import ch.lostkeyfinder.identity.FirebaseIdentity
 import ch.lostkeyfinder.identity.IdentityProperties
 import ch.lostkeyfinder.identity.SecurityConfiguration
-import ch.lostkeyfinder.identity.SupabaseIdentity
 import ch.lostkeyfinder.users.User
 import ch.lostkeyfinder.users.UserService
 import ch.lostkeyfinder.users.UserStatus
@@ -32,11 +32,12 @@ class FirestoreUserIntegrationTest {
         MongoClients.create(uri).use { client ->
             val template = MongoTemplate(client, requireNotNull(ConnectionString(uri).database))
             TestIdentityProvider().use { identity ->
-                val properties = IdentityProperties(URI(identity.origin), "test-publishable-key")
+                val properties =
+                    IdentityProperties("test-project", "test-publishable-key", URI("${identity.origin}/jwks"), URI(identity.origin))
                 val decoder = SecurityConfiguration().jwtDecoder(properties, MockEnvironment())
-                val users = UserService(template, SupabaseIdentity(properties, RestClient.builder()))
+                val users = UserService(template, FirebaseIdentity(properties, RestClient.builder()))
                 val jwt = decoder.decode(identity.token(subject = subjects[0]))
-                val selection = query(where("supabaseUserId").`in`(subjects))
+                val selection = query(where("firebaseUserId").`in`(subjects))
                 try {
                     val ids =
                         Executors.newFixedThreadPool(4).use { executor ->
@@ -52,7 +53,7 @@ class FirestoreUserIntegrationTest {
                     assertEquals("owner@example.com", other.email)
                     assertEquals(2L, template.count(selection, User::class.java))
                     template.updateFirst(
-                        query(where("supabaseUserId").`is`(subjects[0])),
+                        query(where("firebaseUserId").`is`(subjects[0])),
                         Update.update("status", UserStatus.DISABLED),
                         User::class.java,
                     )

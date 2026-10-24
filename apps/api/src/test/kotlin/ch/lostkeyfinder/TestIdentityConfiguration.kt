@@ -2,11 +2,10 @@ package ch.lostkeyfinder
 
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
-import com.nimbusds.jose.crypto.ECDSASigner
-import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.ECKey
+import com.nimbusds.jose.crypto.RSASSASigner
 import com.nimbusds.jose.jwk.JWKSet
-import com.nimbusds.jose.jwk.gen.ECKeyGenerator
+import com.nimbusds.jose.jwk.RSAKey
+import com.nimbusds.jose.jwk.gen.RSAKeyGenerator
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.sun.net.httpserver.HttpServer
@@ -28,16 +27,18 @@ class TestIdentityConfiguration {
     @Bean
     fun identityProperties(identity: TestIdentityProvider) =
         DynamicPropertyRegistrar { registry ->
-            registry.add("identity.supabase-url") { identity.origin }
-            registry.add("identity.publishable-key") { "test-publishable-key" }
+            registry.add("identity.jwk-set-uri") { "${identity.origin}/jwks" }
+            registry.add("identity.accounts-url") { identity.origin }
+            registry.add("identity.project-id") { "test-project" }
+            registry.add("identity.api-key") { "test-publishable-key" }
         }
 }
 
 class TestIdentityProvider : AutoCloseable {
-    val key: ECKey = ECKeyGenerator(Curve.P_256).keyID("test-key").generate()
+    val key: RSAKey = RSAKeyGenerator(2048).keyID("test-key").generate()
     private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
     val origin: String get() = "http://127.0.0.1:${server.address.port}"
-    val issuer: String get() = "$origin/auth/v1"
+    val issuer: String get() = "https://securetoken.google.com/test-project"
     var confirmed = true
     var responseSubject: String? = null
     var responseEmail = "Owner@Example.com"
@@ -45,18 +46,23 @@ class TestIdentityProvider : AutoCloseable {
     val userRequests = AtomicInteger()
 
     init {
-        server.createContext("/auth/v1/.well-known/jwks.json") { exchange ->
+        server.createContext("/jwks") { exchange ->
             val body = JWKSet(key.toPublicJWK()).toString().toByteArray()
             exchange.responseHeaders.set("Content-Type", "application/json")
             exchange.sendResponseHeaders(200, body.size.toLong())
             exchange.responseBody.use { it.write(body) }
         }
-        server.createContext("/auth/v1/user") { exchange ->
+        server.createContext("/v1/accounts:lookup") { exchange ->
             userRequests.incrementAndGet()
-            val token = exchange.requestHeaders.getFirst("Authorization")?.removePrefix("Bearer ")
+            val token =
+                JsonMapper
+                    .builder()
+                    .build()
+                    .readTree(exchange.requestBody)["idToken"]
+                    .asString()
             val subject = runCatching { SignedJWT.parse(token).jwtClaimsSet.subject }.getOrNull()
             val status =
-                if (exchange.requestHeaders.getFirst("apikey") == "test-publishable-key" &&
+                if (exchange.requestURI.query == "key=test-publishable-key" &&
                     subject != null
                 ) {
                     responseStatus
@@ -66,11 +72,16 @@ class TestIdentityProvider : AutoCloseable {
             val body =
                 JsonMapper.builder().build().writeValueAsBytes(
                     mapOf(
-                        "id" to (responseSubject ?: subject),
-                        "email" to responseEmail,
-                        "email_confirmed_at" to if (confirmed) "2026-01-01T00:00:00Z" else null,
-                        "user_metadata" to mapOf("email_verified" to true),
-                        "message" to "upstream-secret",
+                        "users" to
+                            listOf(
+                                mapOf(
+                                    "localId" to (responseSubject ?: subject),
+                                    "email" to responseEmail,
+                                    "emailVerified" to confirmed,
+                                    "user_metadata" to mapOf("email_verified" to true),
+                                    "message" to "upstream-secret",
+                                ),
+                            ),
                     ),
                 )
             exchange.responseHeaders.set("Content-Type", "application/json")
@@ -84,10 +95,12 @@ class TestIdentityProvider : AutoCloseable {
         subject: String? = UUID.randomUUID().toString(),
         email: String = "Owner@Example.com",
         issuer: String = this.issuer,
-        audience: String? = "authenticated",
+        audience: String? = "test-project",
         expires: Instant? = Instant.now().plusSeconds(600),
         notBefore: Instant? = null,
-        signingKey: ECKey = key,
+        issuedAt: Instant? = Instant.now().minusSeconds(10),
+        authTime: Long? = Instant.now().minusSeconds(10).epochSecond,
+        signingKey: RSAKey = key,
     ): String {
         val claims =
             JWTClaimsSet
@@ -95,14 +108,16 @@ class TestIdentityProvider : AutoCloseable {
                 .issuer(issuer)
                 .subject(subject)
                 .claim("email", email)
+                .claim("auth_time", authTime)
                 .claim("role", "admin")
                 .claim("user_metadata", mapOf("email_verified" to true))
+        issuedAt?.let { claims.issueTime(Date.from(it)) }
         audience?.let { claims.audience(it) }
         expires?.let { claims.expirationTime(Date.from(it)) }
         notBefore?.let { claims.notBeforeTime(Date.from(it)) }
-        return SignedJWT(JWSHeader.Builder(JWSAlgorithm.ES256).keyID(key.keyID).build(), claims.build())
+        return SignedJWT(JWSHeader.Builder(JWSAlgorithm.RS256).keyID(key.keyID).build(), claims.build())
             .apply {
-                sign(ECDSASigner(signingKey))
+                sign(RSASSASigner(signingKey))
             }.serialize()
     }
 
