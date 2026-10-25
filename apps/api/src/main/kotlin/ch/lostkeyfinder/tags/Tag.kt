@@ -67,8 +67,11 @@ data class TagResponse(
     }
 }
 
-@Schema(requiredProperties = ["items", "nextCursor"])
+@Schema(requiredProperties = ["items", "page", "pageSize", "totalItems", "totalPages"])
 data class TagPage(
     val items: List<TagResponse>,
-    val nextCursor: String?,
+    val page: Int,
+    val pageSize: Int,
+    val totalItems: Long,
+    val totalPages: Int,
 )

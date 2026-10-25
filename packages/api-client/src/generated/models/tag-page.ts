@@ -4,5 +4,8 @@
 import { TagResponse } from '../models/tag-response';
 export interface TagPage {
   items: Array<TagResponse>;
-  nextCursor: string | null;
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
 }

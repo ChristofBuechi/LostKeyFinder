@@ -62,10 +62,18 @@
           </table>
         </div>
       } @else { <p>{{ copy().empty }}</p> }
-      <div class="pagination">
-        <button type="button" (click)="filter()">{{ copy().first }}</button>
-        @if (page.value().nextCursor; as cursor) { <button type="button" (click)="filter(cursor)">{{ copy().next }}</button> }
-      </div>
+      @let result = page.value();
+      <p role="status">{{ copy().page }} {{ result.page }} {{ copy().of }} {{ result.totalPages }} ·
+        Tags {{ result.totalItems ? (result.page - 1) * result.pageSize + 1 : 0 }}–{{ (result.page - 1) * result.pageSize + result.items.length }} {{ copy().of }} {{ result.totalItems }}</p>
+      <nav class="pagination" [attr.aria-label]="copy().pagination">
+        <button type="button" (click)="filter(result.page - 1)" [disabled]="result.page === 1">{{ copy().previous }}</button>
+        @for (number of pageNumbers(); track number; let index = $index) {
+          @if (index > 0 && number - pageNumbers()[index - 1] > 1) { <span aria-hidden="true">…</span> }
+          <button type="button" (click)="filter(number)" [attr.aria-label]="copy().page + ' ' + number"
+            [attr.aria-current]="number === result.page ? 'page' : null" [disabled]="number === result.page">{{ number }}</button>
+        }
+        <button type="button" (click)="filter(result.page + 1)" [disabled]="result.page === result.totalPages">{{ copy().next }}</button>
+      </nav>
     }
   }
 </section>

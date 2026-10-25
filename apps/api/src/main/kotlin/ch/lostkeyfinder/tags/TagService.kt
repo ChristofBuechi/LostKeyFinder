@@ -7,7 +7,6 @@ import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.FindAndModifyOptions
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.aggregation.Aggregation
-import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Criteria.where
 import org.springframework.data.mongodb.core.query.Query.query
 import org.springframework.data.mongodb.core.query.Update
@@ -103,19 +102,24 @@ class TagService(
 
     fun list(
         ownerId: String? = null,
-        cursor: String? = null,
+        page: Int = 1,
         filter: TagFilter = TagFilter(),
     ): TagPage {
+        if (page < 1) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid page")
         val filters = filter.criteria(ownerId)
-        val criteria = if (cursor == null) filters else Criteria().andOperator(filters, tagCursor(cursor))
+        val total = template.count(query(filters), Tag::class.java)
+        val totalPages = maxOf(1, ((total + PAGE_SIZE - 1) / PAGE_SIZE).toInt())
+        val current = minOf(page, totalPages)
+        // ponytail: fixed pages for inventory; no cursor cache or client-side loading of all tags.
         val tags =
             template.find(
-                query(criteria).with(Sort.by(Sort.Direction.DESC, "createdAt", "_id")).limit(PAGE_SIZE + 1),
+                query(filters)
+                    .with(Sort.by(Sort.Direction.DESC, "createdAt", "_id"))
+                    .skip((current.toLong() - 1) * PAGE_SIZE)
+                    .limit(PAGE_SIZE),
                 Tag::class.java,
             )
-        val page = tags.take(PAGE_SIZE)
-        val next = if (tags.size > PAGE_SIZE) page.last().let { "${it.createdAt.toEpochMilli()}_${it.id}" } else null
-        return TagPage(page.map(TagResponse::from), next)
+        return TagPage(tags.map(TagResponse::from), current, PAGE_SIZE, total, totalPages)
     }
 
     fun adminDetail(id: String): TagResponse {
