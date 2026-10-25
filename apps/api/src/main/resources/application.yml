@@ -9,6 +9,7 @@ spring:
   jackson:
     deserialization:
       fail-on-unknown-properties: true
+      accept-float-as-int: false
 server:
   port: ${PORT:3000}
   error:
@@ -35,3 +36,5 @@ springdoc:
   api-docs:
     version: OPENAPI_3_0
   paths-to-match: /api/v1/**
+tags:
+  public-base-url: ${TAG_PUBLIC_BASE_URL:}

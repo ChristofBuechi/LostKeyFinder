@@ -10,18 +10,9 @@ Es gibt keine separate Login-Formularseite mehr. Bestehende `/login`-Links werde
 auf `/#owner` umgeleitet; `/login#finder` bleibt durch Weiterleitung auf `/#finder`
 nutzbar. Erfolgsseite `/login/link-sent` und Callback `/auth/callback` bleiben stabil.
 
-Ein öffentlicher Tag-Link ist kein Nachweis von Besitz und führt nicht zur
-Besitzer-Anmeldung.
+Ein öffentlicher Tag-Link enthält ausschliesslich die öffentliche UUID-v4. Freigegebene unzugewiesene Hardware-Tags führen zur Registrierung mit E-Mail-Anmeldung und expliziter Zuordnung; zugewiesene Tags zur eigenen Verwaltung oder zum Hinweis auf den späteren Kontaktprozess. Ein zusätzlicher Aktivierungscode ist nicht vorgesehen; die erste bestätigte Zuordnung gewinnt. Eigene Tags werden weiterhin nach Anmeldung neu erzeugt und unmittelbar zugeordnet.
 
-Geplanter Ausbau: Der gemeinsame Scan-/ID-Einstieg wird neutral beschriftet und
-serverseitig aufgelöst. Ein vorhandener, freigegebener unzugewiesener Hardware-Tag
-führt zur Erstregistrierung mit E-Mail-Anmeldung und expliziter Zuordnung; ein
-zugewiesener aktiver Tag zur Fundmeldung. Ein eigener Tag wird weiterhin nach
-Anmeldung neu erzeugt und unmittelbar zugeordnet. Admins mit manuell gesetztem
-`users.isAdmin` erreichen nach gewöhnlicher Anmeldung eine globale Tagübersicht;
-laufende Tag-/Finder-Vorgänge behalten ihre Fortsetzung. Der aktuell implementierte
-Stand mit neutraler Platzhalterseite bleibt bis zu diesem Ausbau unverändert.
-Details: [Tag-Plan](tag-produktion-und-registrierung-plan.md).
+Admins mit manuell gesetztem `users.isAdmin` erreichen nach gewöhnlicher Anmeldung die globale Tagübersicht. Laufende Registrierungen haben Vorrang vor diesem Standardziel. Vollständiger Stand: [Tag-/Admin-Umsetzung](tag-implementation-status.md).
 
 ## QR und Tag-ID
 
@@ -37,10 +28,9 @@ verweigerter Freigabe stehen Tag-Eingabe und lokale QR-Bildauswahl zur Verfügun
 QR-Bilder bis 10 MB werden lokal verarbeitet und nicht an einen Server hochgeladen.
 Der Decoder enthält einen Worker-Fallback für Browser ohne native QR-Erkennung.
 
-Der vollständige Tag-/Fundmeldungsprozess ist weiterhin ein geplanter eigener
-Use Case. Die öffentliche `/f/{publicId}`-Ansicht zeigt bis zu dessen Implementierung
-neutral an, dass eine Fundmeldung derzeit nicht gestartet werden kann. Sie behauptet
-weder, einen Tag serverseitig geprüft zu haben, noch eine Meldung gespeichert zu haben.
+Die öffentliche `/f/{publicId}`-Ansicht löst den Zustand über das Backend auf. Antworten enthalten weder Besitzeridentität noch private Bezeichnungen. Ein noch nicht existierender, nicht freigegebener, inaktiver, gesperrter oder stillgelegter Tag ist neutral nicht verfügbar. Unbekannte IDs erzeugen keinen Bestand. Fundmeldung und Kontaktaufnahme sind weiterhin ein späterer eigener Use Case; bis dahin wird keine Meldung als gespeichert oder versandt dargestellt.
+
+Bei Registrierung enthält der feste Continue-Link ausschliesslich die nicht geheime `registrationId`. Der Callback validiert direkte oder verschachtelte Fortsetzung auf gleicher Origin und festem Pfad, entfernt Query/Fragment und bewahrt Auth-Link und Vorgangs-ID getrennt im Speicher. Nach Firebase-Anmeldung lädt der neue Browser den verifizierten Vorgang und zeigt eine ausdrückliche Zuordnungsbestätigung. E-Mail, Frist und aktueller Tag-Zustand werden im Backend geprüft; der ursprüngliche Tab ist nicht erforderlich.
 
 ## Nach dem Linkversand
 

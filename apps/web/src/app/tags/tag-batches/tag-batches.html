@@ -1,0 +1,38 @@
+<section class="batch-panel" aria-labelledby="batches-title">
+  <nav><a routerLink="/admin/tags">{{ copy().admin }}</a> · <a routerLink="/account">{{ copy().account }}</a></nav>
+  <h1 id="batches-title">{{ copy().batches }}</h1>
+  <p>{{ copy().batchIntro }}</p>
+  @if (page.isLoading()) { <p role="status">{{ copy().loading }}</p> }
+  @if (page.error(); as error) { <p role="alert">{{ errorText(error) }}</p><button type="button" (click)="page.reload()">{{ copy().retry }}</button> }
+  @if (page.hasValue()) {
+    <form (submit)="create($event)">
+      <label for="batch-count">{{ copy().count }}</label><input id="batch-count" type="number" [formField]="batchForm.count">
+      <label for="batch-label">{{ copy().batchLabel }}</label><input id="batch-label" [formField]="batchForm.label">
+      @if (submitted() && invalid()) { <p role="alert">{{ copy().validation }}</p> }
+      <button type="submit" [disabled]="busy()">{{ copy().createBatch }}</button>
+      @if (pending() && failure()) { <p>{{ copy().pending }}</p> }
+    </form>
+    <p>{{ copy().exportHint }}</p>
+    <ul>
+      @for (batch of page.value().items; track batch.id) {
+        <li>
+          <h2>{{ batch.label || batch.id }}</h2><p>{{ batch.id }} · {{ batch.count }} · {{ batch.createdAt | date:'yyyy-MM-dd HH:mm' }}</p>
+          <a routerLink="/admin/tags" [queryParams]="{ batchId: batch.id }">{{ copy().showBatch }}</a>
+          <button type="button" (click)="download(batch)" [disabled]="busy()">{{ copy().export }}</button>
+          @if (batch.releasedAt) { <p>{{ copy().releaseDate }}: {{ batch.releasedAt | date:'yyyy-MM-dd HH:mm' }}</p> }
+          @else { <button type="button" (click)="select(batch)" [disabled]="busy()">{{ copy().prepareRelease }}</button> }
+        </li>
+      } @empty { <li>{{ copy().batchEmpty }}</li> }
+    </ul>
+    @if (selected(); as batch) {
+      <section class="release-panel" aria-labelledby="release-title">
+        <h2 id="release-title">{{ copy().release }}</h2><p>{{ batch.label }} · {{ batch.id }} · {{ batch.count }}</p>
+        <label><input type="checkbox" [formField]="releaseForm.confirmed"> {{ copy().releaseHint }}</label>
+        <button type="button" (click)="release()" [disabled]="busy() || !releaseForm.confirmed().value()">{{ copy().release }}</button>
+        <button type="button" (click)="select(null)" [disabled]="busy()">{{ copy().cancel }}</button>
+      </section>
+    }
+    <div class="pagination"><button type="button" (click)="first()">{{ copy().first }}</button>@if (page.value().nextCursor; as cursor) { <button type="button" (click)="next(cursor)">{{ copy().next }}</button> }</div>
+  }
+  @if (failure(); as error) { <p role="alert">{{ errorText(error) }}</p> }
+</section>

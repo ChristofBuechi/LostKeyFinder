@@ -15,6 +15,8 @@ export interface AdminTagControllerList$Params {
   status?: 'ACTIVE' | 'INACTIVE' | 'BLOCKED' | 'RETIRED';
   assigned?: boolean;
   publicId?: string;
+  batchId?: string;
+  inventoryStatus?: 'PREPARED' | 'RELEASED';
 }
 
 export function adminTagControllerList(http: HttpClient, rootUrl: string, params?: AdminTagControllerList$Params, context?: HttpContext): Observable<StrictHttpResponse<TagPage>> {
@@ -25,6 +27,8 @@ export function adminTagControllerList(http: HttpClient, rootUrl: string, params
     rb.query('status', params.status, {});
     rb.query('assigned', params.assigned, {});
     rb.query('publicId', params.publicId, {});
+    rb.query('batchId', params.batchId, {});
+    rb.query('inventoryStatus', params.inventoryStatus, {});
   }
 
   return http.request(

@@ -1,8 +1,10 @@
 package ch.lostkeyfinder
 
 import ch.lostkeyfinder.tags.Tag
+import ch.lostkeyfinder.tags.TagBatch
 import ch.lostkeyfinder.tags.TagCreationLimit
 import ch.lostkeyfinder.tags.TagOrigin
+import ch.lostkeyfinder.tags.TagRegistrationDraft
 import ch.lostkeyfinder.tags.TagService
 import ch.lostkeyfinder.tags.TagStatus
 import ch.lostkeyfinder.users.User
@@ -31,22 +33,89 @@ class FirestoreTagIndexProvisioningTest {
     @Test fun `provision tag indexes with operator credentials`() =
         withFirestore { template ->
             val indexes = template.indexOps(Tag::class.java)
-            indexes.createIndex(Index().on("publicId", Sort.Direction.ASC).unique())
-            indexes.createIndex(Index().on("creationKey", Sort.Direction.ASC).unique().sparse())
-            indexes.createIndex(Index().on("createdAt", Sort.Direction.DESC).on("_id", Sort.Direction.DESC))
-            indexes.createIndex(
-                Index().on("primaryOwnerUserId", Sort.Direction.ASC).on("createdAt", Sort.Direction.DESC).on("_id", Sort.Direction.DESC),
-            )
-            indexes.createIndex(
-                Index()
-                    .on(
-                        "origin",
-                        Sort.Direction.ASC,
-                    ).on("status", Sort.Direction.ASC)
-                    .on("createdAt", Sort.Direction.DESC)
-                    .on("_id", Sort.Direction.DESC),
-            )
-            template.indexOps("tagCreationLimits").createIndex(Index().on("expiresAt", Sort.Direction.ASC).expire(Duration.ZERO))
+            val operations: List<() -> Unit> =
+                listOf(
+                    {
+                        indexes.createIndex(Index().on("publicId", Sort.Direction.ASC).unique())
+                        Unit
+                    },
+                    {
+                        indexes.createIndex(Index().on("creationKey", Sort.Direction.ASC).unique().sparse())
+                        Unit
+                    },
+                    {
+                        indexes.createIndex(Index().on("createdAt", Sort.Direction.DESC).on("_id", Sort.Direction.DESC))
+                        Unit
+                    },
+                    {
+                        indexes.createIndex(
+                            Index()
+                                .on(
+                                    "primaryOwnerUserId",
+                                    Sort.Direction.ASC,
+                                ).on("createdAt", Sort.Direction.DESC)
+                                .on("_id", Sort.Direction.DESC),
+                        )
+                        Unit
+                    },
+                    {
+                        indexes.createIndex(
+                            Index()
+                                .on(
+                                    "origin",
+                                    Sort.Direction.ASC,
+                                ).on("status", Sort.Direction.ASC)
+                                .on("createdAt", Sort.Direction.DESC)
+                                .on("_id", Sort.Direction.DESC),
+                        )
+                        Unit
+                    },
+                    {
+                        template
+                            .indexOps(
+                                "tagCreationLimits",
+                            ).createIndex(Index().on("expiresAt", Sort.Direction.ASC).expire(Duration.ZERO))
+                        Unit
+                    },
+                    {
+                        indexes.createIndex(
+                            Index()
+                                .on("batchId", Sort.Direction.ASC)
+                                .on("position", Sort.Direction.ASC)
+                                .unique()
+                                .sparse(),
+                        )
+                        Unit
+                    },
+                    {
+                        template.indexOps(TagBatch::class.java).createIndex(Index().on("creationKey", Sort.Direction.ASC).unique())
+                        Unit
+                    },
+                    {
+                        template
+                            .indexOps(
+                                TagBatch::class.java,
+                            ).createIndex(Index().on("createdAt", Sort.Direction.DESC).on("_id", Sort.Direction.DESC))
+                        Unit
+                    },
+                    {
+                        template
+                            .indexOps(
+                                TagRegistrationDraft::class.java,
+                            ).createIndex(Index().on("expiresAt", Sort.Direction.ASC).expire(Duration.ZERO))
+                        Unit
+                    },
+                    {
+                        template
+                            .indexOps(
+                                "publicRequestLimits",
+                            ).createIndex(Index().on("expiresAt", Sort.Direction.ASC).expire(Duration.ZERO))
+                        Unit
+                    },
+                )
+            Executors.newFixedThreadPool(4).use { pool ->
+                operations.map { operation -> pool.submit<Unit> { operation() } }.forEach { it.get(240, TimeUnit.SECONDS) }
+            }
         }
 }
 

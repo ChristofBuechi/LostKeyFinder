@@ -30,7 +30,7 @@ describe('API bearer token scoping', () => {
 
   it('never sends a session token to another origin or to public assets', async () => {
     for (const url of ['https://foreign.example/api/v1/me', '/auth-config.json', '/api/v10/me',
-      '/api/v1/health/ready', '/api/v1/version']) {
+      '/api/v1/health/ready', '/api/v1/version', '/api/v1/public/tags/example']) {
       const response = firstValueFrom(TestBed.inject(HttpClient).get(url));
       const request = http.expectOne(url);
       expect(request.request.headers.has('Authorization')).toBe(false);

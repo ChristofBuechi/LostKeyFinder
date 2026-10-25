@@ -1,12 +1,13 @@
 import { DOCUMENT, DatePipe } from '@angular/common';
-import { HttpErrorResponse, httpResource } from '@angular/common/http';
-import { Component, DestroyRef, InjectionToken, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { httpResource } from '@angular/common/http';
+import { Component, DestroyRef, InjectionToken, computed, inject, signal } from '@angular/core';
+import { FormField, disabled, form, maxLength } from '@angular/forms/signals';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TagPage, TagResponse, TagsService } from '@lost-key-finder/api-client';
+import { TagPage, TagResponse, TagSummary, TagsService } from '@lost-key-finder/api-client';
 import { firstValueFrom } from 'rxjs';
 import { Auth } from '../../auth/auth';
 import { TagCopy } from '../tag-copy';
+import { tagError } from '../tag-error';
 
 export const QR_ENCODER = new InjectionToken('QR encoder loader', {
   providedIn: 'root', factory: () => () => import('qrcode'),
@@ -14,44 +15,55 @@ export const QR_ENCODER = new InjectionToken('QR encoder loader', {
 
 @Component({
   selector: 'app-tag-list',
-  imports: [RouterLink, FormsModule, DatePipe],
+  imports: [RouterLink, FormField, DatePipe],
   templateUrl: './tag-list.html',
   styleUrl: './tag-list.scss',
 })
 export class TagList {
   protected readonly auth = inject(Auth);
   protected readonly copy = inject(TagCopy).text;
-  protected readonly admin = inject(ActivatedRoute).snapshot.data['admin'] === true;
+  private readonly route = inject(ActivatedRoute);
+  protected readonly admin = this.route.snapshot.data['admin'] === true;
   private readonly tags = inject(TagsService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
   private readonly encoder = inject(QR_ENCODER);
-  private readonly query = signal('');
-  private appliedFilters = '';
+  private readonly initialBatchId = this.admin ? this.route.snapshot.queryParamMap?.get('batchId') ?? '' : '';
+  private readonly query = signal(this.initialBatchId ? `?batchId=${encodeURIComponent(this.initialBatchId)}` : '');
+  private appliedFilters = this.query().slice(1);
   protected readonly page = httpResource<TagPage>(() => this.auth.signedIn()
     ? `/api/v1/${this.admin ? 'admin/' : ''}tags${this.query()}` : undefined);
+  private readonly summaryQuery = computed(() => {
+    const params = new URLSearchParams(this.query()); params.delete('cursor');
+    return params.size ? `?${params}` : '';
+  });
+  protected readonly summary = httpResource<TagSummary>(() => this.admin && this.auth.signedIn()
+    ? `/api/v1/admin/tags/summary${this.summaryQuery()}` : undefined);
   protected readonly busy = signal(false);
   protected readonly actionError = signal<unknown>(null);
   protected readonly validationError = signal(false);
   protected readonly pending = signal<{ key: string; label: string } | null>(null);
-  protected label = '';
-  protected publicId = '';
-  protected origin = '';
-  protected status = '';
-  protected assigned = '';
+  private readonly model = signal({ label: '', publicId: '', origin: '', status: '', assigned: '', batchId: this.initialBatchId, inventoryStatus: '' });
+  protected readonly tagForm = form(this.model, p => {
+    maxLength(p.label, 80);
+    maxLength(p.publicId, 36); maxLength(p.batchId, 36);
+    disabled(p.label, () => this.busy() || !!this.pending());
+  });
 
   protected errorText(error: unknown): string {
-    return error instanceof HttpErrorResponse && error.status === 403 ? this.copy().denied
-      : error instanceof HttpErrorResponse && error.status === 401 ? this.copy().expired : this.copy().failed;
+    return tagError(error, this.copy());
   }
 
   protected filter(cursor?: string): void {
     const parameters = new URLSearchParams();
-    const id = this.publicId.trim();
-    this.validationError.set(!!id && !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id));
+    const model = this.model();
+    const id = model.publicId.trim();
+    const batchId = model.batchId.trim();
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    this.validationError.set((!!id && !uuid.test(id)) || (!!batchId && !uuid.test(batchId)));
     if (this.validationError()) return;
     if (this.admin) {
-      for (const [name, value] of Object.entries({ publicId: id, origin: this.origin, status: this.status, assigned: this.assigned })) {
+      for (const [name, value] of Object.entries({ publicId: id, origin: model.origin, status: model.status, assigned: model.assigned, batchId, inventoryStatus: model.inventoryStatus })) {
         if (value) parameters.set(name, value);
       }
     }
@@ -59,13 +71,14 @@ export class TagList {
     if (cursor && filters === this.appliedFilters) parameters.set('cursor', cursor);
     this.appliedFilters = filters;
     const value = parameters.size ? `?${parameters}` : '';
-    if (value === this.query()) this.page.reload();
+    if (value === this.query()) { this.page.reload(); if (!cursor) this.summary.reload(); }
     else this.query.set(value);
   }
 
-  protected async create(): Promise<void> {
-    if (this.busy()) return;
-    const request = this.pending() ?? { key: crypto.randomUUID(), label: this.label.trim() };
+  protected async create(event: Event): Promise<void> {
+    event.preventDefault();
+    if (this.busy() || this.tagForm.label().invalid()) return;
+    const request = this.pending() ?? { key: crypto.randomUUID(), label: this.model().label.trim() };
     this.pending.set(request);
     this.busy.set(true);
     this.actionError.set(null);
@@ -73,7 +86,7 @@ export class TagList {
       await firstValueFrom(this.tags.tagControllerCreate({ 'Idempotency-Key': request.key, body: { label: request.label } }));
       if (this.destroyRef.destroyed) return;
       this.pending.set(null);
-      this.label = '';
+      this.model.update(model => ({ ...model, label: '' }));
       this.filter();
     } catch (error) {
       if (!this.destroyRef.destroyed) this.actionError.set(error);

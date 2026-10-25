@@ -31,3 +31,7 @@ Adminrechte werden manuell über das lokale `users.isAdmin` vergeben und entzoge
 ## Authentifizierungsdaten
 
 Firebase Authentication verarbeitet Anmeldedaten in den USA; dies ist für das Projekt akzeptiert. Die regionale Firestore-Datenbank und Cloud Run in Zürich ändern den Auth-Verarbeitungsstandort nicht. Vor Go-live müssen Datenschutzinformation, Auftragsverarbeitung und Löschabläufe diesen tatsächlich verwendeten Anbieter und Datentransfer beschreiben. Quellen und technische Einrichtung stehen in [Firebase Authentication](firebase-auth-setup.md).
+
+## Implementierte Tag-Registrierung und Quoten
+
+Registrierungsentwürfe sind fachlich maximal vier Stunden gültig; erfolgreiche Zuordnung entfernt die Ziel-E-Mail im selben Commit. TTL bereinigt die übrigen Entwürfe asynchron. Ablaufzugriffe werden unabhängig von der physischen Löschung abgelehnt. HMAC-basierte Quoten speichern keine rohen IPs oder E-Mails; ihr pro Datenbank geteilter Zufallsschlüssel liegt in der privaten Collection `rateLimitKeys`. Es gibt keinen Clientzugriff auf Schlüssel oder Quotendokumente. Produktionsexporte enthalten öffentliche IDs, Positionen und kanonische Links, keine Kontaktdaten oder privaten Bezeichnungen.

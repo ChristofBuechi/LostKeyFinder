@@ -110,6 +110,8 @@ describe('Owner route access and callback', () => {
     http.expectOne('/api/v1/me').flush(user);
     const inventory = await vi.waitFor(() => http.expectOne('/api/v1/admin/tags'));
     inventory.flush({ items: [], nextCursor: null });
+    const counts = await vi.waitFor(() => http.expectOne('/api/v1/admin/tags/summary'));
+    counts.flush({ total: 0, assigned: 0, unassigned: 0, blocked: 0, retired: 0, prepared: 0, released: 0 });
     await harness.fixture.whenStable();
     expect(TestBed.inject(Router).url).toBe('/admin/tags');
     await harness.navigateByUrl('/account');
@@ -132,6 +134,25 @@ describe('Owner route access and callback', () => {
       createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' });
     await harness.fixture.whenStable();
     expect(TestBed.inject(Router).url).toBe('/missing-page');
+    http.verify();
+  });
+
+  it('continues a registration after email login instead of opening the admin inventory', async () => {
+    const id = '550e8400-e29b-41d4-a716-446655440000';
+    signedIn.set(true);
+    TestBed.overrideProvider(Auth, { useValue: { signedIn, needsEmail, configured: true, ready: Promise.resolve(),
+      completeCallback: vi.fn().mockResolvedValue(undefined), registrationId: id } });
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/auth/callback');
+    const http = TestBed.inject(HttpTestingController);
+    const view = await vi.waitFor(() => http.expectOne(`/api/v1/tag-registrations/${id}`));
+    view.flush({ flowId: id, publicId: id, completed: false, expiresAt: '2026-12-01T00:00:00Z' });
+    http.expectOne('/api/v1/me').flush({ id, email: 'admin@example.com', status: 'ACTIVE', isAdmin: true,
+      createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' });
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe(`/tag-registrations/${id}`);
+    expect(harness.routeNativeElement?.textContent).toContain('admin@example.com');
+    http.expectNone(request => request.method === 'POST');
     http.verify();
   });
 });

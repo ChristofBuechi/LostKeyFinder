@@ -1,0 +1,23 @@
+<section class="auth-panel" aria-labelledby="tag-detail-title">
+  <h1 id="tag-detail-title">{{ copy().details }}</h1>
+  @if (tag.isLoading()) { <p role="status">{{ copy().loading }}</p> }
+  @if (tag.error(); as error) { <p role="alert">{{ errorText(error) }}</p><button type="button" (click)="tag.reload()">{{ copy().retry }}</button> }
+  @if (tag.hasValue()) {
+    <dl>
+      <dt>{{ copy().tag }}</dt><dd>{{ tag.value().publicId }}</dd>
+      <dt>{{ copy().label }}</dt><dd>{{ tag.value().label || '—' }}</dd>
+      <dt>{{ copy().origin }}</dt><dd>{{ copy()[tag.value().origin] }}</dd>
+      <dt>{{ copy().status }}</dt><dd>{{ copy()[tag.value().status] }}</dd>
+      <dt>{{ copy().created }}</dt><dd>{{ tag.value().createdAt | date:'yyyy-MM-dd HH:mm' }}</dd>
+      @if (tag.value().registeredAt) { <dt>{{ copy().registeredAt }}</dt><dd>{{ tag.value().registeredAt | date:'yyyy-MM-dd HH:mm' }}</dd> }
+      @if (admin) {
+        <dt>{{ copy().owner }}</dt><dd>{{ tag.value().primaryOwnerUserId || copy().free }}</dd>
+        <dt>{{ copy().batch }}</dt><dd>{{ tag.value().batchId || '—' }}</dd>
+        @if (tag.value().inventoryStatus; as status) { <dt>{{ copy().inventory }}</dt><dd>{{ copy()[status] }}</dd> }
+      }
+    </dl>
+    <p><a [routerLink]="['/f', tag.value().publicId]">{{ copy().publicLink }}</a></p>
+    <p>{{ copy().note }}</p>
+  }
+  <a [routerLink]="admin ? '/admin/tags' : '/tags'">{{ copy().back }}</a>
+</section>

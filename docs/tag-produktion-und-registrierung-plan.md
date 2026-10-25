@@ -2,7 +2,7 @@
 
 Stand: 25. Oktober 2026. Grundlage: aktueller Repository-Code und bestehende Fach-/Implementierungsdokumentation nach PR #5. Dieses Dokument beschreibt die vorgeschlagene Umsetzung; es ändert noch keine Anwendung und legt offene Produktentscheidungen nicht eigenmächtig fest.
 
-Die Implementierung ist im Draft-PR #6 begonnen. Bereits gelieferte Fähigkeiten, noch ausstehende Schritte und die manuelle Admin-Einrichtung stehen im [Umsetzungsstand](tag-implementation-status.md). Der Plan unten beschreibt weiterhin den gesamten Zielumfang, nicht ausschliesslich den bereits implementierten Stand.
+Der vereinbarte Tag-/Admin-Umfang ist im PR #6 implementiert. Fähigkeiten, Verifikation, manuelle Admin-Einrichtung und spätere Produktionsvoraussetzungen stehen im [Umsetzungsstand](tag-implementation-status.md). Fundmeldung/Kontakt, formatierte Druckvorlagen und allgemeine Besitzerübertragung bleiben spätere eigene Schritte.
 
 ## 1. Zielbild
 
@@ -38,11 +38,11 @@ Alle Benutzer verwenden denselben Einstieg: QR-Code scannen, Tag-Link öffnen od
 
 Die Startseite benötigt dafür keine Auswahl „registrieren oder gefunden“. Der gemeinsame Bereich sollte neutral „Tag scannen oder ID eingeben“ heissen. Die E-Mail-Anmeldung ohne Tag bleibt für bestehende Benutzer erreichbar.
 
-## 2. Was heute vorhanden ist und was fehlt
+## 2. Ausgangslage bei Planerstellung nach PR #5
 
 Vorhanden sind Firebase-E-Mail-Link-Anmeldung, Callback, Erfolgsseite nach Linkversand, lokales Benutzerkonto, geschützte Kontoseite sowie QR-/ID-Eingabe mit Navigation nach `/f/{publicId}`. Firebase-Identitäten werden über die Firebase-UID einem lokalen Benutzer zugeordnet.
 
-Noch nicht implementiert sind Tag-Datenmodell und Tag-API, tatsächliche öffentliche Auflösung, Besitzerzuordnung, Produktionsserien und Admin-Oberfläche. Die öffentliche Tag-Seite ist derzeit ein Platzhalter. Auch Fundmeldungen, private Chats und Besitzerbenachrichtigungen sind bisher geplante Funktionen; ein produktiver Kontaktprozess lässt sich deshalb noch nicht lediglich anschliessen.
+Bei Planerstellung fehlten Tag-Datenmodell und Tag-API, tatsächliche öffentliche Auflösung, Besitzerzuordnung, Produktionsserien und Admin-Oberfläche; diese sind inzwischen im oben verlinkten Umsetzungsstand enthalten. Fundmeldungen, private Chats und Besitzerbenachrichtigungen bleiben spätere Funktionen.
 
 Der bestehende Plan muss fachlich korrigiert werden:
 
@@ -216,7 +216,7 @@ Vorgeschlagene fachliche Endpunkte; Namen im OpenAPI-Vertrag abschliessend verei
 
 Ein gemeinsamer Registrierungsservice erzwingt die Regeln für direkte und E-Mail-gestützte Registrierung. Der direkte Weg wird nicht als zweite Fachlogik implementiert. Support-Sperren aus dem bisherigen Plan bleiben eigene autorisierte Aktionen.
 
-Notwendige Indizes: `tags.publicId` eindeutig, `(batchId, position)` eindeutig nur für Produktions-Tags, benutzerbezogener Erstellungs-Idempotenzschlüssel eindeutig nur für selbst erzeugte Tags, Owner plus Listen-/Zeitfelder, Serien-Idempotenzschlüssel eindeutig, Entwurfs-ID eindeutig und Ablaufindex für Wartung. Für die Admin-Liste die tatsächlich angebotenen Filter-/Sortierkombinationen indexieren und gegen Firestore prüfen; stabiler Cursor über Zeit plus ID. Optionale Produktionsfelder dürfen bei selbst erzeugten Tags keine Eindeutigkeitskonflikte auslösen; passende Sparse-/Partial-Semantik gegen die echte Firestore-Datenbank beweisen. Weitere Indizes nur für tatsächlich verwendete Queries.
+Notwendige Indizes: `tags.publicId` eindeutig, `(batchId, position)` eindeutig nur für Produktions-Tags, benutzerbezogener Erstellungs-Idempotenzschlüssel eindeutig nur für selbst erzeugte Tags, Owner plus Listen-/Zeitfelder, Serien-Idempotenzschlüssel eindeutig, Entwurfs-ID eindeutig und Ablaufindex für Wartung. Für die Admin-Liste die tatsächlich angebotenen Filter-/Sortierkombinationen indexieren und gegen Firestore prüfen; stabiler Cursor über Zeit plus ID. Optionale Produktionsfelder dürfen bei selbst erzeugten Tags keine Eindeutigkeitskonflikte auslösen; die verwendeten Sparse-Indizes gegen die echte Firestore-Datenbank prüfen. Weitere Indizes nur für tatsächlich verwendete Queries.
 
 Die Zuordnung verwendet einen bedingten Schreibzugriff auf denselben Tag mit Prüfung von leerem Besitzer und zulässigem Status. Bei Entwürfen werden Verbrauch des Entwurfs und Zuordnung gemeinsam transaktional gespeichert. Keine E-Mail- oder Firebase-Aufrufe innerhalb einer Datenbanktransaktion. Konkurrenz, Retry und verlorene Antworten gegen die echte Ziel-Datenbank beweisen; MongoDB-Kompatibilität nicht mit vollständiger Gleichheit zu lokalem MongoDB verwechseln. [Firestore mit MongoDB-Kompatibilität](https://firebase.google.com/docs/firestore/enterprise/mongodb-compatibility-overview)
 

@@ -1,10 +1,12 @@
 package ch.lostkeyfinder.tags
 
 import ch.lostkeyfinder.users.User
+import org.bson.Document
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.FindAndModifyOptions
 import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Criteria.where
 import org.springframework.data.mongodb.core.query.Query.query
@@ -43,6 +45,7 @@ class TagService(
                 .setOnInsert("label", label.trim())
                 .setOnInsert("createdAt", now)
                 .setOnInsert("updatedAt", now)
+                .setOnInsert("registeredAt", now)
         val tag =
             try {
                 template.findAndModify(selection, update, FindAndModifyOptions.options().upsert(true).returnNew(true), Tag::class.java)
@@ -105,31 +108,11 @@ class TagService(
         status: TagStatus? = null,
         assigned: Boolean? = null,
         publicId: String? = null,
+        batchId: String? = null,
+        inventoryStatus: InventoryStatus? = null,
     ): TagPage {
-        val filters = mutableListOf<Criteria>()
-        ownerId?.let { filters += where("primaryOwnerUserId").`is`(it) }
-        origin?.let { filters += where("origin").`is`(it) }
-        status?.let { filters += where("status").`is`(it) }
-        assigned?.let { filters += if (it) where("primaryOwnerUserId").ne(null) else where("primaryOwnerUserId").`is`(null) }
-        publicId?.let {
-            uuid(it)
-            filters += where("publicId").`is`(it.lowercase())
-        }
-        cursor?.let {
-            val parts = it.split('_')
-            if (parts.size != 2) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid cursor")
-            uuid(parts[1])
-            val time =
-                parts[0].toLongOrNull()?.takeIf { value -> value >= 0 }
-                    ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid cursor")
-            val instant = Instant.ofEpochMilli(time)
-            filters +=
-                Criteria().orOperator(
-                    where("createdAt").lt(instant),
-                    where("createdAt").`is`(instant).and("_id").lt(parts[1]),
-                )
-        }
-        val criteria = if (filters.isEmpty()) Criteria() else Criteria().andOperator(*filters.toTypedArray())
+        val filters = TagFilter(origin, status, assigned, publicId, batchId, inventoryStatus).criteria(ownerId)
+        val criteria = if (cursor == null) filters else Criteria().andOperator(filters, tagCursor(cursor))
         val tags =
             template.find(
                 query(criteria).with(Sort.by(Sort.Direction.DESC, "createdAt", "_id")).limit(PAGE_SIZE + 1),
@@ -138,6 +121,46 @@ class TagService(
         val page = tags.take(PAGE_SIZE)
         val next = if (tags.size > PAGE_SIZE) page.last().let { "${it.createdAt.toEpochMilli()}_${it.id}" } else null
         return TagPage(page.map(TagResponse::from), next)
+    }
+
+    fun adminDetail(id: String): TagResponse {
+        uuid(id)
+        return template.findById(id.lowercase(), Tag::class.java)?.let(TagResponse::from)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
+    }
+
+    fun ownedPublic(
+        owner: User,
+        publicId: String,
+    ): TagResponse {
+        uuid(publicId)
+        return template
+            .findOne(
+                query(where("publicId").`is`(publicId.lowercase()).and("primaryOwnerUserId").`is`(owner.id)),
+                Tag::class.java,
+            )?.let(TagResponse::from) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
+    }
+
+    fun summary(filter: TagFilter): TagSummary {
+        fun sum(condition: Document) = Document("\$sum", Document("\$cond", listOf(condition, 1, 0)))
+
+        fun equals(
+            field: String,
+            value: Any?,
+        ) = Document("\$eq", listOf("\$$field", value))
+        val owner = Document("\$ifNull", listOf("\$primaryOwnerUserId", null))
+        val group =
+            Document("_id", null)
+                .append("total", Document("\$sum", 1))
+                .append("assigned", sum(Document("\$ne", listOf(owner, null))))
+                .append("unassigned", sum(Document("\$eq", listOf(owner, null))))
+                .append("blocked", sum(equals("status", "BLOCKED")))
+                .append("retired", sum(equals("status", "RETIRED")))
+                .append("prepared", sum(equals("inventoryStatus", "PREPARED")))
+                .append("released", sum(equals("inventoryStatus", "RELEASED")))
+        val pipeline =
+            Aggregation.newAggregation({ Document("\$match", filter.criteria().criteriaObject) }, { Document("\$group", group) })
+        return template.aggregate(pipeline, "tags", TagSummary::class.java).uniqueMappedResult ?: TagSummary()
     }
 
     companion object {

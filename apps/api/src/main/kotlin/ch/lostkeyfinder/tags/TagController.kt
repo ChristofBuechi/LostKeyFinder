@@ -8,10 +8,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Size
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.http.MediaType
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -59,6 +61,13 @@ class TagController(
         @PathVariable tagId: String,
     ) = tags.owned(users.currentUser(jwt), tagId)
 
+    @GetMapping("/by-public/{publicId}")
+    @Operation(operationId = "TagController_ownedPublic")
+    fun ownedPublic(
+        @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
+        @PathVariable publicId: String,
+    ) = tags.ownedPublic(users.currentUser(jwt), publicId)
+
     @PatchMapping("/{tagId}/status")
     @Operation(operationId = "TagController_changeStatus")
     fun changeStatus(
@@ -81,12 +90,37 @@ class AdminTagController(
     fun list(
         @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
         @RequestParam(required = false) cursor: String?,
-        @RequestParam(required = false) origin: TagOrigin?,
-        @RequestParam(required = false) status: TagStatus?,
-        @RequestParam(required = false) assigned: Boolean?,
-        @RequestParam(required = false) publicId: String?,
+        @ParameterObject @ModelAttribute filter: TagFilter,
     ): TagPage {
         users.requireAdmin(jwt)
-        return tags.list(cursor = cursor, origin = origin, status = status, assigned = assigned, publicId = publicId)
+        return tags.list(
+            cursor = cursor,
+            origin = filter.origin,
+            status = filter.status,
+            assigned = filter.assigned,
+            publicId = filter.publicId,
+            batchId = filter.batchId,
+            inventoryStatus = filter.inventoryStatus,
+        )
+    }
+
+    @GetMapping("/summary")
+    @Operation(operationId = "AdminTagController_summary")
+    fun summary(
+        @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
+        @ParameterObject @ModelAttribute filter: TagFilter,
+    ): TagSummary {
+        users.requireAdmin(jwt)
+        return tags.summary(filter)
+    }
+
+    @GetMapping("/{tagId}")
+    @Operation(operationId = "AdminTagController_detail")
+    fun detail(
+        @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
+        @PathVariable tagId: String,
+    ): TagResponse {
+        users.requireAdmin(jwt)
+        return tags.adminDetail(tagId)
     }
 }

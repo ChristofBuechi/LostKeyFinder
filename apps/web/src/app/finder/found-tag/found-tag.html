@@ -1,5 +1,36 @@
 <section class="auth-panel" aria-labelledby="found-title">
-  <h1 id="found-title">{{ language.copy().reportFound }}</h1>
-  <p role="status">{{ language.copy().foundUnavailable }}</p>
+  <h1 id="found-title">{{ copy().tag }}</h1>
+  <p class="tag-id">{{ publicId() }}</p>
+  @if (resolution.isLoading()) { <p role="status">{{ copy().loading }}</p> }
+  @if (resolution.error(); as error) { <p role="alert">{{ errorText(error) }}</p><button type="button" (click)="resolution.reload()">{{ copy().retry }}</button> }
+  @if (resolution.hasValue()) {
+    @switch (resolution.value().action) {
+      @case ('REGISTER') {
+        <h2>{{ copy().register }}</h2><p>{{ copy().registerIntro }}</p>
+        @if (auth.signedIn()) {
+          @if (currentUser.hasValue()) { <p>{{ copy().email }}: {{ currentUser.value().email }}</p> }
+          @if (currentUser.error(); as error) { <p role="alert">{{ errorText(error) }}</p> }
+          <button type="button" (click)="register()" [disabled]="busy() || !currentUser.hasValue()">{{ copy().registerConfirm }}</button>
+          <p><a routerLink="/account">{{ copy().account }}</a></p>
+        } @else {
+          <form (submit)="send($event)">
+            <label for="registration-email">{{ copy().email }}</label>
+            <input id="registration-email" type="email" autocomplete="email" [formField]="emailForm.email"
+              [attr.aria-invalid]="submitted() && emailForm.email().invalid()" aria-describedby="registration-email-hint">
+            <p id="registration-email-hint">{{ language.copy().emailHint }}</p>
+            @if (submitted() && emailForm.email().invalid()) { <p role="alert">{{ language.copy().emailInvalid }}</p> }
+            @if (!auth.configured) { <p>{{ language.copy().authUnavailable }}</p> }
+            <button type="submit" [disabled]="busy() || !auth.configured">{{ busy() ? language.copy().sendingLink : copy().registerEmail }}</button>
+          </form>
+        }
+      }
+      @case ('REPORT_FOUND') {
+        @if (own.hasValue()) { <p><a [routerLink]="['/tags', own.value().id]">{{ copy().ownTag }}</a></p> }
+        @else { <p>{{ copy().contactLater }}</p> }
+      }
+      @default { <p>{{ copy().unavailable }}</p> }
+    }
+  }
+  @if (failure(); as error) { <p role="alert">{{ errorText(error) }}</p><button type="button" (click)="resolution.reload()" [disabled]="busy()">{{ copy().retry }}</button> }
   <a routerLink="/" fragment="finder">{{ language.copy().anotherTag }}</a>
 </section>

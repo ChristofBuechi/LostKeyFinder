@@ -43,6 +43,16 @@ describe('Firebase email-link session lifecycle', () => {
     expect(client.sdk['signInWithEmailLink']).toHaveBeenCalledTimes(1);
   });
 
+  it('carries only the registration ID as continuation and rejects arbitrary destinations', async () => {
+    const auth = TestBed.inject(Auth);
+    const id = '550e8400-e29b-41d4-a716-446655440000';
+    await auth.sendLink('owner@example.com', id);
+    expect(client.sdk['sendSignInLinkToEmail']).toHaveBeenLastCalledWith(client.auth, 'owner@example.com', {
+      url: `${location.origin}/auth/callback?registrationId=${id}`, handleCodeInApp: true,
+    });
+    await expect(auth.sendLink('owner@example.com', 'https://foreign.example')).rejects.toThrow('Invalid registration');
+  });
+
   it('asks for email on another device without consuming the link', async () => {
     const auth = TestBed.inject(Auth);
     await auth.completeCallback();

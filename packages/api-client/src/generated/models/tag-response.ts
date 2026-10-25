@@ -8,8 +8,10 @@ export interface TagResponse {
   inventoryStatus: ('PREPARED' | 'RELEASED') | null;
   label: string;
   origin: 'SELF_CREATED' | 'PREPRODUCED';
+  position: number | null;
   primaryOwnerUserId: string | null;
   publicId: string;
+  registeredAt: string | null;
   status: 'ACTIVE' | 'INACTIVE' | 'BLOCKED' | 'RETIRED';
   updatedAt: string;
 }

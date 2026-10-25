@@ -81,6 +81,7 @@ describe('Tag management', () => {
     TestBed.overrideProvider(ActivatedRoute, { useValue: { snapshot: { data: { admin: true } } } });
     const fixture = TestBed.createComponent(TagList);
     await response('/api/v1/admin/tags', { items: [tag], nextCursor: `1_${id}` });
+    await response('/api/v1/admin/tags/summary', { total: 1, assigned: 1, unassigned: 0, blocked: 0, retired: 0, prepared: 0, released: 0 });
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('#tag-label')).toBeNull();
     expect(fixture.nativeElement.querySelector('.actions')).toBeNull();
@@ -90,9 +91,11 @@ describe('Tag management', () => {
     await fixture.whenStable();
     const select = fixture.nativeElement.querySelector('#origin') as HTMLSelectElement;
     select.value = 'PREPRODUCED';
-    select.dispatchEvent(new Event('change'));
+    select.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     await response('/api/v1/admin/tags?origin=PREPRODUCED', { items: [], nextCursor: null });
+    await response('/api/v1/admin/tags/summary?origin=PREPRODUCED', { total: 0, assigned: 0, unassigned: 0, blocked: 0, retired: 0, prepared: 0, released: 0 });
     await fixture.whenStable();
     expect(fixture.nativeElement.textContent).toContain('Keine Tags gefunden');
     TestBed.inject(HttpTestingController).verify();
@@ -102,6 +105,7 @@ describe('Tag management', () => {
     TestBed.overrideProvider(ActivatedRoute, { useValue: { snapshot: { data: { admin: true } } } });
     const fixture = TestBed.createComponent(TagList);
     await response('/api/v1/admin/tags', {}, 403);
+    await response('/api/v1/admin/tags/summary', {}, 403);
     await fixture.whenStable();
     expect(fixture.nativeElement.textContent).toContain('Berechtigung');
     expect(fixture.nativeElement.querySelector('tbody')).toBeNull();

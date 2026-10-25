@@ -1,27 +1,36 @@
 <section class="tag-panel" aria-labelledby="tags-title">
   <nav [attr.aria-label]="copy().account">
     <a routerLink="/account">{{ copy().account }}</a>
-    @if (admin) { <a routerLink="/tags">{{ copy().mine }}</a> }
+    @if (admin) { <a routerLink="/tags">{{ copy().mine }}</a><a routerLink="/admin/tag-batches">{{ copy().batches }}</a> }
   </nav>
   <h1 id="tags-title">{{ admin ? copy().admin : copy().mine }}</h1>
   <p>{{ admin ? copy().adminIntro : copy().intro }}</p>
   <p>{{ copy().note }}</p>
   @if (auth.signedIn()) {
     @if (!admin) {
-      <form (ngSubmit)="create()">
+      <form (submit)="create($event)">
         <label for="tag-label">{{ copy().label }}</label>
-        <input id="tag-label" name="label" maxlength="80" [(ngModel)]="label" [disabled]="busy() || !!pending()">
+        <input id="tag-label" [formField]="tagForm.label">
         <button type="submit" [disabled]="busy()">{{ busy() ? copy().creating : copy().create }}</button>
       </form>
       @if (pending() && actionError()) { <p>{{ copy().pending }}</p> }
     } @else {
-      <form class="filters" (ngSubmit)="filter()">
-        <div><label for="public-id">{{ copy().search }}</label><input id="public-id" name="publicId" [(ngModel)]="publicId" maxlength="36" [attr.aria-invalid]="validationError()" [attr.aria-describedby]="validationError() ? 'tag-id-error' : null"></div>
-        <div><label for="origin">{{ copy().origin }}</label><select id="origin" name="origin" [(ngModel)]="origin"><option value="">{{ copy().all }}</option><option value="SELF_CREATED">{{ copy().SELF_CREATED }}</option><option value="PREPRODUCED">{{ copy().PREPRODUCED }}</option></select></div>
-        <div><label for="status">{{ copy().status }}</label><select id="status" name="status" [(ngModel)]="status"><option value="">{{ copy().all }}</option><option value="ACTIVE">{{ copy().ACTIVE }}</option><option value="INACTIVE">{{ copy().INACTIVE }}</option><option value="BLOCKED">{{ copy().BLOCKED }}</option><option value="RETIRED">{{ copy().RETIRED }}</option></select></div>
-        <div><label for="assigned">{{ copy().assignment }}</label><select id="assigned" name="assigned" [(ngModel)]="assigned"><option value="">{{ copy().all }}</option><option value="true">{{ copy().assigned }}</option><option value="false">{{ copy().free }}</option></select></div>
+      <form class="filters" (submit)="$event.preventDefault(); filter()">
+        <div><label for="public-id">{{ copy().search }}</label><input id="public-id" [formField]="tagForm.publicId" [attr.aria-invalid]="validationError()" [attr.aria-describedby]="validationError() ? 'tag-id-error' : null"></div>
+        <div><label for="origin">{{ copy().origin }}</label><select id="origin" [formField]="tagForm.origin"><option value="">{{ copy().all }}</option><option value="SELF_CREATED">{{ copy().SELF_CREATED }}</option><option value="PREPRODUCED">{{ copy().PREPRODUCED }}</option></select></div>
+        <div><label for="status">{{ copy().status }}</label><select id="status" [formField]="tagForm.status"><option value="">{{ copy().all }}</option><option value="ACTIVE">{{ copy().ACTIVE }}</option><option value="INACTIVE">{{ copy().INACTIVE }}</option><option value="BLOCKED">{{ copy().BLOCKED }}</option><option value="RETIRED">{{ copy().RETIRED }}</option></select></div>
+        <div><label for="assigned">{{ copy().assignment }}</label><select id="assigned" [formField]="tagForm.assigned"><option value="">{{ copy().all }}</option><option value="true">{{ copy().assigned }}</option><option value="false">{{ copy().free }}</option></select></div>
+        <div><label for="batch-id">{{ copy().batch }}</label><input id="batch-id" [formField]="tagForm.batchId" [attr.aria-invalid]="validationError()" [attr.aria-describedby]="validationError() ? 'tag-id-error' : null"></div>
+        <div><label for="inventory">{{ copy().inventory }}</label><select id="inventory" [formField]="tagForm.inventoryStatus"><option value="">{{ copy().all }}</option><option value="PREPARED">{{ copy().PREPARED }}</option><option value="RELEASED">{{ copy().RELEASED }}</option></select></div>
         <button type="submit">{{ copy().filter }}</button>
       </form>
+      @if (summary.hasValue()) {
+        <section [attr.aria-label]="copy().counts">
+          <dl class="counts"><dt>{{ copy().total }}</dt><dd>{{ summary.value().total }}</dd><dt>{{ copy().assigned }}</dt><dd>{{ summary.value().assigned }}</dd><dt>{{ copy().free }}</dt><dd>{{ summary.value().unassigned }}</dd><dt>{{ copy().BLOCKED }}</dt><dd>{{ summary.value().blocked }}</dd><dt>{{ copy().RETIRED }}</dt><dd>{{ summary.value().retired }}</dd><dt>{{ copy().PREPARED }}</dt><dd>{{ summary.value().prepared }}</dd><dt>{{ copy().RELEASED }}</dt><dd>{{ summary.value().released }}</dd></dl>
+          <p>{{ copy().overlap }}</p>
+        </section>
+      }
+      @if (summary.error(); as error) { <p role="alert">{{ errorText(error) }}</p> }
     }
     @if (validationError()) { <p id="tag-id-error" role="alert">{{ copy().invalid }}</p> }
     @if (actionError(); as error) { <p role="alert">{{ errorText(error) }}</p> }
@@ -36,7 +45,7 @@
             <tbody>
               @for (tag of page.value().items; track tag.id) {
                 <tr>
-                  <td>{{ tag.label || '—' }}</td>
+                  <td><a [routerLink]="[admin ? '/admin/tags' : '/tags', tag.id]">{{ tag.label || copy().details }}</a></td>
                   <td><a [routerLink]="['/f', tag.publicId]">{{ tag.publicId }}</a></td>
                   <td>{{ tag.origin ? copy()[tag.origin] : '—' }}</td>
                   <td>{{ tag.status ? copy()[tag.status] : '—' }}</td>

@@ -10,9 +10,15 @@ import { BaseService } from '../base-service';
 import { ApiConfiguration } from '../api-configuration';
 import { StrictHttpResponse } from '../strict-http-response';
 
+import { adminTagControllerDetail } from '../fn/admin-tags/admin-tag-controller-detail';
+import { AdminTagControllerDetail$Params } from '../fn/admin-tags/admin-tag-controller-detail';
 import { adminTagControllerList } from '../fn/admin-tags/admin-tag-controller-list';
 import { AdminTagControllerList$Params } from '../fn/admin-tags/admin-tag-controller-list';
+import { adminTagControllerSummary } from '../fn/admin-tags/admin-tag-controller-summary';
+import { AdminTagControllerSummary$Params } from '../fn/admin-tags/admin-tag-controller-summary';
 import { TagPage } from '../models/tag-page';
+import { TagResponse } from '../models/tag-response';
+import { TagSummary } from '../models/tag-summary';
 
 @Injectable({ providedIn: 'root' })
 export class AdminTagsService extends BaseService {
@@ -44,6 +50,60 @@ export class AdminTagsService extends BaseService {
     const resp = this.adminTagControllerList$Response(params, context);
     return resp.pipe(
       map((r: StrictHttpResponse<TagPage>): TagPage => r.body)
+    );
+  }
+
+  /** Path part for operation `adminTagControllerSummary()` */
+  static readonly AdminTagControllerSummaryPath = '/api/v1/admin/tags/summary';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `adminTagControllerSummary()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  adminTagControllerSummary$Response(params?: AdminTagControllerSummary$Params, context?: HttpContext): Observable<StrictHttpResponse<TagSummary>> {
+    const obs = adminTagControllerSummary(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `adminTagControllerSummary$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  adminTagControllerSummary(params?: AdminTagControllerSummary$Params, context?: HttpContext): Observable<TagSummary> {
+    const resp = this.adminTagControllerSummary$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<TagSummary>): TagSummary => r.body)
+    );
+  }
+
+  /** Path part for operation `adminTagControllerDetail()` */
+  static readonly AdminTagControllerDetailPath = '/api/v1/admin/tags/{tagId}';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `adminTagControllerDetail()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  adminTagControllerDetail$Response(params: AdminTagControllerDetail$Params, context?: HttpContext): Observable<StrictHttpResponse<TagResponse>> {
+    const obs = adminTagControllerDetail(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `adminTagControllerDetail$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  adminTagControllerDetail(params: AdminTagControllerDetail$Params, context?: HttpContext): Observable<TagResponse> {
+    const resp = this.adminTagControllerDetail$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<TagResponse>): TagResponse => r.body)
     );
   }
 

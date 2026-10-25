@@ -1,17 +1,29 @@
 package ch.lostkeyfinder
 
+import ch.lostkeyfinder.tags.TagTransactions
 import de.bwaldvogel.mongo.MongoServer
 import de.bwaldvogel.mongo.backend.memory.MemoryBackend
 import de.bwaldvogel.mongo.bson.Document
 import io.netty.channel.Channel
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Primary
 import org.springframework.context.annotation.Profile
+import org.springframework.data.mongodb.core.MongoOperations
+import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.test.context.DynamicPropertyRegistrar
 
 @TestConfiguration(proxyBeanMethods = false)
 @Profile("ci")
 class InMemoryMongoConfiguration {
+    // Offline contract tests only. Real rollback/isolation is proved by Firestore integration tests.
+    @Bean
+    @Primary
+    fun offlineTagTransactions(template: MongoTemplate): TagTransactions =
+        object : TagTransactions {
+            override fun <T : Any> run(action: (MongoOperations) -> T): T = synchronized(this) { action(template) }
+        }
+
     @Bean(destroyMethod = "shutdown")
     fun mongoServer(): MongoServer =
         MongoServer(HealthCompatibleMemoryBackend()).apply {
