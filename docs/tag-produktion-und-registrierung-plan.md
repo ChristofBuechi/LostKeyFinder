@@ -4,6 +4,14 @@ Stand: 25. Oktober 2026. Grundlage: aktueller Repository-Code und bestehende Fac
 
 ## 1. Zielbild
 
+### Aktuell vereinbarter Umsetzungsumfang
+
+Jetzt werden eigene Tags, vorproduzierter Bestand, Registrierung und Admin-Übersicht vorbereitet. Fundmeldungen, Besitzerbenachrichtigungen und Kontakt-/Chatprozess folgen in einer späteren Umsetzung. Die Zuordnung soll bereits die spätere Auswahl des Finder-Ablaufs erlauben; die aktuelle UI darf noch keine funktionierende Meldung oder Kontaktaufnahme behaupten.
+
+Die Serienfreigabe ist beschlossen: Ein Admin gibt nach der Produktionskontrolle und vor dem Verkauf explizit zur Registrierung frei. Admin-Konten werden manuell gesetzt. Dauerhafte Domain und physisches Produktionsformat werden später festgelegt; die Domain muss vor Herstellung der Verkaufstags feststehen. Ein generisches Serienmanifest kann vorher vorbereitet werden, ohne das finale Herstellerformat festzulegen.
+
+### Gemeinsamer Tag-Einstieg
+
 Ein Admin legt beispielsweise 100 Tags als Produktionsserie an. Jeder Tag existiert vor Herstellung und Verkauf in der Datenbank, besitzt eine dauerhafte öffentliche ID und ist zunächst keinem Benutzer zugewiesen.
 
 **Die Erstellung eigener Tags durch Benutzer bleibt ebenfalls Bestandteil des Produkts.** Ein angemeldeter Benutzer kann einen neuen Tag erzeugen, der unmittelbar seinem Konto zugeordnet wird. Dieser Weg ergänzt die Registrierung vorproduzierter Hardware-Tags. Später kann der Benutzer für seine Tags Druckvorlagen erzeugen, beispielsweise im Kreditkartenformat.
@@ -134,7 +142,9 @@ Die Unterscheidung `REGISTER`/`REPORT_FOUND` macht öffentlich erkennbar, ob ein
 
 Für einen zugewiesenen aktiven Tag wird der geplante Finder-Prozess implementiert: Meldungsentwurf mit Text und E-Mail, Bestätigung, idempotente Erzeugung von Fall/privatem Finder-Chat und Besitzerbenachrichtigung. Die bestehend geplanten Zahlungs- und Chatfreigaberegeln gelten weiter. Ein Scan allein verschickt keine Nachricht und legt keinen Verlustfall an.
 
-Die neue Registrierung darf nicht als fertiggestellter Kontaktprozess gelten. Ein vollständiger Release des gewünschten Gesamtverhaltens benötigt auch diesen noch fehlenden Finder-Durchstich. Bilder, Backup Owner und Zahlungen werden entsprechend der bestehenden Roadmap ergänzt und nicht unbemerkt in den Registrierungsumfang gezogen.
+Die neue Registrierung darf nicht als fertiggestellter Kontaktprozess gelten. Der Finder-Durchstich ist ausdrücklich ein späterer Umsetzungsschritt und blockiert die aktuelle Tag-/Admin-Umsetzung nicht. Bis dahin zeigt die Folgeseite zugewiesener fremder Tags einen ehrlichen Hinweis, dass Fundmeldung und Kontaktaufnahme noch nicht verfügbar sind. Bilder, Backup Owner und Zahlungen werden entsprechend der bestehenden Roadmap ergänzt.
+
+Für Fehlregistrierungen liegt ein gesonderter [Support-Vorschlag](fehlregistrierung-support-ansatz.md) vor: Nachweise prüfen, gegebenenfalls reversibel sperren und eine belegte Fehlzuordnung gezielt korrigieren, ohne den Tag öffentlich freizugeben. Nachweiskriterien und Korrekturberechtigung sind noch zu besprechen. Der Vorschlag ist keine bereits beschlossene oder implementierte Übertragungsfunktion.
 
 ## 7. Admin und Hardware-Produktion
 
@@ -216,11 +226,11 @@ Weitere notwendige Massnahmen: Eingabevalidierung, Grössenlimits, begrenzte öf
 
 ### Schritt 1 – Regeln und Produktionsformat festlegen
 
-- Beschlossene Erstzuordnung ohne Aktivierungscode umsetzen und dauerhafte Produktionsdomain entscheiden.
+- Beschlossene Erstzuordnung ohne Aktivierungscode und Freigabe nach Produktionskontrolle im Vertrag festhalten. Produktionsdomain und Herstellerformat als spätere Produktionsvoraussetzungen führen.
 - Statusmodell, Besitzregeln, öffentliche Antworten und API-Vertrag dokumentieren.
 - Bestehende Fachpläne konsistent aktualisieren; Selbsterstellung als gleichberechtigten Weg ausdrücklich erhalten und spätere Druckvorlagen in der Roadmap aufnehmen.
 
-Abnahme: Beispiele „neu“, „zugewiesen“, „fremde ID“, „gesperrt“ und „parallele Registrierung“ sind eindeutig beschrieben. Druckformat ist entschieden; ein zusätzlicher Aktivierungscode ist nicht vorgesehen.
+Abnahme: Beispiele „neu“, „zugewiesen“, „fremde ID“, „gesperrt“ und „parallele Registrierung“ sind eindeutig beschrieben. Domain und finales Herstellerformat blockieren nicht den Implementierungsstart; ein zusätzlicher Aktivierungscode ist nicht vorgesehen.
 
 ### Schritt 2 – Bestand, Admin-Berechtigung und Serien-API
 
@@ -252,7 +262,7 @@ Abnahme: Kamera, Bildauswahl, manuelle ID und direkter QR-Link führen für dens
 
 Abnahme: Neue und bestehende Konten können freigegebene Tags registrieren. Wechsel vom Scan-Browser zum E-Mail-Browser funktioniert. Kein fremder Benutzer kann einen Entwurf abschliessen oder eine bestehende Zuordnung überschreiben.
 
-### Schritt 5 – Finder-Durchstich anschliessen
+### Späterer Umsetzungsschritt – Finder-Durchstich anschliessen
 
 - Noch fehlende Finder-Entwürfe, bestätigte Meldung, Fall/Chat-Anlage und Benachrichtigung entsprechend dem bestehenden Plan implementieren.
 - Registrierte Tags leiten dahin weiter; unzugewiesene erzeugen keine Meldung an einen nicht existierenden Besitzer.
@@ -268,20 +278,20 @@ Abnahme: Derselbe physische QR-Code führt vor Registrierung zum Registrieren, d
 
 Abnahme: PDF hat die definierten physischen Abmessungen, enthält den unveränderten öffentlichen Link und ist bei 100 % Skalierung auf echten Ausdrucken scanbar. Erneuter Download erzeugt keinen neuen Tag. Dieser Ausbau blockiert den ersten Release der beiden Erstellungswege nicht.
 
-### Schritt 6 – Dev-Abnahme und kontrollierter Produktionsstart
+### Schritt 5 – Dev-Abnahme; Produktion separat vorbereiten
 
 - Build, Lint, Frontend-/Backendtests, OpenAPI- und reale Firestore-Integrationstests in CI ausführen.
 - Kleine getrennte Dev-Serie anlegen und mit gedruckten Mustern auf echten Mobilgeräten testen.
 - Dev deployen und Browserwechsel, QR-Druckqualität und Mailzustellung prüfen.
 - Produktive Domain, Admin-Zugriff, Quoten, Exportzugang, Aufbewahrung und Hilfe bei Fehlregistrierung prüfen.
-- Erst danach produktive Serie erzeugen, Druckdaten übergeben und Freigabe nach Qualitätskontrolle ausführen.
+- Produktion separat: Nach Festlegung von Domain, Herstellerformat und Supportverfahren produktive Serie erzeugen, Druckdaten übergeben und Freigabe nach Qualitätskontrolle vor Verkauf ausführen. Ein Dev-Release der Tag-/Admin-Funktionen benötigt den Finder-/Kontaktprozess noch nicht.
 
 ## 10. Zwingende Tests
 
 - Nicht existierende IDs erzeugen durch Scan oder Registrierungsversuch weder Tag noch Zuordnung; nur explizite autorisierte Erstellung darf eine neue ID erzeugen.
 - Selbsterstellung ordnet den Tag atomar dem richtigen Benutzer zu, benötigt keine Serie/Freigabe und funktioniert parallel für verschiedene Benutzer.
 - Wiederholte Selbsterstellung mit demselben benutzerbezogenen Schlüssel erzeugt genau einen Tag; Limits und fremde Ressourcen-IDs werden geprüft.
-- Selbst erzeugte und registrierte Hardware-Tags verwenden dieselbe Besitzerverwaltung und denselben Finder-Prozess.
+- Selbst erzeugte und registrierte Hardware-Tags verwenden dieselbe Besitzerverwaltung. Bis zum späteren Finder-Release keine Meldung oder Kontaktaufnahme behaupten; danach denselben Finder-Prozess für beide prüfen.
 - Nicht freigegebene, gesperrte und stillgelegte Tags können nicht registriert werden.
 - Zwei unterschiedliche Benutzer registrieren gleichzeitig: genau ein Besitzer, der andere erhält einen Konflikt.
 - Derselbe Benutzer wiederholt nach Timeout: derselbe Erfolg, keine zweite Zuordnung.
@@ -302,10 +312,10 @@ Abnahme: PDF hat die definierten physischen Abmessungen, enthält den unverände
 - Account-Löschung macht alte Tags nicht erneut registrierbar.
 - Beim späteren Druckausbau: physische PDF-Abmessungen, QR-Ruhezone, echte Scanbarkeit, Autorisierung und unveränderte Tag-Identität bei wiederholtem Druck prüfen.
 
-## 11. Vor Umsetzung noch festzulegen
+## 11. Spätere Produktionsentscheidungen und Support-Diskussion
 
 1. **Produktion:** dauerhafte Domain, QR-/Beschriftungsformat und sichere Übergabe von Druckdaten.
-2. **Freigabezeitpunkt:** nach Produktionskontrolle vor Verkauf (empfohlener Start) oder erst durch einen späteren Händler-/Verkaufsprozess?
+2. **Freigabezeitpunkt (beschlossen):** explizit durch Admin nach Produktionskontrolle und vor Verkauf.
 3. **Betrieb und Support:** erste Admin-Konten benennen und nach erster Anmeldung manuell über `users.isAdmin` berechtigen; Vorgehen bei Fehlregistrierung oder defektem Tag festlegen. Die manuelle Rollenvergabe ist beschlossen; eine Admin-Rollenverwaltung in der UI ist zunächst nicht vorgesehen. Keine automatische Besitzerüberschreibung.
 
-Diese Punkte blockieren nicht die Planung oder vorbereitende Arbeit am Modell. Die Produktionsdomain muss vor der ersten Hardware-Serie feststehen. Registrierung ohne Aktivierungscode und das damit verbundene Risiko sind bereits beschlossen.
+Domain und Produktionsformat werden später festgelegt; die Produktionsdomain muss vor Herstellung der Verkaufstags feststehen. Der [Support-Ansatz](fehlregistrierung-support-ansatz.md) ist zu besprechen. Admin-Vergabe, Serienfreigabe sowie Registrierung ohne Aktivierungscode und das damit verbundene Risiko sind beschlossen. Fundmeldung/Kontakt werden später umgesetzt und blockieren die aktuelle Tag-/Admin-Umsetzung nicht.

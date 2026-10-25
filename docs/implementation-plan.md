@@ -175,6 +175,8 @@ Die Spike-Implementierungen werden nur behalten, wenn sie direkt in die folgende
 
 Der [detaillierte Tag-Plan](tag-produktion-und-registrierung-plan.md) beschreibt Vertrag, manuelle Admin-Vergabe, Produktionsablauf, offene Entscheidungen und Abnahmen. Dieser Abschnitt fasst die Umsetzung in aufeinander aufbauenden Teilen zusammen; der tatsächliche Finder-Kontakt bleibt von Phase 5 und 6 abhängig.
 
+Aktuelle Abgrenzung: Phase 3 wird zuerst umgesetzt; Fundmeldungen, Besitzerbenachrichtigungen und Kontakt-/Chatprozess folgen später. Bis dahin behauptet die öffentliche Seite zugewiesener Tags keine verfügbare Kontaktfunktion. Admin-Freigabe nach Produktionskontrolle vor Verkauf und manuelle Admin-Vergabe sind beschlossen. Domain und finales Herstellerformat werden später festgelegt; die dauerhafte Domain muss vor Herstellung der Verkaufstags bestehen. Ein [Support-Ansatz für Fehlregistrierungen](fehlregistrierung-support-ansatz.md) liegt als noch zu besprechender Vorschlag vor.
+
 ### Arbeitsschritte
 
 1. `users.isAdmin` mit Standard `false` ergänzen und in `/me` nur lesbar ausgeben. Manuelle Vergabe im lokalen Konto anhand der Firebase-UID dokumentieren. Jeder Admin-Request prüft das aktive Konto und die aktuelle Berechtigung aus der Datenbank; Profilrequests und erneute Provisionierung dürfen sie nicht überschreiben.

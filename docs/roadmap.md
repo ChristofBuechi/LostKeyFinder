@@ -8,6 +8,8 @@
 4. **Payment:** CHF 10.00 über die im Mollie-Live-Profil freigeschalteten Zahlungsarten, Reconciliation und Access Grant.
 5. **Betrieb:** Archivierung, synchrone Account-Löschung, täglicher Wartungsaufruf, minimale Supportoberfläche, Support-Audit, Backups, Monitoring und Runbooks.
 
+Aktuell wird Punkt 2 ohne den späteren Finder-/Kontaktprozess vorbereitet; Backup-Einladungen folgen ebenfalls der weiteren Roadmap. Serienfreigabe erfolgt explizit nach Produktionskontrolle vor Verkauf. Domain und finales Herstellerformat werden später entschieden; vor Herstellung der Verkaufstags muss die dauerhafte Domain bestehen. [Fehlregistrierungen](fehlregistrierung-support-ansatz.md) sind als Support-Vorschlag ausgearbeitet und noch abzustimmen.
+
 ## Abnahme
 
 - Selbsterstellung und Registrierung vorproduzierter Tags bestehen nebeneinander; unbekannte IDs erzeugen beim Scan keinen Tag.
