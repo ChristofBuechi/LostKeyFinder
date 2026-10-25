@@ -27,6 +27,17 @@
           @for (entry of history.value().items; track entry.id) {
             <li><time [attr.datetime]="entry.createdAt">{{ entry.createdAt | date:'yyyy-MM-dd HH:mm:ss' }}</time>
               <span>{{ historyText(entry.action) }}</span>
+              @if (entry.changes.length) {
+                <details><summary>{{ copy().changes }} ({{ entry.changes.length }})</summary>
+                  <dl class="changes">
+                    @for (change of entry.changes; track change.field) {
+                      <dt>{{ changeField(change.field) }}</dt>
+                      <dd><span>{{ copy().before }}: {{ changeValue(change.field, change.before) }}</span>
+                        <span>{{ copy().after }}: {{ changeValue(change.field, change.after) }}</span></dd>
+                    }
+                  </dl>
+                </details>
+              }
               @if (admin && entry.actorUserId) { <small>{{ copy().actor }}: {{ entry.actorUserId }}</small> }
             </li>
           }

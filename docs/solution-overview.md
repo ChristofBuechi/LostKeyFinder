@@ -11,16 +11,16 @@ Lost Key Finder verbindet Finder und Owner verlorener Gegenstände über QR-Tags
 | Primary Owner | Erstellt eigene Tags oder registriert vorproduzierte Tags, verwaltet Backup Owner und entscheidet über Verlustfälle. Die Rolle ist nicht übertragbar. |
 | Backup Owner | Besitzt nach bestätigter Einladung operative Rechte, verwaltet aber keine Berechtigungen. |
 | Finder | Meldet einen Fund und sieht nur den eigenen privaten Chat. |
-| Admin | Manuell über `users.isAdmin` berechtigt; sieht alle Tags, erstellt Produktionsserien und verwaltet deren Freigabe und Export. Kein pauschaler Zugriff auf private Chats. |
+| Admin | Manuell über `users.isAdmin` berechtigt; sieht alle Tags, erstellt Produktionsserien und verwaltet deren Freigabe und Export. Für die spätere Chat-Umsetzung: Lesezugriff auf sämtliche Chats eines Tags über dessen Historie. |
 
 ## Happy Path
 
 1. Ein Owner erstellt kostenlos einen aktiven Tag mit sofortiger Zuordnung oder registriert einen vorhandenen, freigegebenen Hardware-Tag über Scan/ID und bestätigte E-Mail. Beide verwenden dieselbe öffentliche UUID-v4-URL. Eigene Tags erhalten einen QR-Download; später folgen Druckvorlagen etwa im Kreditkartenformat.
 2. Ein Finder erfasst Text, optional ein Bild und seine E-Mail-Adresse.
 3. Ein Magic Link bestätigt die Identität; erst danach entstehen Verlustfall, privater Chat und Owner-Benachrichtigung.
-4. Owner sehen ohne Freischaltung nur Anzahl und Zeitpunkte der Meldungen.
+4. Chat-Inhalte sind für im Chat gespeicherte Owner/Teilnehmer lesbar; Admins dürfen alle Chats eines Tags lesen. Diese Zuordnung bleibt nach einem Tag-Besitzerwechsel bestehen.
 5. Ein berechtigter Owner bestätigt den Verlust und bezahlt CHF 10.00 über Mollie Hosted Checkout.
-6. Nur eine serverseitig verifizierte Zahlung öffnet aktive, ungesperrte Chats für höchstens 30 Tage.
+6. Der bisher geplante Zahlungs-/Schreibablauf ist vor der späteren Chat-Umsetzung an die bestätigten Teilnehmer-Leserechte anzupassen; Lesen wird am Chat-Objekt autorisiert.
 7. Nach Abschluss oder Ablauf bleiben berechtigte Verläufe schreibgeschützt.
 
 ## Phase 1

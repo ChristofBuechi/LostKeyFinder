@@ -29,5 +29,18 @@ export class TagDetail {
   protected readonly history = httpResource<TagHistoryPage>(() => this.auth.signedIn()
     ? `/api/v1/${this.admin ? 'admin/' : ''}tags/${encodeURIComponent(this.tagId())}/history?page=${this.historyPage()}` : undefined);
   protected historyText(action: string): string { return (this.copy() as Record<string, string>)[action] ?? action; }
+  protected changeField(field: string): string {
+    const copy = this.copy();
+    const names: Record<string, string> = { publicId: copy.tag, origin: copy.origin, primaryOwnerUserId: copy.owner,
+      status: copy.status, label: copy.label, batchId: copy.batch, inventoryStatus: copy.inventory,
+      createdAt: copy.created, updatedAt: copy.updated, registeredAt: copy.registeredAt, deletedAt: copy.deletedAt,
+      count: copy.count, batchLabel: copy.batchLabel, batchReleasedAt: copy.releaseDate };
+    return names[field] ?? field;
+  }
+  protected changeValue(field: string, value: string | null): string {
+    if (value === null) return this.copy().notSet;
+    if (value === '') return this.copy().emptyValue;
+    return ['origin', 'status', 'inventoryStatus'].includes(field) ? this.historyText(value) : value;
+  }
   protected errorText(error: unknown): string { return tagError(error, this.copy()); }
 }

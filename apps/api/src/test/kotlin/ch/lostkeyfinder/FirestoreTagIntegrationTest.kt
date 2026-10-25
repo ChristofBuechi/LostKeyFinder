@@ -157,6 +157,13 @@ class FirestoreTagIntegrationTest {
                             }.map { it.get(45, TimeUnit.SECONDS) }
                     }
                 assertEquals(1, results.toSet().size)
+                assertEquals(
+                    1L,
+                    template.count(
+                        query(where("resourceId").`is`(results.first()).and("action").`is`("TAG_CREATED")),
+                        TagAudit::class.java,
+                    ),
+                )
                 repeat(26) { tags.create(owner, UUID.randomUUID().toString(), "") }
                 val first = tags.list(ownerId = owner.id)
                 assertEquals(25, first.items.size)

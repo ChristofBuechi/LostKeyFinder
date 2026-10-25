@@ -79,7 +79,16 @@ class TagBatchService(
                     },
                     Tag::class.java,
                 )
-                ops.insert(TagAudit(UUID.randomUUID().toString(), admin.id, "BATCH_CREATED", batch.id, now))
+                ops.insert(
+                    TagAudit(
+                        UUID.randomUUID().toString(),
+                        admin.id,
+                        "BATCH_CREATED",
+                        batch.id,
+                        now,
+                        listOf(TagChange("count", null, count.toString()), TagChange("batchLabel", null, label.trim())),
+                    ),
+                )
                 TagBatchResponse.from(batch)
             }
         }
@@ -139,7 +148,19 @@ class TagBatchService(
                     throw ResponseStatusException(HttpStatus.CONFLICT, "Batch is not ready for release")
                 }
                 ops.updateFirst(query(where("_id").`is`(batch.id)), Update.update("releasedAt", now), TagBatch::class.java)
-                ops.insert(TagAudit(UUID.randomUUID().toString(), admin.id, "BATCH_RELEASED", batch.id, now))
+                ops.insert(
+                    TagAudit(
+                        UUID.randomUUID().toString(),
+                        admin.id,
+                        "BATCH_RELEASED",
+                        batch.id,
+                        now,
+                        listOf(
+                            TagChange("inventoryStatus", InventoryStatus.PREPARED.name, InventoryStatus.RELEASED.name),
+                            TagChange("batchReleasedAt", null, now.toString()),
+                        ),
+                    ),
+                )
                 TagBatchResponse.from(batch.copy(releasedAt = now))
             }
         }

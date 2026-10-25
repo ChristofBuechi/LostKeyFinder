@@ -17,6 +17,7 @@ export type { RegistrationView } from './models/registration-view';
 export type { StartTagRegistrationRequest } from './models/start-tag-registration-request';
 export type { TagBatchPage } from './models/tag-batch-page';
 export type { TagBatchResponse } from './models/tag-batch-response';
+export type { TagChange } from './models/tag-change';
 export type { TagHistoryEntry } from './models/tag-history-entry';
 export type { TagHistoryPage } from './models/tag-history-page';
 export type { TagPage } from './models/tag-page';

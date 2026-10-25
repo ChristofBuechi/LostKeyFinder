@@ -135,7 +135,7 @@ class FirestoreHardwareIntegrationTest {
 
                 val history = tagService.history(draftTag.id)
                 assertEquals(
-                    setOf("TAG_CREATED", "TAG_REGISTERED", "BATCH_RELEASED", "BATCH_EXPORTED"),
+                    setOf("TAG_CREATED", "TAG_REGISTERED", "BATCH_CREATED", "BATCH_RELEASED", "BATCH_EXPORTED"),
                     history.items.map { it.action }.toSet(),
                 )
                 val beforeRelease = template.findById(draftTag.id, Tag::class.java)!!

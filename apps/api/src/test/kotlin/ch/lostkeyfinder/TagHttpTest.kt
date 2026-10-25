@@ -104,6 +104,10 @@ class TagHttpTest {
         assertEquals(4, UUID.fromString(node["publicId"].asString()).version())
         assertEquals(4, UUID.fromString(node["id"].asString()).version())
         assertEquals(1L, template.count(Query(), Tag::class.java))
+        val creation = template.findAll(TagAudit::class.java).single()
+        assertEquals("TAG_CREATED", creation.action)
+        assertEquals(null, creation.changes.single { it.field == "label" }.before)
+        assertEquals("Keys", creation.changes.single { it.field == "label" }.after)
         assertEquals(template.findAll(User::class.java).single().id, node["primaryOwnerUserId"].asString())
         mvc
             .post("/api/v1/tags") {
@@ -258,6 +262,44 @@ class TagHttpTest {
             .andExpect { status { isNotFound() } }
         mvc.post("/api/v1/tags/${hardware.publicId}/register") { header("Authorization", "Bearer $other") }.andExpect { status { isOk() } }
         mvc.post("/api/v1/tags/${hardware.id}/release") { header("Authorization", "Bearer $token") }.andExpect { status { isNotFound() } }
+        val history =
+            mvc
+                .get("/api/v1/tags/${hardware.id}/history") {
+                    header("Authorization", "Bearer $other")
+                }.andExpect { status { isOk() } }
+                .andReturn()
+                .response.contentAsString
+        kotlin.test.assertFalse(history.contains("Private"))
+        kotlin.test.assertFalse(history.contains(owner.id))
+        val releaseAudit =
+            template.findOne(
+                query(where("resourceId").`is`(hardware.id).and("action").`is`("TAG_RELEASED")),
+                TagAudit::class.java,
+            )!!
+        assertEquals(owner.id, releaseAudit.changes.single { it.field == "primaryOwnerUserId" }.before)
+        assertEquals(null, releaseAudit.changes.single { it.field == "primaryOwnerUserId" }.after)
+        assertEquals("Private", releaseAudit.changes.single { it.field == "label" }.before)
+        assertEquals("", releaseAudit.changes.single { it.field == "label" }.after)
+        // Existing records without detailed deltas still expose the known owner transition to admins.
+        template.updateFirst(
+            query(where("resourceId").`is`(hardware.id).and("action").`is`("TAG_REGISTERED")),
+            Update().unset("changes"),
+            TagAudit::class.java,
+        )
+        template.updateFirst(query(where("_id").`is`(owner.id)), Update.update("isAdmin", true), User::class.java)
+        val adminHistory =
+            mapper.readTree(
+                mvc
+                    .get("/api/v1/admin/tags/${hardware.id}/history") {
+                        header("Authorization", "Bearer $token")
+                    }.andExpect { status { isOk() } }
+                    .andReturn()
+                    .response.contentAsString,
+            )
+        val registration = adminHistory["items"].single { it["action"].asString() == "TAG_REGISTERED" }
+        assertEquals("primaryOwnerUserId", registration["changes"][0]["field"].asString())
+        assertEquals(template.findById(hardware.id, Tag::class.java)!!.primaryOwnerUserId, registration["changes"][0]["after"].asString())
+        kotlin.test.assertTrue(adminHistory.toString().contains("Private"))
     }
 
     @Test fun `history is owner scoped paginated and exposes actor references only to admins`() {
@@ -280,7 +322,7 @@ class TagHttpTest {
                     }.andExpect { status { isOk() } }
             }
         }
-        assertEquals(26L, template.count(query(where("resourceId").`is`(id)), TagAudit::class.java))
+        assertEquals(27L, template.count(query(where("resourceId").`is`(id)), TagAudit::class.java))
 
         fun history(page: Int) =
             mapper.readTree(

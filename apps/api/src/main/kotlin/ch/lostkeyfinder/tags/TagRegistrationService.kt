@@ -152,7 +152,16 @@ class TagRegistrationService(
                 Tag::class.java,
             )
         if (result.modifiedCount != 1L) throw ResponseStatusException(HttpStatus.CONFLICT, "Tag unavailable")
-        ops.insert(TagAudit(UUID.randomUUID().toString(), user.id, "TAG_REGISTERED", tag.id, now))
+        ops.insert(
+            TagAudit(
+                UUID.randomUUID().toString(),
+                user.id,
+                "TAG_REGISTERED",
+                tag.id,
+                now,
+                tagChanges(tag, tag.copy(primaryOwnerUserId = user.id, registeredAt = now, updatedAt = now)),
+            ),
+        )
         return TagResponse.from(tag.copy(primaryOwnerUserId = user.id, registeredAt = now, updatedAt = now))
     }
 

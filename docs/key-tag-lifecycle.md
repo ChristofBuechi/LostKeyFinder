@@ -4,7 +4,7 @@
 
 - Ein selbst erzeugter Tag besitzt ab Erstellung genau einen Primary Owner. Ein vorproduzierter Tag besitzt bis zur Registrierung keinen, danach genau einen Primary Owner. Nur zugewiesene Tags können einen Verlustfall haben; höchstens einen aktiven pro Tag.
 - Ein Finder besitzt je Verlustfall höchstens einen privaten Chat und sieht keine anderen Finder.
-- Owner sehen Chatinhalt nur nach Access Grant; eine bezahlte Zahlung allein genügt nicht.
+- Chat-Leserecht gilt für im Chat-Objekt gespeicherte Owner/Teilnehmer und für Admins. Tag-Besitzerwechsel ändern bestehende Chat-Teilnehmer nicht; auch ehemalige Besitzer können ihre zugeordneten Chats weiter lesen. Die Berechtigung wird nicht aus Zeiträumen abgeleitet.
 - Archivierung ist endgültig. Sperren sind reversibel, reaktivieren aber keinen archivierten Fall.
 
 ## Tags und Berechtigungen
@@ -24,7 +24,7 @@ Die gemeinsame Scan-Route bietet bei einem registrierbaren Tag Registrierung und
 
 Der Primary Owner kann höchstens drei offene Einladungen oder aktive Backup Owner verwalten. Die Annahme verlangt die exakt passende normalisierte, verifizierte E-Mail der authentifizierten Identität. Jede Annahme erhält eine neue `membershipId`. Archivzugriff eines Backup Owners verlangt dieselbe noch aktive Mitgliedschaft, die beim Fall bestand. Entfernen und erneutes Einladen stellt daher keinen früheren Zugriff wieder her.
 
-Adminrechte werden manuell im lokalen `users`-Dokument als `isAdmin: true` gesetzt. Fehlendes Feld bedeutet `false`. Jede Admin-Aktion verlangt das anhand der Firebase-UID geladene aktive Konto und diese Berechtigung; deren Entzug wirkt beim nächsten Request. Admins sehen alle erzeugten Tags, erhalten dadurch aber keinen pauschalen Zugriff auf private Chats. Details und Abnahmen: [Tag-Produktion und Registrierung](tag-produktion-und-registrierung-plan.md).
+Adminrechte werden manuell im lokalen `users`-Dokument als `isAdmin: true` gesetzt. Fehlendes Feld bedeutet `false`. Jede Admin-Aktion verlangt das anhand der Firebase-UID geladene aktive Konto und diese Berechtigung; deren Entzug wirkt beim nächsten Request. Admins sehen alle erzeugten Tags und dürfen über die Tag-Historie sämtliche zugehörigen Chats lesen, einschliesslich früherer Besitzerperioden. Diese Chat-Funktion folgt später; die verbindlichen Regeln stehen in [Tag-Historie](tag-history.md). Details und Abnahmen: [Tag-Produktion und Registrierung](tag-produktion-und-registrierung-plan.md).
 
 ## Fund und Fall
 

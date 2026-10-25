@@ -163,7 +163,7 @@ Manuelles Vorgehen je Umgebung:
 
 Eine Oberfläche zur Rollenvergabe ist zunächst nicht nötig. Normale Profiländerungen dürfen `isAdmin` niemals schreiben. Die Konto-Provisionierung setzt den Standard ausschliesslich bei Neuanlage und überschreibt bei späteren Logins keine manuell gesetzte Berechtigung. Firebase Custom Claims oder im Token gespeicherte Admin-Rollen sind für diesen Weg nicht notwendig. Manuelle Vergaben/Entzüge im Betriebsprotokoll festhalten; sie erzeugen nicht automatisch ein Anwendungs-Audit, weil sie ausserhalb der API erfolgen.
 
-Bei jedem Admin-Aufruf liest das Backend das lokale Konto und verlangt sowohl `status == ACTIVE` als auch `isAdmin == true`. Das Frontend bekommt über `GET /api/v1/me` ein nur lesbares `isAdmin` für Navigation und Darstellung. Ein ausgeblendeter Menüpunkt oder ein Angular-Route-Guard ersetzt die Backend-Prüfung nicht. Admin-Rechte gewähren keine pauschale Einsicht in private Chats; bestehende Supportrechte bleiben separat.
+Bei jedem Admin-Aufruf liest das Backend das lokale Konto und verlangt sowohl `status == ACTIVE` als auch `isAdmin == true`. Das Frontend bekommt über `GET /api/v1/me` ein nur lesbares `isAdmin` für Navigation und Darstellung. Ein ausgeblendeter Menüpunkt oder ein Angular-Route-Guard ersetzt die Backend-Prüfung nicht. Die spätere Chat-Umsetzung gibt Admins Lesezugriff auf sämtliche Chats eines Tags über dessen Historie; normale Chat- und Supportberechtigungen bleiben separat. Siehe [Tag-Historie](tag-history.md).
 
 ### Übersicht nach der E-Mail-Anmeldung
 

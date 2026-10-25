@@ -19,7 +19,7 @@ Aktuell wird Punkt 2 ohne den späteren Finder-/Kontaktprozess vorbereitet; Back
 - Parallele Finder erzeugen getrennte Chats, aber höchstens einen aktiven Fall.
 - Wiederholungen erzeugen weder doppelte Chats noch doppelte Zahlungen oder interne Benachrichtigungen.
 - Falsche Identität, `flowId`, Statustoken oder Ressourcenzuordnung legt keine Daten offen.
-- Owner sehen ohne Grant nur Anzahl und Zeitpunkte; Inhalte öffnen nur durch den atomaren Access Grant.
+- Lesen wird anhand der im Chat gespeicherten Owner-/Teilnehmerreferenzen oder Adminrechten autorisiert, auch nach einem Tag-Besitzerwechsel. Der frühere Grant-basierte Lesevorbehalt wird vor Chat-Umsetzung entsprechend angepasst.
 - Entfernte Backup Owner verlieren sofort Zugriff; erneutes Einladen stellt alte Archive nicht wieder her.
 - Bilder werden begrenzt und bereinigt, Listen laden keine Base64-Daten.
 - Deutsche und englische Kernabläufe erfüllen WCAG 2.2 AA und funktionieren per Tastatur und Screenreader.
