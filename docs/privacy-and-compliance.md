@@ -4,6 +4,10 @@
 
 Der QR-Code enthält nur die öffentliche UUID-v4-URL. Öffentliche Antworten unterscheiden unbekannte, inaktive, gesperrte und stillgelegte Tags nicht. E-Mail-Adressen werden nicht zwischen Beteiligten offengelegt; freiwillige Kontaktdaten können erst nach Access Grant als normaler Chattext geteilt werden.
 
+Die geplante gemeinsame Auflösung unterscheidet registrierbare, noch unzugewiesene Hardware-Tags von zugewiesenen aktiven Tags, um Registrierung oder Fundmeldung anzubieten. Damit ist die Zuordnung als solche öffentlich erkennbar; Besitzeridentität und Kontaktdaten bleiben verborgen. Noch nicht zur Registrierung freigegebener Bestand bleibt ebenfalls neutral.
+
+Registrierungsentwürfe speichern nur die für die verifizierte Zuordnung benötigten Daten und eine kurze serverseitige Frist; E-Mail-Daten nach Abschluss oder Ablauf entfernen. Hardware-Tags werden ohne zusätzlichen Aktivierungscode registriert. Öffentliche UUID-v4 sind kryptografisch sicher zufällig erzeugt; die erste bestätigte Zuordnung gewinnt. Das Risiko fremder Erstregistrierung durch einen vorab kopierten QR-Code ist akzeptiert. Produktionsexporte sind nur autorisiert zugänglich und sicher an den Hersteller zu übergeben; sie enthalten keine zusätzlichen Aktivierungsgeheimnisse.
+
 Die Plattform speichert keine Karten-, TWINT-Instrument-, Finder-Zahlungs- oder KYC-Daten. Bilder werden begrenzt, bereinigt und nur autorisiert ausgeliefert. Nach Annahme einer Backup-Einladung werden Einladungs-E-Mail und Normalisierungsversion entfernt.
 
 ## Aufbewahrung und Löschung
@@ -22,6 +26,12 @@ Inhaltsmeldungen blenden Inhalte nicht automatisch aus. Support darf nur die gem
 
 Logs und Metriken enthalten nur Correlation IDs, Ereignistypen und pseudonyme IDs. Support-Lesen, Sperren, Paymentstatus, Löschung und Berechtigungsänderungen werden auditiert.
 
+Adminrechte werden manuell über das lokale `users.isAdmin` vergeben und entzogen; diese direkten Datenbankänderungen sind im Betriebsprotokoll festzuhalten, da kein API-Audit ausgelöst wird. Die globale Admin-Tagübersicht zeigt Bestands- und Zuordnungsmetadaten, keine privaten Chattexte oder Auth-Tokens. Serienerstellung, Freigabe und autorisierte Produktionsexporte werden durch die Anwendung auditiert. Adminrechte ersetzen keine Support-Inhaltsberechtigung.
+
 ## Authentifizierungsdaten
 
 Firebase Authentication verarbeitet Anmeldedaten in den USA; dies ist für das Projekt akzeptiert. Die regionale Firestore-Datenbank und Cloud Run in Zürich ändern den Auth-Verarbeitungsstandort nicht. Vor Go-live müssen Datenschutzinformation, Auftragsverarbeitung und Löschabläufe diesen tatsächlich verwendeten Anbieter und Datentransfer beschreiben. Quellen und technische Einrichtung stehen in [Firebase Authentication](firebase-auth-setup.md).
+
+## Implementierte Tag-Registrierung und Quoten
+
+Registrierungsentwürfe sind fachlich maximal vier Stunden gültig; erfolgreiche Zuordnung entfernt die Ziel-E-Mail im selben Commit. TTL bereinigt die übrigen Entwürfe asynchron. Ablaufzugriffe werden unabhängig von der physischen Löschung abgelehnt. HMAC-basierte Quoten speichern keine rohen IPs oder E-Mails; ihr pro Datenbank geteilter Zufallsschlüssel liegt in der privaten Collection `rateLimitKeys`. Es gibt keinen Clientzugriff auf Schlüssel oder Quotendokumente. Produktionsexporte enthalten öffentliche IDs, Positionen und kanonische Links, keine Kontaktdaten oder privaten Bezeichnungen.

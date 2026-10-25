@@ -42,7 +42,7 @@ kotlin {
     }
 }
 tasks.withType<Test> { useJUnitPlatform() }
-tasks.test { exclude("**/OpenApiExportTest.class", "**/Firestore*IntegrationTest.class") }
+tasks.test { exclude("**/OpenApiExportTest.class", "**/Firestore*IntegrationTest.class", "**/FirestoreTagIndexProvisioningTest.class") }
 
 tasks.register<Test>("httpTest") {
     description = "Offline MVC contract tests using real Spring configuration and fake health contributors"
@@ -74,6 +74,17 @@ tasks.register<Test>("integrationTest") {
             .output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
     include("**/Firestore*IntegrationTest.class")
+    outputs.upToDateWhen { false }
+}
+
+tasks.register<Test>("provisionTagIndexes") {
+    description = "Explicit tag index provisioning; requires operator index-admin credentials, never called by runtime or ordinary tests"
+    testClassesDirs =
+        sourceSets.test
+            .get()
+            .output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    include("**/FirestoreTagIndexProvisioningTest.class")
     outputs.upToDateWhen { false }
 }
 

@@ -6,3 +6,5 @@ api:
 identity:
   project-id: ${FIREBASE_PROJECT_ID:lost-key-finder-dev}
   api-key: ${FIREBASE_API_KEY:}
+tags:
+  public-base-url: ${TAG_PUBLIC_BASE_URL:https://lost-key-finder-dev.web.app}

@@ -28,4 +28,25 @@ describe('Auth callback URL hygiene', () => {
     consumeAuthCallback({ pathname: '/login' } as Location, { replaceState } as unknown as History);
     expect(replaceState).not.toHaveBeenCalled();
   });
+
+  it('retains validated cross-browser registration state separately from the Firebase link', () => {
+    const id = '550e8400-e29b-41d4-a716-446655440000';
+    const base = { origin: 'https://example.com', pathname: '/auth/callback', hash: '' };
+    for (const suffix of [`&registrationId=${id}`, `&continueUrl=${encodeURIComponent(`https://example.com/auth/callback?registrationId=${id}`)}`]) {
+      const result = consumeAuthCallback({ ...base, search: `?mode=signIn&apiKey=test&oobCode=code${suffix}` } as Location,
+        { replaceState: vi.fn() } as unknown as History);
+      expect(result.registrationId).toBe(id);
+      expect(result.failed).toBe(false);
+      expect(result.link).not.toContain('registrationId');
+    }
+    for (const suffix of ['&registrationId=bad', '&registrationId=', '&mode=signIn',
+      `&continueUrl=${encodeURIComponent(`https://foreign.example/auth/callback?registrationId=${id}`)}`,
+      `&continueUrl=${encodeURIComponent(`https://example.com/auth/callback?email=private&registrationId=${id}`)}`]) {
+      const result = consumeAuthCallback({ ...base, search: `?mode=signIn&apiKey=test&oobCode=code${suffix}` } as Location,
+        { replaceState: vi.fn() } as unknown as History);
+      expect(result.failed).toBe(true);
+      expect(result.link).toBe('');
+      expect(result.registrationId).toBeUndefined();
+    }
+  });
 });

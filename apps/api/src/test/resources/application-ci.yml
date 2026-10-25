@@ -4,3 +4,5 @@ api:
 logging:
   level:
     de.bwaldvogel.mongo: WARN
+tags:
+  public-base-url: https://example.test

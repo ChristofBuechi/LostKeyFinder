@@ -11,5 +11,11 @@ export const routes: Routes = [
   { path: 'login', pathMatch: 'full', redirectTo: ({ fragment }) => inject(Router).createUrlTree(['/'], { fragment: fragment === 'finder' ? 'finder' : 'owner' }) },
   { path: 'auth/callback', loadComponent: () => import('./auth/callback/callback').then(m => m.Callback), title: 'Lost Key Finder' },
   { path: 'account', canActivate: [authGuard], loadComponent: () => import('./account/account').then(m => m.Account), title: 'Lost Key Finder' },
+  { path: 'tag-registrations/:flowId', canActivate: [authGuard], loadComponent: () => import('./tags/tag-registration/tag-registration').then(m => m.TagRegistration), title: 'Lost Key Finder' },
+  { path: 'tags/:tagId', canActivate: [authGuard], loadComponent: () => import('./tags/tag-detail/tag-detail').then(m => m.TagDetail), title: 'Lost Key Finder' },
+  { path: 'admin/tag-batches', canActivate: [authGuard], loadComponent: () => import('./tags/tag-batches/tag-batches').then(m => m.TagBatches), title: 'Lost Key Finder' },
+  { path: 'admin/tags/:tagId', canActivate: [authGuard], data: { admin: true }, loadComponent: () => import('./tags/tag-detail/tag-detail').then(m => m.TagDetail), title: 'Lost Key Finder' },
+  { path: 'tags', canActivate: [authGuard], loadComponent: () => import('./tags/tag-list/tag-list').then(m => m.TagList), title: 'Lost Key Finder' },
+  { path: 'admin/tags', canActivate: [authGuard], data: { admin: true }, loadComponent: () => import('./tags/tag-list/tag-list').then(m => m.TagList), title: 'Lost Key Finder' },
   { path: '**', component: NotFound, title: 'Lost Key Finder' },
 ];

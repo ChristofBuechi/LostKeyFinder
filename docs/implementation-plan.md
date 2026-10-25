@@ -57,8 +57,10 @@ Die finalen Felder entstehen jeweils in der passenden Phase. Alle Dokumente enth
 
 | Collection | Zweck | Wichtige Regeln |
 | --- | --- | --- |
-| `users` | lokale Identität zu Firebase-UID | kein Passwort, kein Zugriff allein aufgrund einer JWT-E-Mail |
-| `tags` | öffentliche UUID, Primary Owner und Status | genau ein Primary Owner; keine wachsenden Listen |
+| `users` | lokale Identität zu Firebase-UID und manuelles `isAdmin` | kein Passwort; Admin nur bei aktivem lokalen Konto und explizitem Datenbankfeld; fehlendes Feld bedeutet `false` |
+| `tags` | öffentliche UUID, Herkunft, Primary Owner und Status | Selbsterstellung sofort zugewiesen; Produktionsbestand zunächst ohne Besitzer; keine wachsenden Listen |
+| `tagBatches` | Admin-Produktionsserien | idempotente Anlage, separate Freigabe und autorisierter Export |
+| `tagRegistrationDrafts` | E-Mail-gestützte Erstregistrierung | passende bestätigte Identität, Frist und atomarer Verbrauch bei Zuordnung |
 | `memberships` | aktive und historische Backup-Owner-Mitgliedschaften | jede angenommene Einladung erzeugt neue `membershipId` |
 | `invitations` | offene Backup-Owner-Einladungen | E-Mail nach Annahme entfernen |
 | `finderReportDrafts` | unbestätigte Fundmeldung | Ablauf, Statuszugang und bestätigte Firebase-Identität |
@@ -76,7 +78,10 @@ Anzulegende Indizes werden vor dem ersten verwendenden Endpunkt durch eine getre
 
 - `users.firebaseUserId` eindeutig;
 - `tags.publicId` eindeutig;
-- `tags.creationKey` eindeutig;
+- benutzerbezogener `tags.creationKey` eindeutig nur für selbst erzeugte Tags;
+- `(tags.batchId, tags.position)` eindeutig nur für Produktionsbestand; fehlende Produktionsfelder dürfen bei eigenen Tags keine Konflikte erzeugen;
+- `tagBatches.creationKey` eindeutig;
+- Registrierungsentwurfs-ID eindeutig und Ablauf-/Admin-Listenindizes nach tatsächlich verwendeten Queries;
 - `tags.primaryOwnerUserId` plus `status` für Owner-Listen;
 - `memberships.tagId` plus `userId` plus `status`;
 - `invitations.tagId` plus `status`;
@@ -164,33 +169,50 @@ Die Spike-Implementierungen werden nur behalten, wenn sie direkt in die folgende
 - Die E-Mail-Normalisierung deckt lokale Teilregeln, IDN-Domain und Längengrenzen mit Unit-Tests ab.
 - Session-Refresh und Logout funktionieren.
 
-## Phase 3: Tags und öffentliche QR-Auflösung
+## Phase 3: Eigene Tags, Produktionsbestand und gemeinsame QR-Auflösung
 
-**Ziel:** Ein Owner erzeugt einen kostenlosen Tag, erhält seine QR-URL und ein Finder kann den öffentlichen Link auflösen, ohne Status oder Owner preiszugeben.
+**Ziel:** Benutzer erzeugen weiterhin kostenlose eigene Tags mit sofortiger Zuordnung. Zusätzlich erzeugen Admins zunächst unzugewiesene Hardware-Tags. Ein gemeinsamer Scan-Einstieg bietet zustandsabhängig Registrierung oder Fundmeldung an, ohne Besitzeridentität preiszugeben.
+
+Der [detaillierte Tag-Plan](tag-produktion-und-registrierung-plan.md) beschreibt Vertrag, manuelle Admin-Vergabe, Produktionsablauf, offene Entscheidungen und Abnahmen. Dieser Abschnitt fasst die Umsetzung in aufeinander aufbauenden Teilen zusammen; der tatsächliche Finder-Kontakt bleibt von Phase 5 und 6 abhängig.
+
+Aktuelle Abgrenzung: Phase 3 wird zuerst umgesetzt; Fundmeldungen, Besitzerbenachrichtigungen und Kontakt-/Chatprozess folgen später. Bis dahin behauptet die öffentliche Seite zugewiesener Tags keine verfügbare Kontaktfunktion. Admin-Freigabe nach Produktionskontrolle vor Verkauf und manuelle Admin-Vergabe sind beschlossen. Domain und finales Herstellerformat werden später festgelegt; die dauerhafte Domain muss vor Herstellung der Verkaufstags bestehen. Ein [Support-Ansatz für Fehlregistrierungen](fehlregistrierung-support-ansatz.md) liegt als noch zu besprechender Vorschlag vor.
 
 ### Arbeitsschritte
 
-1. `tags` mit `publicId`, `primaryOwnerUserId`, `status`, `label`, `creationKey` und `membershipSlotCount` modellieren.
-2. Tag-Erstellung mit verpflichtendem UUID-v4-`Idempotency-Key` und dedupliziertem Ergebnis implementieren.
-3. Eine QR-URL als `https://<domain>/f/<publicId>` erzeugen. Die Angular-Seite rendert daraus einen herunterladbaren QR-Code; keine externe QR-API verwenden.
-4. Eine öffentliche Auflösung implementieren, die für unbekannte, inaktive, gesperrte und stillgelegte Tags dieselbe neutrale Antwort liefert.
-5. Owner-Tagliste sowie Aktivieren/Deaktivieren implementieren. `RETIRED` bleibt endgültig.
-6. Einfache Rate Limits in Firestore nach gehashtem IP-/Tag-Kontext für öffentliche Auflösung und Tag-Erzeugung einführen. Keine zusätzliche Cache- oder Rate-Limit-Infrastruktur.
+1. `users.isAdmin` mit Standard `false` ergänzen und in `/me` nur lesbar ausgeben. Manuelle Vergabe im lokalen Konto anhand der Firebase-UID dokumentieren. Jeder Admin-Request prüft das aktive Konto und die aktuelle Berechtigung aus der Datenbank; Profilrequests und erneute Provisionierung dürfen sie nicht überschreiben.
+2. `tags` mit Herkunft, optionalen Serien-/Freigabefeldern, optionalem Besitzer, Status, Anzeigename und Idempotenz modellieren. Selbsterstellung verlangt ein aktives bestätigtes Konto und weist den Tag atomar diesem Konto zu; UUID-v4-`Idempotency-Key` benutzerbezogen deduplizieren.
+3. Admin-Produktionsserien anlegen, zunächst bis 100 Tags pro Vorgang. Serie und Bestand idempotent erzeugen; Tags bleiben unzugewiesen. Produktionsexport mit kanonischen öffentlichen URLs, Qualitätskontrolle und explizite Freigabe implementieren. Dauerhafte Produktionsdomain vor Druck entscheiden. Registrierung ohne zusätzlichen Aktivierungscode ist beschlossen: Die erste bestätigte Zuordnung gewinnt; das Risiko vorab kopierter QR-Codes ist akzeptiert. Öffentliche UUID-v4 mit kryptografisch sicherer Zufallsquelle erzeugen.
+4. Minimale Admin-UI mit globaler Tagübersicht, Herkunft-/Serien-/Status-/Zuordnungsfiltern, Bestandszahlen und stabiler Cursor-Pagination erstellen. Nach normaler E-Mail-Anmeldung führt ein Admin dorthin; laufende fachliche Vorgänge werden weitergeführt. Serienaktionen und Exporte auditieren; keine privaten Chattexte anzeigen.
+5. QR-URLs als `https://<domain>/f/<publicId>` und lokalen QR-Download erzeugen. Öffentliche Auflösung liefert `REGISTER`, `REPORT_FOUND` oder `UNAVAILABLE`. Nicht vorhandene, nicht freigegebene, inaktive, gesperrte und stillgelegte Tags bleiben neutral. Die Unterscheidung registrierbar/zugewiesen ist bewusst öffentlich; Besitzerinformationen bleiben verborgen.
+6. Registrierungsentwürfe, sicheren Callback-Zustand und Fortsetzung in anderem Browser implementieren. Passende bestätigte Identität, Frist, Produktionsfreigabe und fehlende Besitzerzuordnung prüfen. Expliziter Abschluss ordnet vorhandenen Tag und Entwurf atomar zu; kein Link-GET, Scan oder Versand erzeugt Bestand oder Besitzerrechte.
+7. Gemeinsame Owner-Tagliste, Detailansicht und Aktivieren/Deaktivieren implementieren. `RETIRED` bleibt endgültig. Eigene Erstellung bleibt unabhängig von Produktionsserie oder Admin-Freigabe zugänglich.
+8. Rate Limits in Firestore für öffentliche Auflösung, Registrierung und Selbsterstellung einführen. Tatsächlich verwendete Queries, Indizes und konkurrierende Zuordnungen gegen echte Firestore-Dev-Datenbank prüfen.
 
 ### Endpunkte
 
-- `POST /api/v1/tags`
-- `GET /api/v1/tags`
-- `GET /api/v1/tags/{tagId}`
+- `GET /api/v1/me` erweitert um nur lesbares `isAdmin`
+- `POST /api/v1/tags`, `GET /api/v1/tags`, `GET /api/v1/tags/{tagId}`
 - `PATCH /api/v1/tags/{tagId}/status`
 - `GET /api/v1/public/tags/{publicId}`
+- `POST /api/v1/public/tags/{publicId}/registration-drafts`
+- `GET /api/v1/tag-registrations/{flowId}`, `POST /api/v1/tag-registrations/{flowId}/complete`
+- `POST /api/v1/tags/{publicId}/register` für bestätigte bestehende Sitzung, mit demselben Registrierungsservice
+- `GET /api/v1/admin/tags`, `GET /api/v1/admin/tags/summary`, `GET /api/v1/admin/tags/{tagId}`
+- `POST /api/v1/admin/tag-batches`, `GET /api/v1/admin/tag-batches`, `GET /api/v1/admin/tag-batches/{batchId}`
+- `GET /api/v1/admin/tag-batches/{batchId}/export`, `POST /api/v1/admin/tag-batches/{batchId}/release`
 
 ### Abnahme
 
-- Wiederholung derselben Erstellung liefert denselben Tag; anderer Key erzeugt einen neuen.
-- Fremde Tag-IDs sind nicht lesbar oder veränderbar.
-- Öffentliche Antworten unterscheiden ungültige Tagzustände nicht.
-- Die QR-Nutzstrecke funktioniert mit Kamera oder kopierter URL auf Desktop und Mobilgerät.
+- Selbsterstellung und Admin-Serie existieren nebeneinander; Wiederholungen erzeugen keine Duplikate und keine falsche Besitzerzuordnung.
+- Zwei konkurrierende Benutzer können denselben Hardware-Tag nicht beide registrieren; unbekannte IDs erzeugen beim Scan keine Tags.
+- E-Mail-Fortsetzung funktioniert in neuem Browser ohne ursprünglichen Tab; fremde oder abgelaufene Entwürfe verleihen keine Rechte.
+- Normale Benutzer sehen ausschliesslich berechtigte Tags. Admins sehen beide Herkünfte und sämtliche Zuordnungszustände; Entzug von `isAdmin` wirkt beim nächsten Request.
+- Öffentliche Antworten und Exporte enthalten keine privaten Besitzerinformationen oder unnötigen Geheimnisse. Ungültige Tagzustände bleiben neutral.
+- Die QR-Nutzstrecke funktioniert mit Kamera, Bildauswahl, manueller ID und direkter URL auf Desktop und Mobilgerät.
+
+### Späterer Ausbau
+
+Druckvorlagen für bestehende eigene Tags, zunächst etwa ein PDF im Kreditkartenformat, folgen nach dem grundlegenden Tag-Durchstich. Physische Abmessungen, QR-Ruhezone und echte Scannbarkeit werden geprüft; erneuter Druck verändert weder öffentliche ID noch Besitzer und erzeugt keinen neuen Tag. Der Ausbau blockiert weder Selbsterstellung noch Hardware-Registrierung.
 
 ## Phase 4: Backup Owner und direkte Einladungs-E-Mails
 

@@ -1,0 +1,14 @@
+<section class="auth-panel" aria-labelledby="registration-title">
+  <h1 id="registration-title">{{ copy().registration }}</h1>
+  @if (view.isLoading() || user.isLoading()) { <p role="status">{{ copy().loading }}</p> }
+  @if (view.error(); as error) { <p role="alert">{{ errorText(error) }}</p> }
+  @if (user.error(); as error) { <p role="alert">{{ errorText(error) }}</p> }
+  @if (view.hasValue() && user.hasValue()) {
+    <dl><dt>{{ copy().tag }}</dt><dd>{{ view.value().publicId }}</dd><dt>{{ copy().email }}</dt><dd>{{ user.value().email }}</dd></dl>
+    @if (view.value().completed) { <p>{{ copy().completed }}</p> }
+    @else { <button type="button" (click)="complete()" [disabled]="busy()">{{ copy().registerConfirm }}</button> }
+  }
+  @if (failure(); as error) { <p role="alert">{{ errorText(error) }}</p> }
+  <p><a routerLink="/tags">{{ copy().mine }}</a></p>
+  <p><a routerLink="/" fragment="finder">{{ copy().tag }}</a></p>
+</section>

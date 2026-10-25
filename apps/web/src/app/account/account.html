@@ -7,7 +7,8 @@
   @if (user(); as currentUser) {
     <p>{{ language.copy().accountIntro }}</p>
     <dl><dt>{{ language.copy().email }}</dt><dd>{{ currentUser.email }}</dd></dl>
-    <p>{{ language.copy().accountEmpty }}</p>
+    <p><a routerLink="/tags">{{ tagCopy().mine }}</a></p>
+    @if (currentUser.isAdmin) { <p><a routerLink="/admin/tags">{{ tagCopy().adminLink }}</a></p> }
   }
   @if (error() === 'accountFailed') {
     <button type="button" (click)="load()" [disabled]="loading()">{{ language.copy().retry }}</button>

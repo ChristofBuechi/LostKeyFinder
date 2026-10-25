@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '../auth';
@@ -14,6 +14,7 @@ export class Callback implements OnInit {
   protected readonly auth = inject(Auth);
   protected email = '';
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly language = inject(LanguageService);
   protected readonly failed = signal(false);
 
@@ -24,8 +25,8 @@ export class Callback implements OnInit {
   protected async complete(): Promise<void> {
     try {
       await this.auth.completeCallback(this.email);
-      if (this.auth.needsEmail()) return;
-      await this.router.navigateByUrl('/account', { replaceUrl: true });
+      if (this.destroyRef.destroyed || this.auth.needsEmail()) return;
+      await this.router.navigateByUrl(this.auth.registrationId ? `/tag-registrations/${this.auth.registrationId}` : '/account?entry=login', { replaceUrl: true });
     } catch {
       this.failed.set(true);
     }

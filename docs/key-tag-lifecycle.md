@@ -2,21 +2,29 @@
 
 ## Invarianten
 
-- Ein Tag besitzt genau einen Primary Owner und höchstens einen aktiven Verlustfall.
+- Ein selbst erzeugter Tag besitzt ab Erstellung genau einen Primary Owner. Ein vorproduzierter Tag besitzt bis zur Registrierung keinen, danach genau einen Primary Owner. Nur zugewiesene Tags können einen Verlustfall haben; höchstens einen aktiven pro Tag.
 - Ein Finder besitzt je Verlustfall höchstens einen privaten Chat und sieht keine anderen Finder.
 - Owner sehen Chatinhalt nur nach Access Grant; eine bezahlte Zahlung allein genügt nicht.
 - Archivierung ist endgültig. Sperren sind reversibel, reaktivieren aber keinen archivierten Fall.
 
 ## Tags und Berechtigungen
 
+Es gibt zwei gleichberechtigte Entstehungswege: Ein angemeldeter Benutzer erzeugt einen eigenen Tag mit atomarer Besitzerzuordnung; ein Admin erzeugt vorproduzierten Bestand, den ein Käufer später registriert. Die Herkunft `SELF_CREATED` oder `PREPRODUCED` ändert den gemeinsamen Finder-Prozess nicht. QR-Downloads und spätere Druckvorlagen, etwa im Kreditkartenformat, erhalten dieselbe öffentliche Identität.
+
+Vorproduzierte Tags gehören einer Serie an und sind zunächst `PREPARED`. Erst `RELEASED` erlaubt die Registrierung eines vorhandenen, unzugewiesenen und nicht gesperrten oder stillgelegten Tags. Selbsterstellung benötigt keine Produktionsserie oder Freigabe. Scan und Registrierung erzeugen niemals neue Tags für unbekannte IDs. Die verbindliche Zuordnung geschieht explizit und atomar; konkurrierende Benutzer können nicht beide Besitzer werden. Hardware-Tags werden ohne zusätzlichen Aktivierungscode registriert: Die erste explizite Zuordnung durch einen Benutzer mit bestätigter E-Mail gewinnt. Die öffentliche UUID-v4 wird kryptografisch sicher zufällig erzeugt; das Risiko einer fremden Erstregistrierung mit einem vorab kopierten QR-Code ist akzeptiert.
+
+Die gemeinsame Scan-Route bietet bei einem registrierbaren Tag Registrierung und bei einem zugewiesenen aktiven Tag Fundmeldung an. Nicht existente, nicht freigegebene, inaktive, gesperrte und stillgelegte Tags bleiben öffentlich neutral. Bereits zugewiesene Tags werden durch Logout, Deaktivierung oder Account-Löschung nicht wieder frei.
+
 | Tagstatus | Wirkung |
 | --- | --- |
-| `ACTIVE` | Öffentlich auflösbar; neuer Verlustfall möglich. |
+| `ACTIVE` | Bei vorhandenem Besitzer Fundmeldung möglich; ohne Besitzer nur bei Produktionsfreigabe registrierbar. |
 | `INACTIVE` | Durch berechtigten Owner reaktivierbar. |
 | `BLOCKED` | Reversible Support-Sperre ohne Endnutzerzugriff. |
 | `RETIRED` | Endzustand nach Löschung des Primary Owners; keine Reaktivierung oder neuen Fälle. |
 
 Der Primary Owner kann höchstens drei offene Einladungen oder aktive Backup Owner verwalten. Die Annahme verlangt die exakt passende normalisierte, verifizierte E-Mail der authentifizierten Identität. Jede Annahme erhält eine neue `membershipId`. Archivzugriff eines Backup Owners verlangt dieselbe noch aktive Mitgliedschaft, die beim Fall bestand. Entfernen und erneutes Einladen stellt daher keinen früheren Zugriff wieder her.
+
+Adminrechte werden manuell im lokalen `users`-Dokument als `isAdmin: true` gesetzt. Fehlendes Feld bedeutet `false`. Jede Admin-Aktion verlangt das anhand der Firebase-UID geladene aktive Konto und diese Berechtigung; deren Entzug wirkt beim nächsten Request. Admins sehen alle erzeugten Tags, erhalten dadurch aber keinen pauschalen Zugriff auf private Chats. Details und Abnahmen: [Tag-Produktion und Registrierung](tag-produktion-und-registrierung-plan.md).
 
 ## Fund und Fall
 

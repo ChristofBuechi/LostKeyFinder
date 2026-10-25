@@ -6,6 +6,7 @@ dist/
 coverage/
 .idea/
 .gradle/
+.kotlin/
 build/
 apps/api/openapi.json
 packages/api-client/openapi.json

@@ -27,6 +27,11 @@ class UserService(
         return user
     }
 
+    fun requireAdmin(jwt: Jwt): User =
+        currentUser(jwt).also {
+            if (!it.isAdmin) throw ResponseStatusException(HttpStatus.FORBIDDEN, "Administrator access required")
+        }
+
     private fun provision(
         query: Query,
         jwt: Jwt,
@@ -39,6 +44,7 @@ class UserService(
                 .setOnInsert("firebaseUserId", jwt.subject)
                 .setOnInsert("email", email)
                 .setOnInsert("status", UserStatus.ACTIVE)
+                .setOnInsert("isAdmin", false)
                 .setOnInsert("createdAt", now)
                 .setOnInsert("updatedAt", now)
         try {

@@ -2,8 +2,8 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const mode = process.argv[2] ?? 'verify';
-if (!['verify', 'start'].includes(mode)) {
-  throw new Error('Usage: node scripts/firestore-dev.mjs [verify|start]');
+if (!['verify', 'start', 'tag-indexes'].includes(mode)) {
+  throw new Error('Usage: node scripts/firestore-dev.mjs [verify|start|tag-indexes]');
 }
 
 // Obtain short-lived credentials without printing or persisting them.
@@ -22,7 +22,8 @@ uri.searchParams.set('authMechanism', 'PLAIN');
 uri.searchParams.set('authSource', '$external');
 uri.searchParams.set('serverSelectionTimeoutMS', '15000');
 
-const result = spawnSync('./gradlew', [mode === 'verify' ? 'integrationTest' : 'bootRun'], {
+const task = { verify: 'integrationTest', start: 'bootRun', 'tag-indexes': 'provisionTagIndexes' }[mode];
+const result = spawnSync('./gradlew', [task, '-Pkotlin.compiler.execution.strategy=in-process'], {
   cwd: fileURLToPath(new URL('../', import.meta.url)),
   stdio: 'inherit',
   env: {

@@ -76,6 +76,10 @@ class SecurityConfiguration {
                 it
                     .requestMatchers("/api/v1/health/live", "/api/v1/health/ready", "/api/v1/version")
                     .permitAll()
+                    .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/public/tags/*")
+                    .permitAll()
+                    .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/public/tags/*/registration-drafts")
+                    .permitAll()
                     .requestMatchers("/api/v1/**")
                     .authenticated()
                     .anyRequest()
