@@ -1,29 +1,34 @@
-<section class="auth-panel" aria-labelledby="login-title">
-  <h1 id="login-title">{{ language.copy().loginTitle }}</h1>
-  <p>{{ language.copy().loginIntro }}</p>
-  @if (!auth.configured) {
-    <p role="status">{{ language.copy().authUnavailable }}</p>
-  } @else {
-    <form (submit)="send($event)" novalidate>
-      <label for="email">{{ language.copy().email }}</label>
-      <input id="email" type="email" autocomplete="email" inputmode="email" autocapitalize="none"
-        [formField]="loginForm.email"
-        [attr.aria-invalid]="loginForm.email().touched() && loginForm.email().invalid() ? 'true' : null"
-        aria-describedby="email-hint email-error">
-      <p id="email-hint">{{ language.copy().emailHint }}</p>
-      <p id="email-error" class="field-error">
-        @if (loginForm.email().touched() && loginForm.email().invalid()) {
-          {{ language.copy().emailInvalid }}
-        }
-      </p>
-      <button type="submit" [disabled]="loginForm().submitting()">
-        {{ loginForm().submitting() ? language.copy().sendingLink : language.copy().sendLink }}
-      </button>
-      <p role="status">
-        @if (status() === 'sent') { {{ language.copy().linkSent }} }
-        @if (status() === 'failed') { {{ language.copy().linkFailed }} }
-      </p>
-    </form>
-  }
-  @if (auth.signedIn()) { <a routerLink="/account">{{ language.copy().account }}</a> }
+<section class="login-page" aria-labelledby="login-page-title">
+  <header class="login-heading">
+    <h1 id="login-page-title">{{ language.copy().loginPageTitle }}</h1>
+    <p>{{ language.copy().loginPageIntro }}</p>
+  </header>
+  <div class="login-grid">
+    <app-finder-entry id="finder" />
+    <section id="owner" class="auth-panel owner-panel" aria-labelledby="login-title">
+      <p class="eyebrow">{{ language.copy().ownerEyebrow }}</p>
+      <h2 id="login-title">{{ language.copy().loginTitle }}</h2>
+      <p>{{ language.copy().loginIntro }}</p>
+      @if (!auth.configured) {
+        <p role="status">{{ language.copy().authUnavailable }}</p>
+      } @else {
+        <form id="owner-login" (submit)="send($event)" novalidate>
+          <label for="email">{{ language.copy().email }}</label>
+          <input id="email" type="email" autocomplete="email" inputmode="email" spellcheck="false"
+            [formField]="loginForm.email"
+            [attr.aria-invalid]="loginForm.email().touched() && loginForm.email().invalid() ? 'true' : null"
+            aria-describedby="email-hint email-error">
+          <p id="email-hint">{{ language.copy().emailHint }}</p>
+          <p id="email-error" class="field-error">
+            @if (loginForm.email().touched() && loginForm.email().invalid()) { {{ language.copy().emailInvalid }} }
+          </p>
+          <button type="submit" [disabled]="loginForm().submitting()">
+            {{ loginForm().submitting() ? language.copy().sendingLink : language.copy().sendLink }}
+          </button>
+          @if (status() === 'failed') { <p role="alert">{{ language.copy().linkFailed }}</p> }
+        </form>
+      }
+      @if (auth.signedIn()) { <a routerLink="/account">{{ language.copy().account }}</a> }
+    </section>
+  </div>
 </section>

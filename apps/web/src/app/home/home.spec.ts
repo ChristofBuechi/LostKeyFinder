@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ApiConfiguration } from '@lost-key-finder/api-client';
+import { provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 import { beforeEach, afterEach, describe, expect, it } from 'vitest';
 import { LanguageService } from '../core/language.service';
@@ -17,6 +18,7 @@ describe('Home', () => {
     TestBed.configureTestingModule({
       imports: [Home],
       providers: [
+        provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ApiConfiguration, useValue: new ApiConfiguration() },
@@ -24,6 +26,7 @@ describe('Home', () => {
           provide: LanguageService,
           useValue: {
             copy: signal({
+              emailSignIn: 'Mit E-Mail anmelden',
               checking: 'Verbindung wird geprüft',
               available: 'Dienst verfügbar',
               unavailable: 'Dienst vorübergehend nicht verfügbar',
@@ -38,6 +41,14 @@ describe('Home', () => {
   });
 
   afterEach(() => http?.verify());
+
+  it('provides explicit email login and finder links on the home page', async () => {
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.actions .button-primary').getAttribute('href')).toBe('/login#owner');
+    expect(fixture.nativeElement.querySelector('.actions .button-primary').textContent).toContain('Mit E-Mail anmelden');
+    expect(fixture.nativeElement.querySelector('.actions .text-link').getAttribute('href')).toBe('/login#finder');
+    http!.expectOne('/api/v1/health/ready').flush({ status: 'ok' });
+  });
 
   it('starts with a checking status and calls the versioned readiness endpoint', () => {
     expect(fixture.nativeElement.querySelector('.service-status').textContent.trim())

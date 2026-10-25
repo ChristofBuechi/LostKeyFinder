@@ -1,0 +1,27 @@
+:host { display: block; min-width: 0; scroll-margin-top: 1rem; }
+.finder-panel { padding: 2rem; border-radius: 1rem; background: var(--ink); color: var(--paper); line-height: 1.6; }
+.eyebrow { margin: 0 0 .5rem; color: #f3a18d; font-size: .75rem; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+h2 { margin: .5rem 0 1rem; font: 400 clamp(2rem, 3vw, 2.8rem)/1.05 Georgia, serif; letter-spacing: -.04em; }
+.intro { margin: 0 0 1.5rem; }
+.scan-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; margin: 1.5rem 0; }
+button, .image-button { min-height: 3rem; border: 0; border-radius: .35rem; padding: .8rem 1rem; font: inherit; font-weight: 650; cursor: pointer; }
+.scan-button { display: inline-flex; align-items: center; gap: .65rem; background: var(--paper); color: var(--ink); }
+svg { width: 1.5rem; height: 1.5rem; fill: currentColor; }
+.image-button { border: 1px solid #82897e; }
+.file-input { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
+.scan-actions:has(.file-input:focus-visible) .image-button { outline: 3px solid #f3a18d; outline-offset: 4px; }
+button:disabled { opacity: .6; cursor: wait; }
+.camera { margin-bottom: 1.5rem; }
+.camera[hidden] { display: none; }
+video { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: #000; border-radius: .5rem; }
+.stop-button { background: #d9ddd2; color: var(--ink); }
+#tag-entry > label { display: block; font-weight: 650; margin-bottom: .5rem; }
+.tag-input-row { display: flex; gap: .6rem; }
+input[type="text"] { min-width: 0; width: 100%; min-height: 3rem; padding: .8rem; border: 2px solid transparent; border-radius: .35rem; font: inherit; background: white; color: var(--ink); }
+input[aria-invalid="true"] { border-color: #f3a18d; }
+.tag-input-row button { flex-shrink: 0; background: #f3a18d; color: var(--ink); }
+#tag-hint, .privacy { font-size: .82rem; color: #d0d2c8; }
+.error { color: #ffc1af; }
+.error:empty { display: none; }
+.privacy { margin-bottom: 0; }
+@media (max-width: 450px) { .finder-panel { padding: 1.5rem; } .tag-input-row { flex-direction: column; } .scan-actions > .scan-button { width: 100%; justify-content: center; } }

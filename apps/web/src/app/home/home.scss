@@ -39,3 +39,5 @@ h2 { max-width: 18ch; margin-bottom: 0; color: var(--ink); font-family: Georgia,
   .step-card { min-height: auto; }
   .step-card h3 { margin-top: 2rem; }
 }
+
+.finder-strip > div > p { max-width: 20rem; margin-bottom: 1.25rem; color: var(--muted); line-height: 1.5; }

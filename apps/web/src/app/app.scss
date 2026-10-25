@@ -39,3 +39,7 @@
   .site-header, .site-footer { width: min(100% - 2rem, 76rem); }
   .site-footer { align-items: flex-start; flex-direction: column; gap: .35rem; }
 }
+
+.account-link { margin-left: auto; margin-right: 1rem; padding: .6rem .8rem; border: 1px solid var(--line); border-radius: .4rem; color: var(--ink); font-size: .9rem; font-weight: 700; text-decoration: none; }
+.account-link:hover { background: var(--ink); color: var(--paper); }
+@media (max-width: 450px) { .brand { font-size: .85rem; gap: .4rem; } .account-link { margin-right: .4rem; padding-inline: .5rem; } }
