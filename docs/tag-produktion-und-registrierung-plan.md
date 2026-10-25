@@ -41,24 +41,17 @@ Der bestehende Plan muss fachlich korrigiert werden:
 - `docs/login-finder-entry.md`: Öffentliche Links bleiben kein Besitznachweis, führen aber zustandsabhängig zur Registrierung.
 - Architektur, Übersicht, Roadmap und Datenschutzdokumentation an Bestand, Admin-Zugriff, Registrierungsentwürfe und Produktionsexporte anpassen.
 
-Fachlicher Reifegrad für diese neue Anforderung: etwa 4/10. Der Einstieg und die Identität sind vorhanden; Zustandsmodell, Besitznachweis, Produktionsprozess und verbindliche Zuordnung fehlen. Die folgenden Schritte definieren die dafür nötigen Regeln und Abnahmen.
+Der Einstieg und die Identität sind vorhanden; Zustandsmodell, Produktionsprozess und verbindliche Zuordnung fehlen. Die folgenden Schritte definieren die dafür nötigen Regeln und Abnahmen.
 
-## 3. Besitznachweis vor der Hardware-Produktion entscheiden
+## 3. Beschlossen: Registrierung ohne zusätzlichen Aktivierungscode
 
-**Empfehlung: zusätzlicher Aktivierungscode in einer verdeckten Verpackungsbeilage oder unter einer Freirubbelfläche.** Der öffentliche QR-Code bleibt dauerhaft derselbe und enthält ausschliesslich den öffentlichen Tag-Link.
+**Die erste erfolgreiche, explizit bestätigte Registrierung mit verifizierter E-Mail erhält den vorhandenen, freigegebenen und noch unzugewiesenen Hardware-Tag.** Ein separater Aktivierungscode oder Kaufnachweis ist nicht vorgesehen. Selbst erzeugte Tags sind bereits bei ihrer Erstellung zugewiesen.
 
-Eine bestätigte E-Mail beweist die Kontrolle über ein Postfach. Ein öffentlich fotografierbarer QR-Code beweist keinen Kauf oder Besitz. Ohne weiteren Nachweis könnte jemand im Lager oder Geschäft Tags zuerst registrieren. Eine zufällige öffentliche UUID verhindert Erraten, aber nicht das Kopieren eines sichtbaren Codes.
+Die öffentliche ID wird mit einem kryptografisch sicheren Zufallszahlengenerator als UUID-v4 erzeugt. Der 122-Bit-Zufallsraum verhindert praktisches Erraten und systematisches Durchprobieren. Keine fortlaufenden IDs oder vorhersagbaren Zufallsquellen verwenden. Rate Limits für öffentliche Auflösung, Registrierung und Versand bleiben als Missbrauchs- und Kostenschutz bestehen.
 
-Zwei mögliche Produktvarianten:
+Die bestätigte E-Mail belegt die Kontrolle über das Postfach, nicht den Kauf. Eine UUID schützt nicht gegen das Kopieren eines bereits sichtbaren QR-Codes. Das Risiko, dass jemand mit einer solchen Kopie vor dem Käufer registriert, wurde ausdrücklich akzeptiert. Es blockiert weder Umsetzung noch Hardware-Produktion.
 
-| Variante | Konsequenz |
-| --- | --- |
-| Empfohlen: E-Mail-Bestätigung plus separater Aktivierungscode | Schutz der Erstzuordnung auch bei öffentlich sichtbarem QR-Code; Code und Verpackungsprozess müssen vor der Produktion feststehen. |
-| Nur E-Mail-Bestätigung plus öffentliche Tag-ID | Weniger Eingaben; der erste erfolgreiche Registrierende erhält den Tag. Das Risiko fremder Erstregistrierung wird ausdrücklich akzeptiert. |
-
-Der Plan funktioniert mit beiden Varianten. Der zusätzliche Code ist eine Empfehlung und noch keine beschlossene Anforderung. Diese Entscheidung ist vor dem Druck von Hardware-Tags verbindlich zu treffen. Ein Aktivierungscode gehört nicht in den öffentlichen QR-Code; der öffentliche Scan allein muss für Finder genügen. Selbst erzeugte Tags sind bereits bei ihrer Erstellung zugewiesen und benötigen keinen Aktivierungscode.
-
-Bei der empfohlenen Variante: kryptografisch zufällige Codes, serverseitig nur Prüfwerte speichern, begrenzte Versuche pro Tag und Quelle, Codes nie protokollieren. Produktionsausgabe der Klartextcodes separat schützen und nur solange nötig aufbewahren. Nach erfolgreicher Zuordnung kann der Code nie erneut zur Übernahme verwendet werden. Ersatzcodes sind ausschliesslich für unzugewiesene Tags durch eine auditierte Admin-Aktion möglich; alte Codes werden dabei ungültig.
+Ein bereits zugewiesener Tag kann über die Erstregistrierung nicht übernommen werden. Fehlzuordnungen werden durch Support nach gesonderter Prüfung geklärt; es gibt keine öffentliche Überschreibfunktion. Das Modell enthält keine Codefelder, Codeprüfungen oder geheimen Codeexporte. Ein späterer zusätzlicher Aktivierungsnachweis wäre eine neue Produktentscheidung.
 
 ## 4. Fachmodell und unveränderliche Regeln
 
@@ -75,7 +68,6 @@ Vorgeschlagene Felder:
 - Erstellungs-Idempotenzschlüssel für selbst erzeugte Tags, an den erzeugenden Benutzer gebunden;
 - bestehender fachlicher Status: `ACTIVE`, `INACTIVE`, `BLOCKED`, `RETIRED`;
 - `registeredAt`, optionaler privater Anzeigename, Erstellungs-/Änderungszeit;
-- optionaler Aktivierungscode-Prüfwert entsprechend der Produktentscheidung.
 
 Bestand/Freigabe und Besitzerzuordnung sind verschiedene Sachverhalte: Ein hergestellter Tag kann bereits freigegeben sein und trotzdem noch keinen Besitzer haben. Registrierbar ist er nur, wenn er freigegeben, unzugewiesen und nicht gesperrt oder stillgelegt ist. `ACTIVE` allein bedeutet nicht, dass ein Finder bereits einen Besitzer erreichen kann.
 
@@ -98,7 +90,7 @@ In „Meine Tags“ bleibt die Aktion „Neuen Tag erstellen“ erhalten bzw. wi
 
 Der erste Umfang enthält die Selbsterstellung und den QR-Download. Als späterer Ausbau folgt „Druckvorlage herunterladen“ pro eigenem Tag, etwa als PDF im Kreditkartenformat. Das Format ist eine Darstellung des bestehenden Tags und keine neue Tag-Art oder neue Identität. Dieselbe autorisierte Druckfunktion soll auch für bereits registrierte Hardware-Tags verwendbar sein.
 
-Vor der Druckfunktion festlegen: konkrete Abmessungen (für Kreditkartenformat beispielsweise 85,60 × 53,98 mm), Vorder-/Rückseite, Beschnitt und Sicherheitsabstand, Beschriftung, Sprache, Mindestgrösse und Ruhezone des QR-Codes sowie eine bei 100 % Skalierung druckbare Ausgabe. PDF-/QR-Erzeugung verwendet dieselbe kanonische öffentliche URL wie der Produktionsexport; private Kontodaten und Aktivierungscodes gehören nicht auf die Vorlage. Druckqualität und Scannbarkeit werden an echten Ausdrucken geprüft. Ein allgemeiner Layout-Editor ist dafür zunächst nicht erforderlich.
+Vor der Druckfunktion festlegen: konkrete Abmessungen (für Kreditkartenformat beispielsweise 85,60 × 53,98 mm), Vorder-/Rückseite, Beschnitt und Sicherheitsabstand, Beschriftung, Sprache, Mindestgrösse und Ruhezone des QR-Codes sowie eine bei 100 % Skalierung druckbare Ausgabe. PDF-/QR-Erzeugung verwendet dieselbe kanonische öffentliche URL wie der Produktionsexport; private Kontodaten gehören nicht auf die Vorlage. Druckqualität und Scannbarkeit werden an echten Ausdrucken geprüft. Ein allgemeiner Layout-Editor ist dafür zunächst nicht erforderlich.
 
 ### Produktionsserie
 
@@ -114,17 +106,17 @@ Empfohlene Frist zunächst vier Stunden, serverseitig geprüft und konfigurierba
 
 1. Scan oder Eingabe führt wie bisher zu `/f/{publicId}`.
 2. Backend löst den Tag auf und liefert ausschliesslich die erlaubte nächste Aktion.
-3. Bei freiem Tag: Seite erklärt „Diesen Tag registrieren“. Benutzer gibt E-Mail und gegebenenfalls Aktivierungscode ein. Bei gültiger bestehender Sitzung kann er sein Konto direkt verwenden oder bewusst wechseln.
-4. Backend prüft Tag, Freigabe und gegebenenfalls Code. Für unangemeldete Benutzer legt es einen kurzlebigen, an Tag und E-Mail gebundenen Entwurf an. Keine Besitzerzuordnung zu diesem Zeitpunkt.
+3. Bei freiem Tag: Seite erklärt „Diesen Tag registrieren“. Benutzer gibt seine E-Mail ein. Bei gültiger bestehender Sitzung kann er sein Konto direkt verwenden oder bewusst wechseln.
+4. Backend prüft Tag, Freigabe und fehlende Besitzerzuordnung. Für unangemeldete Benutzer legt es einen kurzlebigen, an Tag und E-Mail gebundenen Entwurf an. Keine Besitzerzuordnung zu diesem Zeitpunkt.
 5. Der vorhandene Firebase-Linkversand erhält einen fest erlaubten Continue-Link mit der `flowId`. Nach angenommenem Versand folgt die vorhandene Erfolgsseite: Browser kann geschlossen werden. Versandfehler bleiben sichtbar, erneuter Versand ist begrenzt möglich.
 6. Im Browser aus der E-Mail: Callback übernimmt Firebase-Anmeldedaten und die getrennt validierte `flowId` zunächst in den Speicher und entfernt sie aus der Adresszeile. Heute verwirft der Callback alle zusätzlichen Zustandsdaten; er muss gezielt erweitert werden.
-7. Bei anderem Browser/Gerät wird die E-Mail erneut abgefragt. Die Fortsetzung darf nicht von LocalStorage oder einem Tab im ursprünglichen Browser abhängen. E-Mail und Aktivierungscode werden nicht in die Continue-URL geschrieben.
+7. Bei anderem Browser/Gerät wird die E-Mail erneut abgefragt. Die Fortsetzung darf nicht von LocalStorage oder einem Tab im ursprünglichen Browser abhängen. Die E-Mail wird nicht in die Continue-URL geschrieben.
 8. Nach Firebase-Anmeldung lädt die Anwendung den Entwurf über einen geschützten Endpunkt. Backend prüft bestätigte E-Mail, UID-Zuordnung, lokalen Benutzerstatus und Frist. Neue Benutzer erhalten das vorhandene lokale Benutzerkonto; bestehende verwenden dasselbe Konto.
 9. Eine geschützte Bestätigungsseite unter beispielsweise `/tag-registrations/{flowId}` zeigt den konkreten Tag und das verwendete Konto. Die nicht geheime Vorgangs-ID erlaubt dort Reloads; alle Inhalte werden erneut autorisiert vom Backend geladen. „Tag registrieren“ sendet die verbindliche Mutation. Vorher noch keine Zuordnung, damit Mail-Link-Vorschauen und unbeabsichtigtes Öffnen keine Registrierung auslösen.
 10. Backend prüft den Zustand erneut und ordnet Tag und Entwurf in einer Transaktion zu. Falls zwischenzeitlich vergeben: verständlicher Konflikt, keine automatische Überschreibung und keine automatische Fundmeldung.
 11. Erfolg führt zur eigenen Tag-Detailseite und der Tag erscheint in „Meine Tags“.
 
-Bei bereits angemeldeten Benutzern entfällt ein unnötiger neuer E-Mail-Link; dieselben Backend-Regeln und gegebenenfalls der Aktivierungscode gelten weiterhin. Veraltete oder fehlende E-Mail-Verifikation muss vor der Zuordnung erneuert werden.
+Bei bereits angemeldeten Benutzern entfällt ein unnötiger neuer E-Mail-Link; dieselben Backend-Regeln gelten weiterhin. Veraltete oder fehlende E-Mail-Verifikation muss vor der Zuordnung erneuert werden.
 
 Die `flowId` dient nur zum Wiederfinden des Vorgangs. Sie erlaubt weder fremde Daten einzusehen noch einen Tag zu übernehmen. Keine frei wählbaren externen Redirect-Ziele einführen.
 
@@ -172,7 +164,7 @@ Die Übersicht umfasst **alle erzeugten Tags der jeweiligen Umgebung**, unabhän
 - Filter: Herkunft, Serie, zugewiesen/unzugewiesen, Produktionsfreigabe und Tagstatus; Suche zunächst nach exakter öffentlicher ID.
 - Stabile Sortierung und serverseitige Cursor-Pagination; keine vollständige Bestandsabfrage im Browser. Filterbare Gesamtzahlen serverseitig berechnen.
 - Detailansicht mit QR-Link, Metadaten und zulässigen Admin-Aktionen; Zugang zu Serienerstellung, Serienübersicht und Produktionsexport.
-- Leere Listen, Ladefehler und fehlende Berechtigung verständlich darstellen. Aktivierungscodes, private Nachrichten und unnötige persönliche Daten erscheinen nicht in der Tag-Tabelle.
+- Leere Listen, Ladefehler und fehlende Berechtigung verständlich darstellen. Private Nachrichten und unnötige persönliche Daten erscheinen nicht in der Tag-Tabelle.
 
 Minimale geschützte Oberfläche:
 
@@ -181,9 +173,9 @@ Minimale geschützte Oberfläche:
 3. Backend erzeugt genau die gewünschte Anzahl einmalig. Serienmetadaten und Tags atomar anlegen; Transaktionsgrenzen für 100 Tags gegen echte Firestore-Dev-Datenbank testen. Ein Retry nach Timeout liefert dieselbe Serie.
 4. Serienliste und Detail zeigen Soll-/Ist-Anzahl, Freigabe sowie registrierte und unzugewiesene Tags; keine freie Datenbankbearbeitung.
 5. Export liefert UTF-8-CSV mit öffentlicher ID, dauerhafter URL und Produktionsreferenz; bei Bedarf lokal generiertes QR-SVG/PDF für den Hersteller. IDs und QR-Ziele werden automatisiert auf Eindeutigkeit und Übereinstimmung geprüft.
-6. Öffentliche Druckdaten und gegebenenfalls geheime Aktivierungscodes getrennt exportieren. Zugang, Aufbewahrung und sichere Übergabe der Code-Datei festlegen. Nach verlorenem Geheimexport keinen neuen Tag-Satz erzeugen; kontrolliert Ersatzcodes für dieselben unzugewiesenen Tags ausgeben.
+6. Produktionsexporte nur autorisiert ausgeben und sicher an den Hersteller übergeben. Sie enthalten ausschliesslich öffentliche Tag-IDs, URLs und Produktionsreferenzen; zusätzliche Aktivierungsgeheimnisse werden nicht erzeugt. Ein erneuter Export verwendet denselben Bestand und erzeugt keine neuen Tags.
 7. Nach Qualitätskontrolle explizit zur Registrierung freigeben. Die Freigabe erzeugt keine Besitzer. Änderungen dürfen zugewiesene Tags nicht zurücksetzen.
-8. Admin-Aktionen wie Erstellung, Export, Freigabe und Sperre mit Akteur, Zeitpunkt und Aktion auditieren; keine geheimen Codes oder E-Mail-Inhalte im Audit.
+8. Admin-Aktionen wie Erstellung, Export, Freigabe und Sperre mit Akteur, Zeitpunkt und Aktion auditieren; keine E-Mail-Inhalte oder Auth-Tokens im Audit.
 
 **Vor dem physischen Druck verbindlich:** produktive dauerhafte Domain und `/f/{publicId}` festlegen. Keine `web.app`-Dev-Links auf Verkaufstags drucken. Dev-/Testserien sind vom Produktionsbestand getrennt und dürfen nicht ausgeliefert werden. Bei einem späteren Domainwechsel müssen bestehende gedruckte URLs dauerhaft weiterleiten.
 
@@ -198,7 +190,7 @@ Vorgeschlagene fachliche Endpunkte; Namen im OpenAPI-Vertrag abschliessend verei
 | `POST /api/v1/public/tags/{publicId}/registration-drafts` | Entwurf anlegen, Tag/Code prüfen; begrenzt, keine Reservierung. |
 | `GET /api/v1/tag-registrations/{flowId}` | Fortsetzung nur mit passender bestätigter Identität. |
 | `POST /api/v1/tag-registrations/{flowId}/complete` | Explizite, atomare Zuordnung; passende Identität erforderlich. |
-| `POST /api/v1/tags/{publicId}/register` | Direkte Registrierung mit bestätigter Sitzung, denselben fachlichen Prüfungen und optionalem Code. |
+| `POST /api/v1/tags/{publicId}/register` | Direkte Registrierung mit bestätigter Sitzung, denselben fachlichen Prüfungen. |
 | `POST /api/v1/tags` | Eigenen Tag erstellen und atomar dem angemeldeten Benutzer zuordnen; benutzerbezogener Idempotenzschlüssel und Mengenlimits. |
 | `GET /api/v1/tags`, `GET /api/v1/tags/{tagId}` | Eigene Tags und Details, ressourcenbezogene Autorisierung. |
 | Später: `GET /api/v1/tags/{tagId}/printout?format=card` | Autorisierter PDF-Download für bestehenden eigenen Tag; Layoutparameter serverseitig begrenzen. |
@@ -218,17 +210,17 @@ Die Zuordnung verwendet einen bedingten Schreibzugriff auf denselben Tag mit Pr�
 
 Bestehende Security-Konfiguration gezielt erweitern: nur die vorgesehenen öffentlichen Pfade freigeben; alle Registrierungsabschlüsse und Admin-Mutationen geschützt halten. Kein pauschales Freischalten von `/api/v1/**`.
 
-Weitere notwendige Massnahmen: Eingabevalidierung, Grössenlimits, begrenzte öffentliche Auflösung/Entwurfserstellung/Codeversuche, Kosten- und Versandquoten, nicht cachebare zustandsabhängige Antworten, keine sensiblen Daten in Logs. Rate-Limit-Prüfwerte benötigen eine kurze Aufbewahrung. Produktionsdateien und Callback-Seiten nicht durch Analyse-/Drittanbieter-Skripte erfassen lassen.
+Weitere notwendige Massnahmen: Eingabevalidierung, Grössenlimits, begrenzte öffentliche Auflösung/Entwurfserstellung, Kosten- und Versandquoten, nicht cachebare zustandsabhängige Antworten, keine sensiblen Daten in Logs. Rate-Limit-Prüfwerte benötigen eine kurze Aufbewahrung. Produktionsdateien und Callback-Seiten nicht durch Analyse-/Drittanbieter-Skripte erfassen lassen.
 
 ## 9. Umsetzung als überprüfbare Schritte
 
 ### Schritt 1 – Regeln und Produktionsformat festlegen
 
-- Aktivierungsnachweis und dauerhafte Produktionsdomain entscheiden.
+- Beschlossene Erstzuordnung ohne Aktivierungscode umsetzen und dauerhafte Produktionsdomain entscheiden.
 - Statusmodell, Besitzregeln, öffentliche Antworten und API-Vertrag dokumentieren.
 - Bestehende Fachpläne konsistent aktualisieren; Selbsterstellung als gleichberechtigten Weg ausdrücklich erhalten und spätere Druckvorlagen in der Roadmap aufnehmen.
 
-Abnahme: Beispiele „neu“, „zugewiesen“, „fremde ID“, „gesperrt“ und „parallele Registrierung“ sind eindeutig beschrieben. Druckformat und Codebeilage sind entschieden.
+Abnahme: Beispiele „neu“, „zugewiesen“, „fremde ID“, „gesperrt“ und „parallele Registrierung“ sind eindeutig beschrieben. Druckformat ist entschieden; ein zusätzlicher Aktivierungscode ist nicht vorgesehen.
 
 ### Schritt 2 – Bestand, Admin-Berechtigung und Serien-API
 
@@ -305,16 +297,15 @@ Abnahme: PDF hat die definierten physischen Abmessungen, enthält den unverände
 - Manuelle Vergabe wird nach Laden von `/me` sichtbar; manueller Entzug wirkt beim nächsten Admin-Request ohne Token-Erneuerung. Direkte fremde Tag-IDs bleiben für normale Benutzer gesperrt.
 - Admin-Liste enthält selbst erzeugte und vorproduzierte Tags, zugewiesene und unzugewiesene. Filter, Zählungen und Cursor-Pagination liefern konsistente Ergebnisse ohne doppelte Einträge; normale Besitzerlisten bleiben auf berechtigte Tags begrenzt.
 - Normale Admin-Anmeldung öffnet die globale Übersicht; Anmeldung innerhalb eines Tag-/Finder-Vorgangs erhält dessen Fortsetzung.
-- Bei Aktivierungscodes: falsch, ersetzt, bereits verwendet und zu viele Versuche werden korrekt behandelt; Geheimnisse fehlen in Logs.
+- Registrierung verlangt keinen zusätzlichen Code. UUID-v4-Erzeugung verwendet eine kryptografisch sichere Zufallsquelle; bereits zugewiesene Tags bleiben gegen erneute Zuordnung geschützt.
 - Deutsch/Englisch, Tastaturbedienung, Screenreader-Status, kleine Bildschirme und Kamera ohne Berechtigung prüfen.
 - Account-Löschung macht alte Tags nicht erneut registrierbar.
 - Beim späteren Druckausbau: physische PDF-Abmessungen, QR-Ruhezone, echte Scanbarkeit, Autorisierung und unveränderte Tag-Identität bei wiederholtem Druck prüfen.
 
 ## 11. Vor Umsetzung noch festzulegen
 
-1. **Besitznachweis:** verdeckter Aktivierungscode (empfohlen) oder bewusst „erste bestätigte Registrierung gewinnt“?
-2. **Produktion:** dauerhafte Domain, QR-/Beschriftungsformat und sichere Übergabe von Druckdaten bzw. Codebeilagen.
-3. **Freigabezeitpunkt:** nach Produktionskontrolle vor Verkauf (empfohlener Start) oder erst durch einen späteren Händler-/Verkaufsprozess?
-4. **Betrieb und Support:** erste Admin-Konten benennen und nach erster Anmeldung manuell über `users.isAdmin` berechtigen; Vorgehen bei Fehlregistrierung, defektem Tag oder verlorener Codebeilage festlegen. Die manuelle Rollenvergabe ist beschlossen; eine Admin-Rollenverwaltung in der UI ist zunächst nicht vorgesehen. Keine automatische Besitzerüberschreibung.
+1. **Produktion:** dauerhafte Domain, QR-/Beschriftungsformat und sichere Übergabe von Druckdaten.
+2. **Freigabezeitpunkt:** nach Produktionskontrolle vor Verkauf (empfohlener Start) oder erst durch einen späteren Händler-/Verkaufsprozess?
+3. **Betrieb und Support:** erste Admin-Konten benennen und nach erster Anmeldung manuell über `users.isAdmin` berechtigen; Vorgehen bei Fehlregistrierung oder defektem Tag festlegen. Die manuelle Rollenvergabe ist beschlossen; eine Admin-Rollenverwaltung in der UI ist zunächst nicht vorgesehen. Keine automatische Besitzerüberschreibung.
 
-Diese Punkte blockieren nicht die Planung oder vorbereitende Arbeit am Modell. Besitznachweis und Produktionsdomain müssen jedoch vor der ersten Hardware-Serie geklärt sein.
+Diese Punkte blockieren nicht die Planung oder vorbereitende Arbeit am Modell. Die Produktionsdomain muss vor der ersten Hardware-Serie feststehen. Registrierung ohne Aktivierungscode und das damit verbundene Risiko sind bereits beschlossen.
