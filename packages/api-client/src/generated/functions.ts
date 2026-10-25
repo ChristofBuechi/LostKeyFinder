@@ -41,6 +41,10 @@ export type { TagControllerOwnedPublic$Params as TagControllerOwnedPublic$Params
 export { tagControllerOwnedPublic as tagControllerOwnedPublic } from './fn/tags/tag-controller-owned-public';
 export type { TagControllerDetail$Params as TagControllerDetail$Params } from './fn/tags/tag-controller-detail';
 export { tagControllerDetail as tagControllerDetail } from './fn/tags/tag-controller-detail';
+export type { TagControllerDelete$Params as TagControllerDelete$Params } from './fn/tags/tag-controller-delete';
+export { tagControllerDelete as tagControllerDelete } from './fn/tags/tag-controller-delete';
+export type { TagControllerRelease$Params as TagControllerRelease$Params } from './fn/tags/tag-controller-release';
+export { tagControllerRelease as tagControllerRelease } from './fn/tags/tag-controller-release';
 export type { TagControllerChangeStatus$Params as TagControllerChangeStatus$Params } from './fn/tags/tag-controller-change-status';
 export { tagControllerChangeStatus as tagControllerChangeStatus } from './fn/tags/tag-controller-change-status';
 export type { VersionControllerVersion$Params as VersionControllerVersion$Params } from './fn/version/version-controller-version';

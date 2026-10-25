@@ -7,7 +7,7 @@ Stand: 25. Oktober 2026. Branch `feature/tag-registration-admin`, PR #6.
 - Lokales `users.isAdmin`, sicherer Standard `false` auch für bestehende Dokumente ohne Feld, nur lesbare Ausgabe in `/api/v1/me`.
 - Backend prüft vor jedem Admin-Aufruf das aktuelle lokale Konto und die Berechtigung. Manuelle Vergaben bleiben bei erneutem Login erhalten; Entzug und lokale Kontosperre wirken beim nächsten Request.
 - Authentifizierte Selbsterstellung mit UUID-v4, atomarer unmittelbarer Besitzerzuordnung, benutzerbezogenem Idempotenzschlüssel und privater Bezeichnung bis 80 Zeichen.
-- Besitzerliste und Detail-API sowie Aktivieren/Deaktivieren. Besitzerliste und Admin-Tagbestand verwenden nummerierte Seiten à 25 Tags, direkte Seitenwahl, Gesamtseitenzahl und sichtbaren Bereich (z. B. 26–50 von 100); Gesamtzahlen beziehen sich auf Besitzer bzw. aktive Filter. Fremde Ressourcen und Änderungen an gesperrten/stillgelegten Tags werden abgelehnt.
+- Besitzerliste und Detail-API sowie Aktivieren/Deaktivieren. Selbst erstellte Tags lassen sich nach Bestätigung aus Übersicht und Details per Soft Delete entfernen: `deletedAt` und `RETIRED`, vollständiger Datensatz und Besitzerreferenz bleiben erhalten. Besitzerlisten/-details blenden sie aus; Admin-Bestand und Admin-Details zeigen sie weiterhin. Ein altes Create-Retry kann sie nicht wiederbeleben. Besitzerliste und Admin-Tagbestand verwenden nummerierte Seiten à 25 Tags, direkte Seitenwahl, Gesamtseitenzahl und sichtbaren Bereich (z. B. 26–50 von 100); Gesamtzahlen beziehen sich auf Besitzer bzw. aktive Filter. Fremde Ressourcen und Änderungen an gesperrten/stillgelegten Tags werden abgelehnt.
 - Globale Admin-Tagübersicht mit Herkunft, Status, Zuordnung, öffentlicher ID, Serie und Produktionsfreigabe als Filtern; konsistente Bestandszahlen aus einer serverseitigen Aggregation und geschützte Detailansichten.
 - Stabile Cursor-Pagination mit 25 Einträgen über `(createdAt, id)` für Besitzer- und Adminlisten. Bei zwischenzeitlich neu erzeugten Tags führt „Zur ersten Seite“ zum aktualisierten Anfang; keine Snapshot-Sitzung über mehrere Seiten.
 - Angular-Ansichten `/tags` und `/admin/tags` auf Deutsch/Englisch, Zugriff über das Konto. Nach normalem E-Mail-Login führt ein Admin zur Gesamtübersicht; seine eigene Kontoseite bleibt erreichbar.
@@ -23,9 +23,15 @@ Stand: 25. Oktober 2026. Branch `feature/tag-registration-admin`, PR #6.
 - Begrenzte öffentliche Auflösung, Entwurfserstellung und Registrierung; feste serverseitige Zeitfenster und atomare Zähler. IP-/E-Mail-Kontexte stehen nur als HMAC-Prüfwerte in Zählern. Die Zähler liegen in `rateLimits`; ihr privater Schlüssel kommt aus Secret Manager und wird zwischen Backend-Replikaten geteilt.
 - TTL-Indizes bereinigen Entwürfe und Zähler automatisch. Fristprüfungen erfolgen unabhängig davon bei jedem fachlichen Zugriff; die physische TTL-Löschung ist asynchron und kein präziser Vier-Stunden-Timer.
 
+## Besitzerzuordnung freiwillig lösen
+
+Besitzer können aktive oder inaktive Hardware-Tags nach Bestätigung freigeben. Der Tag bleibt mit UUID, Serie, Position und Produktionsfreigabe erhalten; Besitzerreferenz, Registrierungszeitpunkt und private Bezeichnung werden entfernt und der Status wird `ACTIVE`. Danach ist der Tag wieder registrierbar. Alte Registrierungsentwürfe werden im selben Commit ungültig (Ablaufzeitpunkt setzen, E-Mail entfernen); TTL übernimmt ihre Bereinigung. `TAG_RELEASED` hält den bisherigen Besitzer im Audit fest. Soft Delete schreibt `TAG_DELETED`; beide Vorgänge verwenden dieselbe Transaktionsgrenze wie Registrierung und Serienfreigabe. Fremde, gesperrte oder stillgelegte Tags sowie die falsche Herkunft werden abgelehnt. Admin-Ansichten bieten keine pauschale Besitzerfreigabe an.
+
+Keine neue Collection, kein Backfill und keine Wiederherstellungsfunktion. Fehlendes `deletedAt` bedeutet weiterhin nicht gelöscht. Physisches Löschen von selbst erstellten Tags ist keine Benutzeraktion.
+
 ## Vereinbarter Umfang abgeschlossen; spätere Funktionen
 
-Fundmeldung, Benachrichtigungen, Kontakt/Chat und formatierte Druckvorlagen folgen später. Der Support-Ablauf bei Fehlregistrierungen ist gesondert beschrieben; dieser Umfang implementiert weder allgemeine Besitzerübertragung noch Support-Korrektur. Der separate Foto-/Rückfrageprozess bleibt eine manuelle Support-Konzeption und verspricht keine automatische Korrekturmöglichkeit.
+Fundmeldung, Benachrichtigungen, Kontakt/Chat und formatierte Druckvorlagen folgen später. Der Support-Ablauf bei Fehlregistrierungen ist gesondert beschrieben; direkte Übertragung auf ein bestimmtes anderes Konto und Support-Korrektur bleiben ausgenommen. Der separate Foto-/Rückfrageprozess bleibt eine manuelle Support-Konzeption und verspricht keine automatische Korrekturmöglichkeit.
 
 ## Admin manuell vergeben
 

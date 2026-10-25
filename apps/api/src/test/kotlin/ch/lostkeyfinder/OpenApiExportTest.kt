@@ -52,6 +52,7 @@ class OpenApiExportTest {
                 "/api/v1/tags",
                 "/api/v1/tags/{tagId}",
                 "/api/v1/tags/{tagId}/status",
+                "/api/v1/tags/{tagId}/release",
                 "/api/v1/admin/tags",
                 "/api/v1/admin/tags/summary",
                 "/api/v1/admin/tags/{tagId}",

@@ -26,12 +26,13 @@ data class Tag(
     val inventoryStatus: InventoryStatus? = null,
     val position: Int? = null,
     val registeredAt: Instant? = null,
+    val deletedAt: Instant? = null,
 )
 
 @Schema(
     requiredProperties = [
         "id", "publicId", "origin", "primaryOwnerUserId", "status", "label", "createdAt", "updatedAt",
-        "batchId", "inventoryStatus", "position", "registeredAt",
+        "batchId", "inventoryStatus", "position", "registeredAt", "deletedAt",
     ],
 )
 data class TagResponse(
@@ -47,6 +48,7 @@ data class TagResponse(
     val inventoryStatus: InventoryStatus?,
     val position: Int?,
     val registeredAt: Instant?,
+    val deletedAt: Instant?,
 ) {
     companion object {
         fun from(tag: Tag) =
@@ -63,6 +65,7 @@ data class TagResponse(
                 tag.inventoryStatus,
                 tag.position,
                 tag.registeredAt,
+                tag.deletedAt,
             )
     }
 }

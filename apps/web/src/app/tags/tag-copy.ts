@@ -39,6 +39,9 @@ export class TagCopy {
     rateLimit: 'Zu viele Anfragen. Bitte versuche es später erneut.', details: 'Tag-Details', registeredAt: 'Registriert am',
     validation: 'Bitte prüfe deine Eingaben.', back: 'Zur Übersicht', email: 'E-Mail-Adresse',
     prepareRelease: 'Freigabe vorbereiten', cancel: 'Abbrechen',
+    deleteTag: 'Tag löschen', releaseTag: 'Tag freigeben', deletedAt: 'Gelöscht am',
+    deleteConfirm: 'Diesen selbst erstellten Tag löschen? Sein QR-Code wird deaktiviert. Die Daten bleiben für die Historie erhalten.',
+    releaseConfirm: 'Die Besitzerzuordnung dieses Hardware-Tags lösen? Danach kann jemand anderes ihn registrieren. Deine private Bezeichnung wird entfernt.',
   } : {
     mine: 'My tags', admin: 'Tag inventory', account: 'My account', adminLink: 'Administration',
     intro: 'Create your own tag and download its QR code.',
@@ -74,5 +77,8 @@ export class TagCopy {
     rateLimit: 'Too many requests. Please try again later.', details: 'Tag details', registeredAt: 'Registered at',
     validation: 'Please check your input.', back: 'Back to list', email: 'Email address',
     prepareRelease: 'Review release', cancel: 'Cancel',
+    deleteTag: 'Delete tag', releaseTag: 'Release tag', deletedAt: 'Deleted at',
+    deleteConfirm: 'Delete this self-created tag? Its QR code will be deactivated. The data is retained for history.',
+    releaseConfirm: 'Release ownership of this hardware tag? Someone else can then register it. Your private label will be removed.',
   });
 }

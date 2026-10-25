@@ -4,6 +4,7 @@
 export interface TagResponse {
   batchId: string | null;
   createdAt: string;
+  deletedAt: string | null;
   id: string;
   inventoryStatus: ('PREPARED' | 'RELEASED') | null;
   label: string;

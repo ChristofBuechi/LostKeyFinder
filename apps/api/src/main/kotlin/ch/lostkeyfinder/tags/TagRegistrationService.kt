@@ -30,7 +30,7 @@ class TagRegistrationService(
         val tag = template.findOne(query(where("publicId").`is`(publicId.lowercase())), Tag::class.java)
         val action =
             when {
-                tag == null || tag.status != TagStatus.ACTIVE ||
+                tag == null || tag.deletedAt != null || tag.status != TagStatus.ACTIVE ||
                     (tag.origin == TagOrigin.PREPRODUCED && tag.inventoryStatus != InventoryStatus.RELEASED) -> PublicTagAction.UNAVAILABLE
 
                 tag.primaryOwnerUserId != null -> PublicTagAction.REPORT_FOUND
@@ -127,7 +127,11 @@ class TagRegistrationService(
         val tag =
             ops.findOne(query(where("publicId").`is`(publicId)), Tag::class.java)
                 ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
-        if (tag.primaryOwnerUserId == user.id && tag.status in listOf(TagStatus.ACTIVE, TagStatus.INACTIVE)) return TagResponse.from(tag)
+        if (tag.deletedAt == null && tag.primaryOwnerUserId == user.id &&
+            tag.status in listOf(TagStatus.ACTIVE, TagStatus.INACTIVE)
+        ) {
+            return TagResponse.from(tag)
+        }
         if (!registrable(tag)) throw ResponseStatusException(HttpStatus.CONFLICT, "Tag unavailable")
         val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
         val result =
@@ -163,6 +167,6 @@ class TagRegistrationService(
     }
 
     private fun registrable(tag: Tag) =
-        tag.origin == TagOrigin.PREPRODUCED && tag.primaryOwnerUserId == null &&
+        tag.deletedAt == null && tag.origin == TagOrigin.PREPRODUCED && tag.primaryOwnerUserId == null &&
             tag.inventoryStatus == InventoryStatus.RELEASED && tag.status == TagStatus.ACTIVE
 }

@@ -13,14 +13,14 @@ Es gibt zwei gleichberechtigte Entstehungswege: Ein angemeldeter Benutzer erzeug
 
 Vorproduzierte Tags gehören einer Serie an und sind zunächst `PREPARED`. Erst `RELEASED` erlaubt die Registrierung eines vorhandenen, unzugewiesenen und nicht gesperrten oder stillgelegten Tags. Selbsterstellung benötigt keine Produktionsserie oder Freigabe. Scan und Registrierung erzeugen niemals neue Tags für unbekannte IDs. Die verbindliche Zuordnung geschieht explizit und atomar; konkurrierende Benutzer können nicht beide Besitzer werden. Hardware-Tags werden ohne zusätzlichen Aktivierungscode registriert: Die erste explizite Zuordnung durch einen Benutzer mit bestätigter E-Mail gewinnt. Die öffentliche UUID-v4 wird kryptografisch sicher zufällig erzeugt; das Risiko einer fremden Erstregistrierung mit einem vorab kopierten QR-Code ist akzeptiert.
 
-Die gemeinsame Scan-Route bietet bei einem registrierbaren Tag Registrierung und bei einem zugewiesenen aktiven Tag Fundmeldung an. Nicht existente, nicht freigegebene, inaktive, gesperrte und stillgelegte Tags bleiben öffentlich neutral. Bereits zugewiesene Tags werden durch Logout, Deaktivierung oder Account-Löschung nicht wieder frei.
+Die gemeinsame Scan-Route bietet bei einem registrierbaren Tag Registrierung und bei einem zugewiesenen aktiven Tag Fundmeldung an. Nicht existente, nicht freigegebene, inaktive, gesperrte und stillgelegte Tags bleiben öffentlich neutral. Bereits zugewiesene Tags werden durch Logout, Deaktivierung oder Account-Löschung nicht wieder frei. Besitzer können die Zuordnung eines aktiven/inaktiven Hardware-Tags ausdrücklich lösen; danach ist derselbe produzierte Tag wieder registrierbar. Alte Registrierungsentwürfe werden dabei ungültig.
 
 | Tagstatus | Wirkung |
 | --- | --- |
 | `ACTIVE` | Bei vorhandenem Besitzer Fundmeldung möglich; ohne Besitzer nur bei Produktionsfreigabe registrierbar. |
 | `INACTIVE` | Durch berechtigten Owner reaktivierbar. |
 | `BLOCKED` | Reversible Support-Sperre ohne Endnutzerzugriff. |
-| `RETIRED` | Endzustand nach Löschung des Primary Owners; keine Reaktivierung oder neuen Fälle. |
+| `RETIRED` | Endzustand, auch beim Soft Delete eines selbst erstellten Tags (`deletedAt`); keine Reaktivierung oder neuen Fälle. Das Tag-Dokument bleibt erhalten. |
 
 Der Primary Owner kann höchstens drei offene Einladungen oder aktive Backup Owner verwalten. Die Annahme verlangt die exakt passende normalisierte, verifizierte E-Mail der authentifizierten Identität. Jede Annahme erhält eine neue `membershipId`. Archivzugriff eines Backup Owners verlangt dieselbe noch aktive Mitgliedschaft, die beim Fall bestand. Entfernen und erneutes Einladen stellt daher keinen früheren Zugriff wieder her.
 

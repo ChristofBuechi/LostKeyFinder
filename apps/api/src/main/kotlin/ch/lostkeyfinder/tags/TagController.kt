@@ -9,9 +9,11 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Size
 import org.springdoc.core.annotations.ParameterObject
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PatchMapping
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
 data class CreateTagRequest(
@@ -67,6 +70,22 @@ class TagController(
         @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
         @PathVariable publicId: String,
     ) = tags.ownedPublic(users.currentUser(jwt), publicId)
+
+    @DeleteMapping("/{tagId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(operationId = "TagController_delete")
+    fun delete(
+        @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
+        @PathVariable tagId: String,
+    ) = tags.delete(users.currentUser(jwt), tagId)
+
+    @PostMapping("/{tagId}/release")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(operationId = "TagController_release")
+    fun release(
+        @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
+        @PathVariable tagId: String,
+    ) = tags.release(users.currentUser(jwt), tagId)
 
     @PatchMapping("/{tagId}/status")
     @Operation(operationId = "TagController_changeStatus")

@@ -8,6 +8,7 @@ import { firstValueFrom } from 'rxjs';
 import { Auth } from '../../auth/auth';
 import { TagCopy } from '../tag-copy';
 import { tagError } from '../tag-error';
+import { TagRemoval } from '../tag-removal/tag-removal';
 
 export const QR_ENCODER = new InjectionToken('QR encoder loader', {
   providedIn: 'root', factory: () => () => import('qrcode'),
@@ -15,7 +16,7 @@ export const QR_ENCODER = new InjectionToken('QR encoder loader', {
 
 @Component({
   selector: 'app-tag-list',
-  imports: [RouterLink, FormField, DatePipe],
+  imports: [RouterLink, FormField, DatePipe, TagRemoval],
   templateUrl: './tag-list.html',
   styleUrl: './tag-list.scss',
 })

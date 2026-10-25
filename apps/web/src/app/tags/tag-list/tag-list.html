@@ -54,7 +54,8 @@
                     <td>{{ tag.primaryOwnerUserId || copy().free }}</td><td>{{ tag.batchId || '—' }}</td><td>{{ tag.inventoryStatus ? copy()[tag.inventoryStatus] : '—' }}</td>
                   } @else {
                     <td class="actions"><button type="button" (click)="download(tag)" [disabled]="busy()">{{ copy().qr }}</button>
-                    @if (tag.status === 'ACTIVE' || tag.status === 'INACTIVE') { <button type="button" (click)="toggle(tag)" [disabled]="busy()">{{ tag.status === 'ACTIVE' ? copy().deactivate : copy().activate }}</button> }</td>
+                    @if (tag.status === 'ACTIVE' || tag.status === 'INACTIVE') { <button type="button" (click)="toggle(tag)" [disabled]="busy()">{{ tag.status === 'ACTIVE' ? copy().deactivate : copy().activate }}</button> }
+                    <app-tag-removal [tag]="tag" (removed)="page.reload()" /></td>
                   }
                 </tr>
               }

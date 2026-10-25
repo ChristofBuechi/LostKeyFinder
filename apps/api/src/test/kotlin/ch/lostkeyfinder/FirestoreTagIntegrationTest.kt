@@ -1,6 +1,8 @@
 package ch.lostkeyfinder
 
+import ch.lostkeyfinder.tags.MongoTagTransactions
 import ch.lostkeyfinder.tags.Tag
+import ch.lostkeyfinder.tags.TagAudit
 import ch.lostkeyfinder.tags.TagBatch
 import ch.lostkeyfinder.tags.TagCreationLimit
 import ch.lostkeyfinder.tags.TagFilter
@@ -11,6 +13,7 @@ import ch.lostkeyfinder.tags.TagStatus
 import ch.lostkeyfinder.users.User
 import ch.lostkeyfinder.users.UserStatus
 import com.mongodb.ConnectionString
+import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoClients
 import org.junit.jupiter.api.Test
 import org.springframework.data.domain.Sort
@@ -32,7 +35,7 @@ import kotlin.test.assertFailsWith
 // This explicit operator task uses index-admin credentials, never the runtime service account.
 class FirestoreTagIndexProvisioningTest {
     @Test fun `provision tag indexes with operator credentials`() =
-        withFirestore { template ->
+        withFirestore { template, _ ->
             val indexes = template.indexOps(Tag::class.java)
             val operations: List<() -> Unit> =
                 listOf(
@@ -120,10 +123,10 @@ class FirestoreTagIndexProvisioningTest {
 
 class FirestoreTagIntegrationTest {
     @Test fun `real Firestore supports concurrent creation filtering numbered pages and owner status checks`() =
-        withFirestore { template ->
+        withFirestore { template, client ->
             val now = Instant.now()
             val owner = User(UUID.randomUUID().toString(), UUID.randomUUID().toString(), "probe@example.com", UserStatus.ACTIVE, now, now)
-            val tags = TagService(template, TagCreationLimit(template))
+            val tags = TagService(template, TagCreationLimit(template), MongoTagTransactions(client, template))
             val key = UUID.randomUUID().toString()
             val selection = query(where("primaryOwnerUserId").`is`(owner.id))
             template.insert(owner)
@@ -177,14 +180,23 @@ class FirestoreTagIntegrationTest {
                         tags.owned(owner.copy(id = UUID.randomUUID().toString()), tag.id)
                     }.statusCode.value(),
                 )
+                tags.delete(owner, tag.id)
+                val deleted = template.findById(tag.id, Tag::class.java)!!
+                kotlin.test.assertNotNull(deleted.deletedAt)
+                assertEquals(TagStatus.RETIRED, deleted.status)
+                assertEquals(tag.publicId, deleted.publicId)
+                assertEquals(tag.label, deleted.label)
+                assertEquals(26L, tags.list(ownerId = owner.id).totalItems)
+                assertEquals(404, assertFailsWith<ResponseStatusException> { tags.owned(owner, tag.id) }.statusCode.value())
             } finally {
+                template.remove(query(where("actorUserId").`is`(owner.id)), TagAudit::class.java)
                 template.remove(selection, Tag::class.java)
                 template.remove(query(where("_id").`is`(owner.id)), User::class.java)
             }
         }
 }
 
-private fun withFirestore(action: (MongoTemplate) -> Unit) {
+private fun withFirestore(action: (MongoTemplate, MongoClient) -> Unit) {
     val uri = requireNotNull(System.getenv("FIRESTORE_MONGODB_URI"))
-    MongoClients.create(uri).use { client -> action(MongoTemplate(client, requireNotNull(ConnectionString(uri).database))) }
+    MongoClients.create(uri).use { client -> action(MongoTemplate(client, requireNotNull(ConnectionString(uri).database)), client) }
 }
