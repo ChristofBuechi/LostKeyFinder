@@ -23,5 +23,5 @@ data class TagProperties(
 }
 
 @Configuration
-@EnableConfigurationProperties(TagProperties::class)
+@EnableConfigurationProperties(TagProperties::class, RateLimitProperties::class)
 class TagConfiguration

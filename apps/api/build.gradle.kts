@@ -112,3 +112,11 @@ tasks.jacocoTestCoverageVerification {
     }
 }
 tasks.bootJar { archiveFileName = "api.jar" }
+
+tasks.register<JavaExec>("simplifySchema") {
+    description = "Explicit operator migration; default is read-only, never called by application startup"
+    dependsOn(tasks.testClasses)
+    classpath = sourceSets.test.get().runtimeClasspath
+    mainClass.set("ch.lostkeyfinder.operations.SchemaMigrationKt")
+    args((project.findProperty("migrationArgs") as String? ?: "inspect").split(' '))
+}

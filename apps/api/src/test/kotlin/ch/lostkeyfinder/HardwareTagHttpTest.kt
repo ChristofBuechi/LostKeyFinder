@@ -60,7 +60,7 @@ class HardwareTagHttpTest {
             "tagBatches",
             "tagRegistrationDrafts",
             "auditLog",
-            "publicRequestLimits",
+            "rateLimits",
         )) {
             template.remove(Query(), collection)
         }
@@ -432,7 +432,7 @@ class HardwareTagHttpTest {
         assertEquals(429, assertFailsWith<ResponseStatusException> { limits.reserve("test", "private@example.com", 1) }.statusCode.value())
         assertFalse(
             template
-                .getCollection("publicRequestLimits")
+                .getCollection("rateLimits")
                 .find()
                 .first()
                 .toString()

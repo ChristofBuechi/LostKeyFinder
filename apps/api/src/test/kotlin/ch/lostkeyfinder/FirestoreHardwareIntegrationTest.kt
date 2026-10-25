@@ -3,6 +3,7 @@ package ch.lostkeyfinder
 import ch.lostkeyfinder.tags.InventoryStatus
 import ch.lostkeyfinder.tags.MongoTagTransactions
 import ch.lostkeyfinder.tags.PublicRequestLimits
+import ch.lostkeyfinder.tags.RateLimitProperties
 import ch.lostkeyfinder.tags.Tag
 import ch.lostkeyfinder.tags.TagAudit
 import ch.lostkeyfinder.tags.TagBatch
@@ -56,7 +57,12 @@ class FirestoreHardwareIntegrationTest {
             val admin = user().copy(isAdmin = true)
             val owners = listOf(user(), user())
             val batches = TagBatchService(template, transactions, TagProperties("https://example.test"))
-            val registrations = TagRegistrationService(template, transactions, PublicRequestLimits(template))
+            val registrations =
+                TagRegistrationService(
+                    template,
+                    transactions,
+                    PublicRequestLimits(template, RateLimitProperties(requireNotNull(System.getenv("PUBLIC_RATE_LIMIT_HMAC_KEY")))),
+                )
             val batchIds = mutableListOf<String>()
             val flowId = UUID.randomUUID().toString()
             val key = UUID.randomUUID().toString()
@@ -146,9 +152,8 @@ class FirestoreHardwareIntegrationTest {
                 template.remove(query(where("actorUserId").`in`((owners + admin).map { it.id })), TagAudit::class.java)
                 template.remove(query(where("_id").`is`(flowId)), TagRegistrationDraft::class.java)
                 // Clean only the exact isolated users' buckets; never remove live users' limits.
-                val stored = template.findById("public-v1", Document::class.java, "rateLimitKeys")
-                if (stored != null) {
-                    val secret = Base64.getDecoder().decode(stored.getString("key"))
+                run {
+                    val secret = Base64.getDecoder().decode(requireNotNull(System.getenv("PUBLIC_RATE_LIMIT_HMAC_KEY")))
                     for (owner in owners) {
                         for (window in (now.epochSecond / 3600)..(Instant.now().epochSecond / 3600)) {
                             val mac = Mac.getInstance("HmacSHA256").apply { init(SecretKeySpec(secret, "HmacSHA256")) }
@@ -156,7 +161,7 @@ class FirestoreHardwareIntegrationTest {
                                 Base64.getUrlEncoder().withoutPadding().encodeToString(
                                     mac.doFinal("registration-user:${owner.id}:$window".toByteArray()),
                                 )
-                            template.remove(query(where("_id").`is`(bucket)), "publicRequestLimits")
+                            template.remove(query(where("_id").`is`(bucket)), "rateLimits")
                         }
                     }
                 }

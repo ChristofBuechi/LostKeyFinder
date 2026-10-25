@@ -71,13 +71,6 @@ class FirestoreTagIndexProvisioningTest {
                         Unit
                     },
                     {
-                        template
-                            .indexOps(
-                                "tagCreationLimits",
-                            ).createIndex(Index().on("expiresAt", Sort.Direction.ASC).expire(Duration.ZERO))
-                        Unit
-                    },
-                    {
                         indexes.createIndex(
                             Index()
                                 .on("batchId", Sort.Direction.ASC)
@@ -108,7 +101,7 @@ class FirestoreTagIndexProvisioningTest {
                     {
                         template
                             .indexOps(
-                                "publicRequestLimits",
+                                "rateLimits",
                             ).createIndex(Index().on("expiresAt", Sort.Direction.ASC).expire(Duration.ZERO))
                         Unit
                     },
@@ -126,8 +119,8 @@ class FirestoreTagIntegrationTest {
             val owner = User(UUID.randomUUID().toString(), UUID.randomUUID().toString(), "probe@example.com", UserStatus.ACTIVE, now, now)
             val tags = TagService(template, TagCreationLimit(template))
             val key = UUID.randomUUID().toString()
-            val limitId = "${owner.id}:${LocalDate.now(ZoneOffset.UTC)}"
             val selection = query(where("primaryOwnerUserId").`is`(owner.id))
+            template.insert(owner)
             try {
                 val results =
                     Executors.newFixedThreadPool(4).use { pool ->
@@ -171,7 +164,7 @@ class FirestoreTagIntegrationTest {
                 )
             } finally {
                 template.remove(selection, Tag::class.java)
-                template.remove(query(where("_id").`is`(limitId)), "tagCreationLimits")
+                template.remove(query(where("_id").`is`(owner.id)), User::class.java)
             }
         }
 }

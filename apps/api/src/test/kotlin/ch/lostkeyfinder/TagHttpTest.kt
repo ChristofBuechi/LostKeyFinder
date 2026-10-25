@@ -52,7 +52,6 @@ class TagHttpTest {
     @BeforeEach fun reset() {
         template.remove(Query(), Tag::class.java)
         template.remove(Query(), User::class.java)
-        template.remove(Query(), "tagCreationLimits")
         template.indexOps(User::class.java).createIndex(Index().on("firebaseUserId", Sort.Direction.ASC).unique())
         template.indexOps(Tag::class.java).createIndex(Index().on("publicId", Sort.Direction.ASC).unique())
         template.indexOps(Tag::class.java).createIndex(Index().on("creationKey", Sort.Direction.ASC).unique().sparse())
@@ -287,8 +286,7 @@ class TagHttpTest {
         val key = UUID.randomUUID().toString()
         val created = create(token, key)
         val owner = template.findAll(User::class.java).single()
-        val limitId = "${owner.id}:${LocalDate.now(ZoneOffset.UTC)}"
-        template.updateFirst(query(where("_id").`is`(limitId)), Update.update("count", 100), "tagCreationLimits")
+        template.updateFirst(query(where("_id").`is`(owner.id)), Update.update("tagCreationLimit.count", 100), User::class.java)
         assertEquals(created, create(token, key))
         mvc
             .post("/api/v1/tags") {
