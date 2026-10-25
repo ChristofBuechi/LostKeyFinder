@@ -19,7 +19,7 @@ describe('App', () => {
     expect(fixture.nativeElement.querySelector('main#main-content').getAttribute('tabindex')).toBe('-1');
     expect(fixture.nativeElement.querySelector('.language-toggle').getAttribute('aria-label')).toContain('Auf Englisch wechseln');
     expect(fixture.nativeElement.querySelector('.account-link').textContent).toContain('Anmelden');
-    expect(fixture.nativeElement.querySelector('.account-link').getAttribute('href')).toBe('/login#owner');
+    expect(fixture.nativeElement.querySelector('.account-link').getAttribute('href')).toBe('/#owner');
   });
 
   it('offers the account after the session changes', async () => {

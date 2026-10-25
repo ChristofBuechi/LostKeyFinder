@@ -5,7 +5,7 @@ import { ApiConfiguration } from '@lost-key-finder/api-client';
 import { provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 import { beforeEach, afterEach, describe, expect, it } from 'vitest';
-import { LanguageService } from '../core/language.service';
+import { Auth } from '../auth/auth';
 import { Home } from './home';
 
 describe('Home', () => {
@@ -22,17 +22,7 @@ describe('Home', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ApiConfiguration, useValue: new ApiConfiguration() },
-        {
-          provide: LanguageService,
-          useValue: {
-            copy: signal({
-              emailSignIn: 'Mit E-Mail anmelden',
-              checking: 'Verbindung wird geprüft',
-              available: 'Dienst verfügbar',
-              unavailable: 'Dienst vorübergehend nicht verfügbar',
-            }),
-          },
-        },
+        { provide: Auth, useValue: { configured: true, signedIn: signal(false), sendLink: () => Promise.resolve() } },
       ],
     });
     fixture = TestBed.createComponent(Home);
@@ -42,11 +32,12 @@ describe('Home', () => {
 
   afterEach(() => http?.verify());
 
-  it('provides explicit email login and finder links on the home page', async () => {
+  it('offers finder and owner forms directly on the home page', async () => {
     await fixture.whenStable();
-    expect(fixture.nativeElement.querySelector('.actions .button-primary').getAttribute('href')).toBe('/login#owner');
-    expect(fixture.nativeElement.querySelector('.actions .button-primary').textContent).toContain('Mit E-Mail anmelden');
-    expect(fixture.nativeElement.querySelector('.actions .text-link').getAttribute('href')).toBe('/login#finder');
+    expect(fixture.nativeElement.querySelector('#finder #tag-id')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('#finder .scan-button').textContent).toContain('QR-Code scannen');
+    expect(fixture.nativeElement.querySelector('#owner #email')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('h1').textContent).toContain('Wie können wir dir helfen');
     http!.expectOne('/api/v1/health/ready').flush({ status: 'ok' });
   });
 

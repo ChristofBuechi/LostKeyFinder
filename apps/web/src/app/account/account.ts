@@ -26,7 +26,7 @@ export class Account implements OnInit {
     effect(() => {
       if (!this.auth.signedIn()) {
         this.user.set(null);
-        void this.router.navigateByUrl('/login', { replaceUrl: true });
+        void this.router.navigateByUrl('/#owner', { replaceUrl: true });
       }
     });
   }
@@ -55,7 +55,7 @@ export class Account implements OnInit {
     try {
       await this.auth.signOut();
       this.user.set(null);
-      await this.router.navigateByUrl('/login', { replaceUrl: true });
+      await this.router.navigateByUrl('/#owner', { replaceUrl: true });
     } catch {
       this.error.set('logoutFailed');
     } finally {

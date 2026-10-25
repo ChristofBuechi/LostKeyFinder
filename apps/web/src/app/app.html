@@ -5,7 +5,7 @@
     <span class="brand-mark" aria-hidden="true">LK</span>
     <span>Lost Key Finder</span>
   </a>
-  <a class="account-link" [routerLink]="auth.signedIn() ? '/account' : '/login'" [fragment]="auth.signedIn() ? undefined : 'owner'">{{ auth.signedIn() ? language.copy().account : language.copy().signIn }}</a>
+  <a class="account-link" [routerLink]="auth.signedIn() ? '/account' : '/'" [fragment]="auth.signedIn() ? undefined : 'owner'">{{ auth.signedIn() ? language.copy().account : language.copy().signIn }}</a>
   <button class="language-toggle" type="button" (click)="toggleLanguage()" [attr.aria-label]="(language.language() === 'de' ? 'EN: ' : 'DE: ') + language.copy().switchLabel">
     {{ language.language() === 'de' ? 'EN' : 'DE' }}
   </button>

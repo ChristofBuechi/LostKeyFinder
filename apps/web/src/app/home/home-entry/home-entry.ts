@@ -2,16 +2,16 @@ import { Component, inject, signal } from '@angular/core';
 import { FormField, disabled, email, form, required, submit } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { FinderEntry } from '../../finder/finder-entry/finder-entry';
-import { Auth } from '../auth';
+import { Auth } from '../../auth/auth';
 import { LanguageService } from '../../core/language.service';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-home-entry',
   imports: [FormField, RouterLink, FinderEntry],
-  templateUrl: './login.html',
-  styleUrl: './login.scss',
+  templateUrl: './home-entry.html',
+  styleUrl: './home-entry.scss',
 })
-export class Login {
+export class HomeEntry {
   protected readonly auth = inject(Auth);
   protected readonly language = inject(LanguageService);
   protected readonly model = signal({ email: '' });

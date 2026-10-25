@@ -2,13 +2,16 @@
 
 ## Navigation
 
-Die Startseite bietet einen expliziten E-Mail-Login im Kopfbereich und im Hero.
-Die Links führen auf `/login#owner`, damit auf kleinen Bildschirmen direkt das
-Besitzerformular sichtbar wird. Der Finder-Einstieg führt auf `/login#finder`.
+Die Startseite zeigt Tag-ID-/QR-Einstieg und E-Mail-Anmeldung unmittelbar als zwei
+Bereiche. Auf kleinen Bildschirmen stehen sie untereinander. Der Kopfbereich führt
+unangemeldete Besitzer direkt auf `/#owner`; Finder können `/#finder` verwenden.
 
-Die Loginseite unterscheidet zwei Aufgaben: Finder geben eine Tag-ID ein oder
-scannen einen QR-Code; Besitzer melden sich per E-Mail-Link an. Ein öffentlicher
-Tag-Link ist kein Nachweis von Besitz und führt nicht zur Besitzer-Anmeldung.
+Es gibt keine separate Login-Formularseite mehr. Bestehende `/login`-Links werden
+auf `/#owner` umgeleitet; `/login#finder` bleibt durch Weiterleitung auf `/#finder`
+nutzbar. Erfolgsseite `/login/link-sent` und Callback `/auth/callback` bleiben stabil.
+
+Ein öffentlicher Tag-Link ist kein Nachweis von Besitz und führt nicht zur
+Besitzer-Anmeldung.
 
 ## QR und Tag-ID
 

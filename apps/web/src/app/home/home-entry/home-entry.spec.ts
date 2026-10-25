@@ -1,11 +1,13 @@
+import { HealthService } from '@lost-key-finder/api-client';
+import { of } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Auth } from '../auth';
+import { Auth } from '../../auth/auth';
 import { LanguageService } from '../../core/language.service';
-import { Login } from './login';
+import { HomeEntry } from './home-entry';
 import { routes } from '../../app.routes';
 
 // Finder and owner forms are separate; owner submission never interprets the tag input.
@@ -15,12 +17,12 @@ describe('Owner login form and sent page', () => {
     TestBed.resetTestingModule();
     localStorage.clear();
     sendLink.mockReset().mockResolvedValue(undefined);
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideRouter(routes),
+    TestBed.configureTestingModule({ providers: [{ provide: HealthService, useValue: { healthControllerReady: () => of({ status: 'ok' }) } }, provideZonelessChangeDetection(), provideRouter(routes),
       { provide: Auth, useValue: { configured: true, signedIn: signal(false), sendLink } }] });
   });
 
   it('shows an associated error and never sends an invalid email', async () => {
-    const fixture = TestBed.createComponent(Login);
+    const fixture = TestBed.createComponent(HomeEntry);
     await fixture.whenStable();
     fixture.nativeElement.querySelector('#owner-login').dispatchEvent(new Event('submit', { cancelable: true }));
     await fixture.whenStable();
@@ -58,7 +60,7 @@ describe('Owner login form and sent page', () => {
     input.value = 'owner@example.com'; input.dispatchEvent(new Event('input'));
     harness.routeNativeElement!.querySelector('#owner-login')!.dispatchEvent(new Event('submit', { cancelable: true }));
     await harness.fixture.whenStable();
-    expect(TestBed.inject(Router).url).toBe('/login');
+    expect(TestBed.inject(Router).url).toBe('/#owner');
     expect(harness.routeNativeElement!.querySelector('#owner-login [role="alert"]')!.textContent).toContain('nicht gesendet');
     expect(harness.routeNativeElement!.textContent).not.toContain('private upstream detail');
   });
@@ -66,7 +68,7 @@ describe('Owner login form and sent page', () => {
   it('does not submit twice while a request is in flight', async () => {
     let finish!: () => void;
     sendLink.mockReturnValue(new Promise<void>(resolve => { finish = resolve; }));
-    const fixture = TestBed.createComponent(Login);
+    const fixture = TestBed.createComponent(HomeEntry);
     await fixture.whenStable();
     const input = fixture.nativeElement.querySelector('#email');
     input.value = 'owner@example.com'; input.dispatchEvent(new Event('input'));
@@ -79,7 +81,7 @@ describe('Owner login form and sent page', () => {
   });
 
   it('prominently offers a tag input and camera scan without requiring owner authentication', async () => {
-    const fixture = TestBed.createComponent(Login);
+    const fixture = TestBed.createComponent(HomeEntry);
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('#finder #tag-id')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('#finder .scan-button').textContent).toContain('QR-Code scannen');
