@@ -13,6 +13,16 @@ nutzbar. Erfolgsseite `/login/link-sent` und Callback `/auth/callback` bleiben s
 Ein öffentlicher Tag-Link ist kein Nachweis von Besitz und führt nicht zur
 Besitzer-Anmeldung.
 
+Geplanter Ausbau: Der gemeinsame Scan-/ID-Einstieg wird neutral beschriftet und
+serverseitig aufgelöst. Ein vorhandener, freigegebener unzugewiesener Hardware-Tag
+führt zur Erstregistrierung mit E-Mail-Anmeldung und expliziter Zuordnung; ein
+zugewiesener aktiver Tag zur Fundmeldung. Ein eigener Tag wird weiterhin nach
+Anmeldung neu erzeugt und unmittelbar zugeordnet. Admins mit manuell gesetztem
+`users.isAdmin` erreichen nach gewöhnlicher Anmeldung eine globale Tagübersicht;
+laufende Tag-/Finder-Vorgänge behalten ihre Fortsetzung. Der aktuell implementierte
+Stand mit neutraler Platzhalterseite bleibt bis zu diesem Ausbau unverändert.
+Details: [Tag-Plan](tag-produktion-und-registrierung-plan.md).
+
 ## QR und Tag-ID
 
 Akzeptiert werden öffentliche UUID-v4-Tag-IDs sowie Tag-Links dieser Website im

@@ -3,12 +3,16 @@
 ## Reihenfolge
 
 1. **Fundament:** Angular, Kotlin/Spring Boot, Firebase Authentication, Firestore-Anbindung, OpenAPI und getrennte `dev`/`prod`-Umgebungen.
-2. **Tag und Identität:** Magic-Link-Login, kostenlose UUID-v4-Tags, QR-Route und Backup-Einladungen.
+2. **Tag und Identität:** Magic-Link-Login, eigene kostenlose UUID-v4-Tags mit sofortiger Zuordnung, Admin-Produktionsserien, Registrierung vorproduzierter Tags, gemeinsame QR-Route, globale Admin-Tagübersicht und Backup-Einladungen. Adminrechte werden manuell im lokalen Benutzerkonto gesetzt. Umsetzungsreihenfolge und Abnahmen: [Tag-Plan](tag-produktion-und-registrierung-plan.md).
 3. **Fund und Chat:** Finder-Draft, geräteübergreifende Bestätigung, private Text-Chats, optionale bereinigte Bilder und Benachrichtigungen.
 4. **Payment:** CHF 10.00 über die im Mollie-Live-Profil freigeschalteten Zahlungsarten, Reconciliation und Access Grant.
 5. **Betrieb:** Archivierung, synchrone Account-Löschung, täglicher Wartungsaufruf, minimale Supportoberfläche, Support-Audit, Backups, Monitoring und Runbooks.
 
 ## Abnahme
+
+- Selbsterstellung und Registrierung vorproduzierter Tags bestehen nebeneinander; unbekannte IDs erzeugen beim Scan keinen Tag.
+- Parallele Registrierung kann nur einen Besitzer zuordnen; Wiederholungen erzeugen weder zweite Tags noch zweite Serien.
+- Manuell berechtigte Admins sehen nach normaler Anmeldung alle Tags mit Filtern und Pagination; Rollenentzug wirkt beim nächsten Admin-Request.
 
 - Parallele Finder erzeugen getrennte Chats, aber höchstens einen aktiven Fall.
 - Wiederholungen erzeugen weder doppelte Chats noch doppelte Zahlungen oder interne Benachrichtigungen.
@@ -23,4 +27,4 @@
 
 ## Später
 
-Weitere Länder, Sprachen, Währungen, physische Tags, eine erweiterte Supportoberfläche, Infrastructure as Code und Finderlohn-Verarbeitung folgen nur nach validiertem Bedarf. Eine Finderlohn-Verarbeitung benötigt zusätzlich eine neue rechtliche und paymenttechnische Prüfung.
+Formatierte PDF-Druckvorlagen für bestehende eigene Tags, zunächst beispielsweise im Kreditkartenformat, folgen als Ausbau. Nachdruck verändert keine Tag-ID und erzeugt keinen neuen Tag. Weitere Länder, Sprachen, Währungen, Versand-/Shopabwicklung, eine erweiterte Supportoberfläche, Infrastructure as Code und Finderlohn-Verarbeitung folgen nur nach validiertem Bedarf. Eine Finderlohn-Verarbeitung benötigt zusätzlich eine neue rechtliche und paymenttechnische Prüfung.

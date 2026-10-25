@@ -4,6 +4,10 @@
 
 Der QR-Code enthält nur die öffentliche UUID-v4-URL. Öffentliche Antworten unterscheiden unbekannte, inaktive, gesperrte und stillgelegte Tags nicht. E-Mail-Adressen werden nicht zwischen Beteiligten offengelegt; freiwillige Kontaktdaten können erst nach Access Grant als normaler Chattext geteilt werden.
 
+Die geplante gemeinsame Auflösung unterscheidet registrierbare, noch unzugewiesene Hardware-Tags von zugewiesenen aktiven Tags, um Registrierung oder Fundmeldung anzubieten. Damit ist die Zuordnung als solche öffentlich erkennbar; Besitzeridentität und Kontaktdaten bleiben verborgen. Noch nicht zur Registrierung freigegebener Bestand bleibt ebenfalls neutral.
+
+Registrierungsentwürfe speichern nur die für die verifizierte Zuordnung benötigten Daten und eine kurze serverseitige Frist; E-Mail-Daten nach Abschluss oder Ablauf entfernen. Falls separate Hardware-Aktivierungscodes beschlossen werden, liegen serverseitig nur Prüfwerte vor. Geheime Produktionsausgaben sind von öffentlichen QR-Druckdaten getrennt zugriffsgeschützt zu übergeben und zeitlich begrenzt aufzubewahren. Aktivierungscodes gehören weder in den öffentlichen QR-Code noch auf Benutzerdruckvorlagen.
+
 Die Plattform speichert keine Karten-, TWINT-Instrument-, Finder-Zahlungs- oder KYC-Daten. Bilder werden begrenzt, bereinigt und nur autorisiert ausgeliefert. Nach Annahme einer Backup-Einladung werden Einladungs-E-Mail und Normalisierungsversion entfernt.
 
 ## Aufbewahrung und Löschung
@@ -21,6 +25,8 @@ Rate Limits schützen öffentliche Auflösung, Drafts, Magic Links, Tags und Nac
 Inhaltsmeldungen blenden Inhalte nicht automatisch aus. Support darf nur die gemeldete Nachricht über einen auditierten Least-Privilege-Pfad lesen. Manuelle Sperren und Refunds benötigen eine benannte Person, Pflichtgrund und Ticketreferenz; ob eine zweite Freigabe nötig ist, wird vor Go-live verbindlich entschieden. Provideränderungen gelten fachlich erst nach API-Verifikation.
 
 Logs und Metriken enthalten nur Correlation IDs, Ereignistypen und pseudonyme IDs. Support-Lesen, Sperren, Paymentstatus, Löschung und Berechtigungsänderungen werden auditiert.
+
+Adminrechte werden manuell über das lokale `users.isAdmin` vergeben und entzogen; diese direkten Datenbankänderungen sind im Betriebsprotokoll festzuhalten, da kein API-Audit ausgelöst wird. Die globale Admin-Tagübersicht zeigt Bestands- und Zuordnungsmetadaten, keine privaten Chattexte oder Aktivierungscodes. Serienerstellung, Freigabe und autorisierte Produktionsexporte werden durch die Anwendung auditiert. Adminrechte ersetzen keine Support-Inhaltsberechtigung.
 
 ## Authentifizierungsdaten
 
