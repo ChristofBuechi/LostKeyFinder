@@ -51,8 +51,8 @@ class TagController(
     @Operation(operationId = "TagController_list")
     fun list(
         @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
-        @RequestParam(required = false) cursor: String?,
-    ) = tags.list(ownerId = users.currentUser(jwt).id, cursor = cursor)
+        @RequestParam(defaultValue = "1") page: Int,
+    ) = tags.list(ownerId = users.currentUser(jwt).id, page = page)
 
     @GetMapping("/{tagId}")
     @Operation(operationId = "TagController_detail")
@@ -89,11 +89,11 @@ class AdminTagController(
     @Operation(operationId = "AdminTagController_list")
     fun list(
         @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
-        @RequestParam(required = false) cursor: String?,
+        @RequestParam(defaultValue = "1") page: Int,
         @ParameterObject @ModelAttribute filter: TagFilter,
     ): TagPage {
         users.requireAdmin(jwt)
-        return tags.list(cursor = cursor, filter = filter)
+        return tags.list(page = page, filter = filter)
     }
 
     @GetMapping("/summary")

@@ -119,7 +119,7 @@ class FirestoreTagIndexProvisioningTest {
 }
 
 class FirestoreTagIntegrationTest {
-    @Test fun `real Firestore supports concurrent creation filtering cursor and owner status checks`() =
+    @Test fun `real Firestore supports concurrent creation filtering numbered pages and owner status checks`() =
         withFirestore { template ->
             val now = Instant.now()
             val owner = User(UUID.randomUUID().toString(), UUID.randomUUID().toString(), "probe@example.com", UserStatus.ACTIVE, now, now)
@@ -146,8 +146,11 @@ class FirestoreTagIntegrationTest {
                 repeat(26) { tags.create(owner, UUID.randomUUID().toString(), "") }
                 val first = tags.list(ownerId = owner.id)
                 assertEquals(25, first.items.size)
-                val second = tags.list(ownerId = owner.id, cursor = requireNotNull(first.nextCursor))
+                val second = tags.list(ownerId = owner.id, page = 2)
                 assertEquals(2, second.items.size)
+                assertEquals(27L, first.totalItems)
+                assertEquals(2, first.totalPages)
+                assertEquals(2, second.page)
                 assertEquals(27, (first.items + second.items).map { it.id }.toSet().size)
                 val tag = tags.create(owner, key, "Firestore probe")
                 assertEquals(tag, tags.owned(owner, tag.id))

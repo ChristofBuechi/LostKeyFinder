@@ -10,7 +10,7 @@ import { RequestBuilder } from '../../request-builder';
 import { TagPage } from '../../models/tag-page';
 
 export interface AdminTagControllerList$Params {
-  cursor?: string;
+  page?: number;
   origin?: 'SELF_CREATED' | 'PREPRODUCED';
   status?: 'ACTIVE' | 'INACTIVE' | 'BLOCKED' | 'RETIRED';
   assigned?: boolean;
@@ -22,7 +22,7 @@ export interface AdminTagControllerList$Params {
 export function adminTagControllerList(http: HttpClient, rootUrl: string, params?: AdminTagControllerList$Params, context?: HttpContext): Observable<StrictHttpResponse<TagPage>> {
   const rb = new RequestBuilder(rootUrl, adminTagControllerList.PATH, 'get');
   if (params) {
-    rb.query('cursor', params.cursor, {});
+    rb.query('page', params.page, {});
     rb.query('origin', params.origin, {});
     rb.query('status', params.status, {});
     rb.query('assigned', params.assigned, {});

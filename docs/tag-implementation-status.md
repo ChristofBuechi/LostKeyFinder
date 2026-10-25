@@ -7,7 +7,7 @@ Stand: 25. Oktober 2026. Branch `feature/tag-registration-admin`, PR #6.
 - Lokales `users.isAdmin`, sicherer Standard `false` auch für bestehende Dokumente ohne Feld, nur lesbare Ausgabe in `/api/v1/me`.
 - Backend prüft vor jedem Admin-Aufruf das aktuelle lokale Konto und die Berechtigung. Manuelle Vergaben bleiben bei erneutem Login erhalten; Entzug und lokale Kontosperre wirken beim nächsten Request.
 - Authentifizierte Selbsterstellung mit UUID-v4, atomarer unmittelbarer Besitzerzuordnung, benutzerbezogenem Idempotenzschlüssel und privater Bezeichnung bis 80 Zeichen.
-- Besitzerliste und Detail-API sowie Aktivieren/Deaktivieren. Fremde Ressourcen und Änderungen an gesperrten/stillgelegten Tags werden abgelehnt.
+- Besitzerliste und Detail-API sowie Aktivieren/Deaktivieren. Besitzerliste und Admin-Tagbestand verwenden nummerierte Seiten à 25 Tags, direkte Seitenwahl, Gesamtseitenzahl und sichtbaren Bereich (z. B. 26–50 von 100); Gesamtzahlen beziehen sich auf Besitzer bzw. aktive Filter. Fremde Ressourcen und Änderungen an gesperrten/stillgelegten Tags werden abgelehnt.
 - Globale Admin-Tagübersicht mit Herkunft, Status, Zuordnung, öffentlicher ID, Serie und Produktionsfreigabe als Filtern; konsistente Bestandszahlen aus einer serverseitigen Aggregation und geschützte Detailansichten.
 - Stabile Cursor-Pagination mit 25 Einträgen über `(createdAt, id)` für Besitzer- und Adminlisten. Bei zwischenzeitlich neu erzeugten Tags führt „Zur ersten Seite“ zum aktualisierten Anfang; keine Snapshot-Sitzung über mehrere Seiten.
 - Angular-Ansichten `/tags` und `/admin/tags` auf Deutsch/Englisch, Zugriff über das Konto. Nach normalem E-Mail-Login führt ein Admin zur Gesamtübersicht; seine eigene Kontoseite bleibt erreichbar.

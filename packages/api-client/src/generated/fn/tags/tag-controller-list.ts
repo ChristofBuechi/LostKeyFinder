@@ -10,13 +10,13 @@ import { RequestBuilder } from '../../request-builder';
 import { TagPage } from '../../models/tag-page';
 
 export interface TagControllerList$Params {
-  cursor?: string;
+  page?: number;
 }
 
 export function tagControllerList(http: HttpClient, rootUrl: string, params?: TagControllerList$Params, context?: HttpContext): Observable<StrictHttpResponse<TagPage>> {
   const rb = new RequestBuilder(rootUrl, tagControllerList.PATH, 'get');
   if (params) {
-    rb.query('cursor', params.cursor, {});
+    rb.query('page', params.page, {});
   }
 
   return http.request(

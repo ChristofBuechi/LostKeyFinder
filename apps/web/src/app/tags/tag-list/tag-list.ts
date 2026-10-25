@@ -34,11 +34,18 @@ export class TagList {
   protected readonly page = httpResource<TagPage>(() => this.auth.signedIn()
     ? `/api/v1/${this.admin ? 'admin/' : ''}tags${this.query()}` : undefined);
   private readonly summaryQuery = computed(() => {
-    const params = new URLSearchParams(this.query()); params.delete('cursor');
+    const params = new URLSearchParams(this.query()); params.delete('page');
     return params.size ? `?${params}` : '';
   });
   protected readonly summary = httpResource<TagSummary>(() => this.admin && this.auth.signedIn()
     ? `/api/v1/admin/tags/summary${this.summaryQuery()}` : undefined);
+  protected readonly pageNumbers = computed(() => {
+    if (!this.page.hasValue()) return [];
+    const { page, totalPages } = this.page.value();
+    // ponytail: show the ends and nearby pages, rather than rendering thousands of buttons.
+    return [...new Set([1, page - 2, page - 1, page, page + 1, page + 2, totalPages])]
+      .filter(number => number >= 1 && number <= totalPages).sort((a, b) => a - b);
+  });
   protected readonly busy = signal(false);
   protected readonly actionError = signal<unknown>(null);
   protected readonly validationError = signal(false);
@@ -54,7 +61,7 @@ export class TagList {
     return tagError(error, this.copy());
   }
 
-  protected filter(cursor?: string): void {
+  protected filter(pageNumber = 1): void {
     const parameters = new URLSearchParams();
     const model = this.model();
     const id = model.publicId.trim();
@@ -68,10 +75,10 @@ export class TagList {
       }
     }
     const filters = parameters.toString();
-    if (cursor && filters === this.appliedFilters) parameters.set('cursor', cursor);
+    if (pageNumber > 1 && filters === this.appliedFilters) parameters.set('page', String(pageNumber));
     this.appliedFilters = filters;
     const value = parameters.size ? `?${parameters}` : '';
-    if (value === this.query()) { this.page.reload(); if (!cursor) this.summary.reload(); }
+    if (value === this.query()) { this.page.reload(); if (pageNumber === 1) this.summary.reload(); }
     else this.query.set(value);
   }
 

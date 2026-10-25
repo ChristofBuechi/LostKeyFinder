@@ -185,7 +185,7 @@ class TagHttpTest {
         assertEquals(0L, template.count(Query(), Tag::class.java))
     }
 
-    @Test fun `admin filters and cursor pagination handle both origins with duplicate timestamps`() {
+    @Test fun `admin filters and numbered pagination handle both origins with duplicate timestamps`() {
         val token = login()
         val owner = template.findAll(User::class.java).single()
         template.updateFirst(Query(), Update.update("isAdmin", true), User::class.java)
@@ -219,18 +219,23 @@ class TagHttpTest {
             )
         template.insert(unassigned)
 
-        fun page(cursor: String? = null): String =
+        fun page(number: Int = 1): String =
             mvc
                 .get("/api/v1/admin/tags") {
                     header("Authorization", "Bearer $token")
-                    cursor?.let { param("cursor", it) }
+                    param("page", number.toString())
                 }.andExpect { status { isOk() } }
                 .andReturn()
                 .response.contentAsString
         val first = mapper.readTree(page())
         assertEquals(25, first["items"].size())
-        val second = mapper.readTree(page(first["nextCursor"].asString()))
+        val second = mapper.readTree(page(2))
         assertEquals(4, second["items"].size())
+        assertEquals(29L, first["totalItems"].asLong())
+        assertEquals(2, first["totalPages"].asInt())
+        assertEquals(2, second["page"].asInt())
+        assertEquals(25, second["pageSize"].asInt())
+        assertEquals(second, mapper.readTree(page(999)))
         val ids = (first["items"].toList() + second["items"].toList()).map { it["id"].asString() }
         assertEquals(29, ids.toSet().size)
         mvc
@@ -239,6 +244,8 @@ class TagHttpTest {
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.items.length()") { value(1) }
+                jsonPath("$.totalItems") { value(1) }
+                jsonPath("$.totalPages") { value(1) }
                 jsonPath("$.items[0].primaryOwnerUserId") { doesNotExist() }
             }
         assertEquals(
@@ -249,7 +256,7 @@ class TagHttpTest {
                     filter = TagFilter(origin = TagOrigin.SELF_CREATED, status = TagStatus.ACTIVE, assigned = true),
                 ).let {
                     it.items.size +
-                        tags.list(ownerId = owner.id, cursor = it.nextCursor).items.size
+                        tags.list(ownerId = owner.id, page = 2).items.size
                 },
         )
     }
@@ -273,17 +280,24 @@ class TagHttpTest {
                 contentType = MediaType.APPLICATION_JSON
                 content = "{}"
             }.andExpect { status { isBadRequest() } }
-        for (cursor in listOf("bad", "no_${UUID.randomUUID()}", "-1_${UUID.randomUUID()}", "1_bad")) {
+        for (page in listOf("bad", "0", "-1", "1.5", "2147483648")) {
             mvc
                 .get("/api/v1/tags") {
                     header("Authorization", "Bearer $token")
-                    param("cursor", cursor)
+                    param("page", page)
                 }.andExpect { status { isBadRequest() } }
         }
         mvc.get("/api/v1/tags/bad") { header("Authorization", "Bearer $token") }.andExpect { status { isBadRequest() } }
         val legacy = template.getCollection("users").find().first()!!
         assertEquals(false, legacy["isAdmin"])
         assertEquals(0L, template.count(Query(), Tag::class.java))
+        mvc.get("/api/v1/tags?page=999") { header("Authorization", "Bearer $token") }.andExpect {
+            status { isOk() }
+            jsonPath("$.page") { value(1) }
+            jsonPath("$.totalPages") { value(1) }
+            jsonPath("$.totalItems") { value(0) }
+            jsonPath("$.items.length()") { value(0) }
+        }
     }
 
     @Test fun `daily creation limit cannot prevent readback of a successful request`() {

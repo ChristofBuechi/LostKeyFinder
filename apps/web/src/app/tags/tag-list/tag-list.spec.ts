@@ -33,7 +33,7 @@ describe('Tag management', () => {
 
   it('creates a tag once and retries uncertain delivery with the same key and label', async () => {
     const fixture = TestBed.createComponent(TagList);
-    await response('/api/v1/tags', { items: [], nextCursor: null });
+    await response('/api/v1/tags', { items: [], page: 1, pageSize: 25, totalItems: 0, totalPages: 1 });
     await fixture.whenStable();
     const input = fixture.nativeElement.querySelector('#tag-label') as HTMLInputElement;
     input.value = 'Keys';
@@ -50,7 +50,7 @@ describe('Tag management', () => {
     const retry = await response('/api/v1/tags', tag);
     expect(retry.request.headers.get('Idempotency-Key')).toBe(first.request.headers.get('Idempotency-Key'));
     expect(retry.request.body).toEqual(first.request.body);
-    await response('/api/v1/tags', { items: [tag], nextCursor: null });
+    await response('/api/v1/tags', { items: [tag], page: 1, pageSize: 25, totalItems: 1, totalPages: 1 });
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('tbody').textContent).toContain('Keys');
     expect(input.disabled).toBe(false);
@@ -59,7 +59,7 @@ describe('Tag management', () => {
 
   it('deactivates an owned tag and downloads a QR for the canonical public link', async () => {
     const fixture = TestBed.createComponent(TagList);
-    await response('/api/v1/tags', { items: [tag], nextCursor: null });
+    await response('/api/v1/tags', { items: [tag], page: 1, pageSize: 25, totalItems: 1, totalPages: 1 });
     await fixture.whenStable();
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
     const buttons = fixture.nativeElement.querySelectorAll('td.actions button') as NodeListOf<HTMLButtonElement>;
@@ -71,33 +71,56 @@ describe('Tag management', () => {
     buttons[1].click();
     const mutation = await response(`/api/v1/tags/${id}/status`, { ...tag, status: 'INACTIVE' });
     expect(mutation.request.body).toEqual({ status: 'INACTIVE' });
-    await response('/api/v1/tags', { items: [{ ...tag, status: 'INACTIVE' }], nextCursor: null });
+    await response('/api/v1/tags', { items: [{ ...tag, status: 'INACTIVE' }], page: 1, pageSize: 25, totalItems: 1, totalPages: 1 });
     await fixture.whenStable();
     expect(fixture.nativeElement.textContent).toContain('Aktivieren');
     TestBed.inject(HttpTestingController).verify();
   });
 
-  it('admin filters use server queries and page cursors without exposing owner-only actions', async () => {
+  it('admin numbered pages preserve filters and show totals and displayed range', async () => {
     TestBed.overrideProvider(ActivatedRoute, { useValue: { snapshot: { data: { admin: true } } } });
     const fixture = TestBed.createComponent(TagList);
-    await response('/api/v1/admin/tags', { items: [tag], nextCursor: `1_${id}` });
-    await response('/api/v1/admin/tags/summary', { total: 1, assigned: 1, unassigned: 0, blocked: 0, retired: 0, prepared: 0, released: 0 });
+    await response('/api/v1/admin/tags', { items: Array.from({ length: 25 }, (_, i) => ({ ...tag, id: String(i) })), page: 1, pageSize: 25, totalItems: 100, totalPages: 4 });
+    await response('/api/v1/admin/tags/summary', { total: 100, assigned: 100, unassigned: 0, blocked: 0, retired: 0, prepared: 0, released: 0 });
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('#tag-label')).toBeNull();
     expect(fixture.nativeElement.querySelector('.actions')).toBeNull();
-    const next = [...fixture.nativeElement.querySelectorAll('button')].find((b: unknown) => (b as HTMLButtonElement).textContent.includes('Nächste')) as HTMLButtonElement;
-    next.click();
-    await response(`/api/v1/admin/tags?cursor=1_${id}`, { items: [], nextCursor: null });
+    expect(fixture.nativeElement.textContent).toContain('Seite 1 von 4');
+    expect(fixture.nativeElement.textContent).toContain('Tags 1–25 von 100');
+    fixture.nativeElement.querySelector('button[aria-label="Seite 3"]').click();
+    await response('/api/v1/admin/tags?page=3', { items: Array.from({ length: 25 }, (_, i) => ({ ...tag, id: String(i) })), page: 3, pageSize: 25, totalItems: 100, totalPages: 4 });
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]').textContent.trim()).toBe('3');
+    expect(fixture.nativeElement.textContent).toContain('Tags 51–75 von 100');
+    const previous = [...fixture.nativeElement.querySelectorAll('button')].find((b: unknown) => (b as HTMLButtonElement).textContent.includes('Vorherige')) as HTMLButtonElement;
+    previous.click();
+    await response('/api/v1/admin/tags?page=2', { items: [tag], page: 2, pageSize: 25, totalItems: 100, totalPages: 4 });
     await fixture.whenStable();
     const select = fixture.nativeElement.querySelector('#origin') as HTMLSelectElement;
     select.value = 'PREPRODUCED';
     select.dispatchEvent(new Event('input'));
     await fixture.whenStable();
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    await response('/api/v1/admin/tags?origin=PREPRODUCED', { items: [], nextCursor: null });
+    await response('/api/v1/admin/tags?origin=PREPRODUCED', { items: [], page: 1, pageSize: 25, totalItems: 0, totalPages: 1 });
     await response('/api/v1/admin/tags/summary?origin=PREPRODUCED', { total: 0, assigned: 0, unassigned: 0, blocked: 0, retired: 0, prepared: 0, released: 0 });
     await fixture.whenStable();
     expect(fixture.nativeElement.textContent).toContain('Keine Tags gefunden');
+    TestBed.inject(HttpTestingController).verify();
+  });
+
+  it('keeps large inventories compact and supports jumping directly to the last page', async () => {
+    const fixture = TestBed.createComponent(TagList);
+    await response('/api/v1/tags', { items: [tag], page: 1, pageSize: 25, totalItems: 10000, totalPages: 400 });
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelectorAll('.pagination button[aria-label]').length).toBe(4);
+    expect(fixture.nativeElement.querySelector('.pagination').textContent).toContain('…');
+    fixture.nativeElement.querySelector('button[aria-label="Seite 400"]').click();
+    await response('/api/v1/tags?page=400', { items: Array.from({ length: 25 }, (_, i) => ({ ...tag, id: String(i) })), page: 400, pageSize: 25, totalItems: 10000, totalPages: 400 });
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('Seite 400 von 400');
+    expect(fixture.nativeElement.textContent).toContain('Tags 9976–10000 von 10000');
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]').textContent.trim()).toBe('400');
+    expect(fixture.nativeElement.querySelector('.pagination button:last-child').disabled).toBe(true);
     TestBed.inject(HttpTestingController).verify();
   });
 
@@ -121,7 +144,7 @@ describe('Tag management', () => {
 
   it('does not render a cached owner list after logout and supports both languages', async () => {
     const fixture = TestBed.createComponent(TagList);
-    await response('/api/v1/tags', { items: [tag], nextCursor: null });
+    await response('/api/v1/tags', { items: [tag], page: 1, pageSize: 25, totalItems: 1, totalPages: 1 });
     await fixture.whenStable();
     TestBed.inject(LanguageService).toggle();
     await fixture.whenStable();
