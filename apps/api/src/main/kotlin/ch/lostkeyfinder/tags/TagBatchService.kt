@@ -178,9 +178,6 @@ class TagBatchService(
         }
         val batch = batch(id)
         val tags = template.find(query(where("batchId").`is`(batch.id)).with(Sort.by("_id")), Tag::class.java)
-        if (tags.any { it.deletedAt != null }) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Batch contains deleted tags")
-        }
         if (tags.size != batch.count ||
             tags.map { it.publicId }.toSet().size != batch.count
         ) {
@@ -189,10 +186,11 @@ class TagBatchService(
         template.insert(TagAudit(UUID.randomUUID().toString(), admin.id, "BATCH_EXPORTED", batch.id, Instant.now()))
         return "batchId,position,publicId,url\r\n" +
             tags
+                .filter { it.deletedAt == null }
                 .mapIndexed { index, tag ->
                     // ponytail: CSV row numbers are presentation, not persistent tag state.
                     listOf(batch.id, (index + 1).toString(), tag.publicId, "${properties.publicBaseUrl.trimEnd('/')}/f/${tag.publicId}")
-                        .joinToString(",") { "\"${it.replace("\"", "\"\"")}\"" }
-                }.joinToString("\r\n", postfix = "\r\n")
+                        .joinToString(",") { "\"${it.replace("\"", "\"\"")}\"" } + "\r\n"
+                }.joinToString("")
     }
 }

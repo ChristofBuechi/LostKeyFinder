@@ -214,7 +214,7 @@ class HardwareTagHttpTest {
         }
     }
 
-    @Test fun `admin soft deletes all tag types while owner rules remain and CSV refuses deleted inventory`() {
+    @Test fun `admin soft deletes all tag types while owner rules remain and CSV skips deleted inventory`() {
         val adminToken = login(true)
         val admin = template.findAll(User::class.java).single()
         val batchId = batch(adminToken, 2)
@@ -254,13 +254,31 @@ class HardwareTagHttpTest {
             val audit = template.findOne(query(where("resourceId").`is`(id).and("action").`is`("TAG_DELETED")), TagAudit::class.java)!!
             assertEquals(admin.id, audit.actorUserId)
             mvc.delete("/api/v1/admin/tags/$id") { header("Authorization", "Bearer $adminToken") }.andExpect { status { isNotFound() } }
+            if (id == hardware[0].id) {
+                val csv =
+                    mvc
+                        .get("/api/v1/admin/tag-batches/$batchId/export") {
+                            header("Authorization", "Bearer $adminToken")
+                        }.andExpect { status { isOk() } }
+                        .andReturn()
+                        .response.contentAsString
+                assertEquals(
+                    "batchId,position,publicId,url\r\n" +
+                        "\"$batchId\",\"1\",\"${hardware[1].publicId}\",\"https://example.test/f/${hardware[1].publicId}\"\r\n",
+                    csv,
+                )
+            }
         }
         assertEquals(2L, template.count(query(where("batchId").`is`(batchId)), Tag::class.java))
-        mvc.get("/api/v1/admin/tag-batches/$batchId/export") { header("Authorization", "Bearer $adminToken") }.andExpect {
-            status { isConflict() }
-            jsonPath("$.detail") { value("Batch contains deleted tags") }
-        }
-        assertEquals(0L, template.count(query(where("action").`is`("BATCH_EXPORTED")), TagAudit::class.java))
+        val emptyCsv =
+            mvc
+                .get("/api/v1/admin/tag-batches/$batchId/export") {
+                    header("Authorization", "Bearer $adminToken")
+                }.andExpect { status { isOk() } }
+                .andReturn()
+                .response.contentAsString
+        assertEquals("batchId,position,publicId,url\r\n", emptyCsv)
+        assertEquals(2L, template.count(query(where("action").`is`("BATCH_EXPORTED")), TagAudit::class.java))
         template.updateFirst(query(where("_id").`is`(admin.id)), Update.update("isAdmin", false), User::class.java)
         mvc.delete("/api/v1/admin/tags/$selfId") { header("Authorization", "Bearer $adminToken") }.andExpect { status { isForbidden() } }
     }
