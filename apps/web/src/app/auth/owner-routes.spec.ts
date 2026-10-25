@@ -10,17 +10,19 @@ import { Auth } from './auth';
 
 describe('Owner route access and callback', () => {
   const signedIn = signal(false);
+  const needsEmail = signal(false);
   const completeCallback = vi.fn();
   const signOut = vi.fn();
   beforeEach(() => {
     TestBed.resetTestingModule();
     localStorage.clear();
     signedIn.set(false);
+    needsEmail.set(false);
     completeCallback.mockReset();
     signOut.mockReset().mockImplementation(async () => signedIn.set(false));
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideRouter(routes),
       provideHttpClient(), provideHttpClientTesting(), { provide: Auth, useValue: {
-        signedIn, configured: true, ready: Promise.resolve(), completeCallback, signOut,
+        signedIn, needsEmail, configured: true, ready: Promise.resolve(), completeCallback, signOut,
       } }] });
   });
 
@@ -39,6 +41,22 @@ describe('Owner route access and callback', () => {
     expect(harness.routeNativeElement?.textContent).toContain('ungültig');
     expect(harness.routeNativeElement?.textContent).not.toContain('private-provider-code');
     expect(harness.routeNativeElement?.querySelector('a')?.getAttribute('href')).toBe('/login');
+  });
+
+  it('requests email on another device and submits it before navigating', async () => {
+    needsEmail.set(true);
+    completeCallback.mockImplementation(async (email: string) => {
+      if (email) needsEmail.set(false);
+    });
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/auth/callback');
+    await harness.fixture.whenStable();
+    const input = harness.routeNativeElement!.querySelector('input')!;
+    input.value = 'owner@example.com';
+    input.dispatchEvent(new Event('input'));
+    harness.routeNativeElement!.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await harness.fixture.whenStable();
+    expect(completeCallback).toHaveBeenLastCalledWith('owner@example.com');
   });
 
   it('does not display account data after a server-side access denial', async () => {

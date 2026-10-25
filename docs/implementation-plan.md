@@ -2,7 +2,7 @@
 
 ## Ziel und Leitplanken
 
-Dieser Plan setzt die in den übrigen Dokumenten beschriebene Phase 1 als modularen NestJS-Monolithen und Angular-Anwendung um. Der bestehende HTML-/LocalStorage-Prototyp ist keine technische Grundlage und wird nicht migriert.
+Dieser Plan setzt die in den übrigen Dokumenten beschriebene Phase 1 als modularen Kotlin-/Spring-Boot-Monolithen und Angular-Anwendung um. Der bestehende HTML-/LocalStorage-Prototyp ist keine technische Grundlage und wird nicht migriert.
 
 - Ein npm-Workspaces-Monorepo enthält Frontend, API und den aus OpenAPI erzeugten Client.
 - Benutzeraktionen werden vollständig im auslösenden HTTP-Request verarbeitet.
@@ -18,10 +18,10 @@ Vor Beginn müssen vorhanden sein:
 
 - getrennte Google-Cloud-Projekte für `dev` und `prod`;
 - je Projekt eine Firestore-Enterprise-Datenbank mit MongoDB-Kompatibilität in `europe-west6`;
-- getrennte Supabase-Projekte in `eu-central-2`;
+- getrennte Firebase-Auth-Projekte; Auth-Verarbeitung in den USA ist akzeptiert;
 - ein Mollie-Testprofil für `dev`;
-- eine Domain für `dev` und die erlaubten Supabase-Redirect-URLs;
-- ein benannter erster Supportbenutzer und dessen Supabase-Identität.
+- eine Domain für `dev` und die erlaubten Firebase-Auth-Domains;
+- ein benannter erster Supportbenutzer und dessen Firebase-Identität.
 
 Die Go-live-Entscheidungen aus [Offene Go-live-Entscheidungen](open-decisions.md) blockieren nicht die ersten Phasen. Sie müssen vor den jeweils betroffenen Produktionsphasen abgeschlossen sein.
 
@@ -31,7 +31,7 @@ Die Go-live-Entscheidungen aus [Offene Go-live-Entscheidungen](open-decisions.md
 lost-key-finder/
   apps/
     web/                 Angular-Anwendung
-    api/                 NestJS mit Fastify
+    api/                 Kotlin / Spring Boot
   packages/
     api-client/          aus OpenAPI erzeugter Angular-Client
   docs/
@@ -41,7 +41,7 @@ lost-key-finder/
   tsconfig.base.json
 ```
 
-- Node.js: aktuelle LTS, in `.nvmrc` und `package.json#engines` festgehalten.
+- Java 25 für das Backend (Gradle Toolchain); Node.js LTS für Angular und Buildwerkzeuge, in `.nvmrc` und `package.json#engines` festgehalten.
 - Paketmanager: npm Workspaces; kein Nx, Turborepo oder weiterer Build-Orchestrator.
 - API: JSON, UTC-ISO-8601, `/api/v1`, RFC-9457-Problem-Details, Cursor-Pagination.
 - Fehlercodes: stabile maschinenlesbare `type`-URLs und keine sensitiven Detailtexte.
@@ -57,11 +57,11 @@ Die finalen Felder entstehen jeweils in der passenden Phase. Alle Dokumente enth
 
 | Collection | Zweck | Wichtige Regeln |
 | --- | --- | --- |
-| `users` | lokale Identität zu Supabase-`sub` | kein Passwort, kein Zugriff allein aufgrund einer JWT-E-Mail |
+| `users` | lokale Identität zu Firebase-UID | kein Passwort, kein Zugriff allein aufgrund einer JWT-E-Mail |
 | `tags` | öffentliche UUID, Primary Owner und Status | genau ein Primary Owner; keine wachsenden Listen |
 | `memberships` | aktive und historische Backup-Owner-Mitgliedschaften | jede angenommene Einladung erzeugt neue `membershipId` |
 | `invitations` | offene Backup-Owner-Einladungen | E-Mail nach Annahme entfernen |
-| `finderReportDrafts` | unbestätigte Fundmeldung | Ablauf und verschlüsselter PKCE-Verifier |
+| `finderReportDrafts` | unbestätigte Fundmeldung | Ablauf, Statuszugang und bestätigte Firebase-Identität |
 | `lossCases` | Verlustfall und Statusmaschine | höchstens ein aktiver Fall pro Tag |
 | `finderChats` | privater Chat eines Finders pro Fall | eindeutige Fall-/Finder-Identität |
 | `messages` | Textnachrichten und Verweis auf Bild | keine Bilddaten im Dokument |
@@ -74,7 +74,7 @@ Die finalen Felder entstehen jeweils in der passenden Phase. Alle Dokumente enth
 
 Anzulegende Indizes werden vor dem ersten verwendenden Endpunkt durch eine getrennte CI-Identität mit administrativen Rechten erstellt und gegen Firestore geprüft. Der Runtime-Service-Account verwaltet keine Indizes:
 
-- `users.supabaseUserId` eindeutig;
+- `users.firebaseUserId` eindeutig;
 - `tags.publicId` eindeutig;
 - `tags.creationKey` eindeutig;
 - `tags.primaryOwnerUserId` plus `status` für Owner-Listen;
@@ -95,9 +95,9 @@ Anzulegende Indizes werden vor dem ersten verwendenden Endpunkt durch eine getre
 
 ### Arbeitsschritte
 
-1. Eine minimale NestJS-Anwendung verbindet sich mit der Firestore-Dev-Datenbank über `mongodb` 6.x, `loadBalanced=true`, TLS, `retryWrites=false` und Cloud-Run-OIDC.
+1. Eine minimale Spring-Boot-Anwendung verbindet sich mit der Firestore-Dev-Datenbank über den von Spring Boot verwalteten MongoDB-JVM-Treiber, `loadBalanced=true`, TLS, `retryWrites=false` und Cloud-Run-OIDC.
 2. Ein Integrationstest verwendet vorab angelegte Indizes, führt eine Multi-Dokument-Transaktion aus und testet Parallelität: zwei gleichzeitige Aufrufe erzeugen genau einen `lossCases`-Datensatz und zwei unterschiedliche `finderChats`.
-3. Ein isolierter Supabase-Test implementiert den Finder-Magic-Link-Ablauf: Draft mit verschlüsseltem PKCE-Verifier, Link auf einem zweiten Browserprofil, Backend-Exchange, einmalige Tokenübergabe an den Angular-Supabase-Client, exakte normalisierte und verifizierte E-Mail-Prüfung, Refresh und Logout.
+3. Ein isolierter Firebase-Test prüft den Finder-E-Mail-Link: Draft-Zuordnung über `flowId`, Link auf einem zweiten Browserprofil, erneute E-Mail-Eingabe, clientseitige Einlösung und serverseitige Completion mit exakt passender normalisierter, bestätigter E-Mail. Refresh, Logout und Replay-Ablehnung gehören zur Abnahme.
 4. Ein Mollie-Test prüft Checkout-Erstellung mit Idempotency-Key, verlorene Create-Antwort, Wiederauffinden über Metadata und Zeitfenster, doppelten Webhook, Statusabfrage und atomaren Access Grant.
 
 ### Abnahme
@@ -114,14 +114,14 @@ Die Spike-Implementierungen werden nur behalten, wenn sie direkt in die folgende
 
 ## Phase 1: Monorepo und deploybarer Durchstich
 
-**Ziel:** Eine deployte Angular-Seite ruft eine versionierte NestJS-API auf, die Firestore erreicht.
+**Ziel:** Eine deployte Angular-Seite ruft eine versionierte Spring-MVC-API auf, die Firestore erreicht.
 
 ### Arbeitsschritte
 
 1. npm-Workspaces mit `apps/web`, `apps/api` und `packages/api-client` erzeugen.
 2. Angular mit Routing, i18n-Grundgerüst, globalen Styles, Skip-Link, Fehlerseite und einem öffentlichen Startscreen anlegen.
-3. NestJS mit Fastify, globaler DTO-Validierung, RFC-9457-Exception-Filter, Request-Correlation-ID, Health- und Readiness-Endpunkt anlegen.
-4. OpenAPI aus NestJS erzeugen und daraus den Angular-Client im Build generieren. CI schlägt bei nicht generiertem Client fehl.
+3. Kotlin / Spring Boot, Bean Validation, RFC-9457-Exception-Advice, Request-Correlation-ID, Health- und Readiness-Endpunkt anlegen.
+4. OpenAPI mit springdoc erzeugen und daraus den Angular-Client im Build generieren. CI schlägt bei nicht generiertem Client fehl.
 5. Konfiguration strikt validieren: lokale `.env.example`, `dev`-/`prod`-Umgebungsvariablen, keine Secrets im Browser-Build.
 6. Firebase Hosting liefert Angular aus und rewritet `/api/**` an Cloud Run oder nutzt eine klar konfigurierte API-URL. CORS wird auf die bekannten Hosting-Domains begrenzt.
 7. GitHub Actions baut, testet und deployt nach `dev`; `prod` benötigt eine Freigabe.
@@ -145,9 +145,9 @@ Die Spike-Implementierungen werden nur behalten, wenn sie direkt in die folgende
 
 ### Arbeitsschritte
 
-1. Supabase-Magic-Link für Owner im Angular-Client integrieren; Passwortfelder des Prototyps werden nicht übernommen.
-2. Einen NestJS-JWT-Guard implementieren: JWKS, Signatur, `iss`, `aud`, `exp`, `nbf` und `sub` prüfen.
-3. Beim ersten erfolgreichen Zugriff ein lokales `users`-Dokument mit `supabaseUserId`, normalisierter verifizierter E-Mail und Status anlegen.
+1. Firebase-E-Mail-Link für Owner im Angular-Client integrieren; Passwortfelder des Prototyps werden nicht übernommen.
+2. Einen Spring-Security-JWT-Schutz implementieren: Google-JWKS, RS256, Projekt-Issuer/-Audience, `exp`, optionales `nbf`, `iat`, `auth_time` und Firebase-UID prüfen; maximale API-Sitzungsdauer 30 Tage ab Anmeldung durchsetzen.
+3. Beim ersten erfolgreichen Zugriff ein lokales `users`-Dokument mit `firebaseUserId`, normalisierter verifizierter E-Mail und Status anlegen.
 4. `email-normalization-v1` als pure gemeinsame API-Funktion implementieren und Grenzfälle testen.
 5. Vor jeder geschützten fachlichen Aktion `users.status` und die Ressourcenberechtigung aus Firestore prüfen.
 6. Callback-Routen nicht cachebar ausliefern; Token und Code vor jeder Navigation aus URL und Browser-History entfernen.
@@ -228,9 +228,9 @@ Die Spike-Implementierungen werden nur behalten, wenn sie direkt in die folgende
 ### Arbeitsschritte
 
 1. Öffentliche Fundseite zu `/f/{publicId}` erstellen: initialer Text und E-Mail; das optionale Bild ergänzt Phase 9 an demselben Draft-Endpunkt.
-2. `finderReportDrafts` mit `flowId`, HMAC des nicht erratbaren Statustokens, `tagId`, initialem Text, normalisierter E-Mail, Ablauf, Versandstatus und verschlüsseltem kurzlebigem PKCE-Verifier erzeugen. Das rohe Statustoken wird nur einmal an den Browser zurückgegeben.
-3. Draft erstellen, Supabase-Magic-Link direkt im HTTP-Request versenden und UI-Status wie bei Einladungen ausgeben.
-4. Das Callback-Dokument setzt `Referrer-Policy: no-referrer`, entfernt Code und `flowId` vor asynchronen Aufrufen und lässt den Backend-Exchange ausführen. Dieser liefert Access- und Refresh-Token genau einmal in einer nicht cachebaren JSON-Antwort; Angular setzt sie mit `supabase.auth.setSession()` und verwirft die Response-Daten danach. Es werden keine Auth-Cookies eingeführt.
+2. `finderReportDrafts` mit `flowId`, HMAC des nicht erratbaren Statustokens, `tagId`, initialem Text, normalisierter E-Mail, Versandstatus und konfigurierbarer Draft-Frist erzeugen. Das rohe Statustoken wird nur einmal an den Browser zurückgegeben.
+3. Draft erstellen und den Firebase-E-Mail-Link im auslösenden Request versenden. Der spätere Backend-Adapter erzeugt dafür mit einem dedizierten Firebase-Admin-Zugriff den Link und übergibt ihn an den vorhandenen Mailanbieter; der Continue-Link enthält nur die nicht geheime `flowId`. Kein Draft-Token und keine E-Mail gehören in die URL. Ein unversandter Draft endet nach 15 Minuten; beim Versand wird eine maximal vier Stunden gültige serverseitige Draft-Frist gesetzt. Linkgültigkeit verlängert diese Frist nicht.
+4. Das Callback-Dokument erfasst Auth-Link und `flowId` separat im Speicher und bereinigt Query/Fragment synchron vor asynchronen Aufrufen. Angular löst den Link mit Firebase ein, fragt bei Bedarf die E-Mail erneut ab und ruft anschliessend die Draft-Completion mit ID-Token auf. Das Backend tauscht keine Codes oder Refresh-Tokens aus; es werden keine Auth-Cookies eingeführt.
 5. Das Backend akzeptiert Completion nur für ein gültiges JWT mit exakt passender normalisierter verifizierter E-Mail.
 6. Draft-Status ist abrufbar, enthält aber nie Nachricht, E-Mail oder Chatinhalt. Abgelaufene Drafts werden beim Zugriff und im täglichen Wartungslauf logisch entfernt.
 
@@ -239,13 +239,12 @@ Die Spike-Implementierungen werden nur behalten, wenn sie direkt in die folgende
 - `POST /api/v1/public/tags/{publicId}/finder-drafts`
 - `POST /api/v1/public/finder-drafts/{flowId}/send-link` mit `X-Draft-Token`
 - `GET /api/v1/public/finder-drafts/{flowId}/status` mit `X-Draft-Token`
-- `POST /api/v1/auth/finder-callback`
 - `POST /api/v1/finder-drafts/{flowId}/complete`
 
 ### Abnahme
 
 - Same-Device- und Cross-Device-Ablauf funktionieren.
-- Sessionübergabe, Refresh, Logout und Replay-Ablehnung funktionieren.
+- Firebase-Anmeldung, Refresh, Logout und Replay-Ablehnung funktionieren.
 - `flowId` oder Statustoken geben keinen Zugriff auf sensible Inhalte.
 - Nur `flowId` plus korrektes Statustoken dürfen Status und erneuten Linkversand auslösen; Completion verlangt unabhängig davon die passende verifizierte Identität.
 - Abgelaufene, verbrauchte und falsch zugeordnete Links schlagen sicher fehl.
@@ -258,7 +257,7 @@ Die Spike-Implementierungen werden nur behalten, wenn sie direkt in die folgende
 ### Arbeitsschritte
 
 1. `lossCases` mit `tagId`, `status`, `activeKey`, Fristen, `accessGrantedAt`, `chatAccessUntil`, archiviertem Grund und berechtigungsrelevanten Membership-Snapshots modellieren.
-2. `finderChats` sowie `messages` mit `finderChatId`, `senderKind`, Text, Zeit und optionalem `imageId` modellieren und die Initialnachricht im selben Firestore-Transaktionsablauf erzeugen. Die Finder-Identität ist die bestätigte Supabase-Identität, nicht die E-Mail als Zugriffsschlüssel.
+2. `finderChats` sowie `messages` mit `finderChatId`, `senderKind`, Text, Zeit und optionalem `imageId` modellieren und die Initialnachricht im selben Firestore-Transaktionsablauf erzeugen. Die Finder-Identität ist die bestätigte Firebase-Identität, nicht die E-Mail als Zugriffsschlüssel.
 3. Bei gleichzeitigen Completes: aktiven Fall finden oder erzeugen, anschliessend Chat je Finder finden oder erzeugen. Der Ablauf muss ohne doppelte Initialnachricht wiederholbar sein.
 4. Eine direkte Owner-Benachrichtigung per SMTP senden; Fehlstatus bleibt am Fall sichtbar und kann manuell erneut ausgelöst werden.
 5. Owner-Übersicht zeigt nur Fallstatus, Anzahl Finder-Chats und Zeitpunkte, nie Text, Bild, E-Mail oder Kontaktinformationen.
@@ -413,7 +412,7 @@ Die Spike-Implementierungen werden nur behalten, wenn sie direkt in die folgende
 ### Arbeitsschritte
 
 1. Löschanforderung legt zuerst dauerhaft ein `deletionLedger` mit Status und nächstem Schritt an und setzt danach den lokalen Sperrstatus, damit gültige Sessions bei der nächsten API-Anfrage keinen Zugriff mehr haben.
-2. Der auslösende HTTP-Request führt die Kaskade idempotent aus: eigene aktive Fälle schliessen, eigene Tags `RETIRED`, fremde Backup-Mitgliedschaften entfernen und deren `membershipSlotCount` transaktional reduzieren, Identitätsreferenzen in Tags, Memberships, Fall-Snapshots, Chats, Nachrichten und Drafts pseudonymisieren, E-Mail-Kopien entfernen, zuletzt Supabase-Identität und lokales Konto löschen.
+2. Der auslösende HTTP-Request führt die Kaskade idempotent aus: eigene aktive Fälle schliessen, eigene Tags `RETIRED`, fremde Backup-Mitgliedschaften entfernen und deren `membershipSlotCount` transaktional reduzieren, Identitätsreferenzen in Tags, Memberships, Fall-Snapshots, Chats, Nachrichten und Drafts pseudonymisieren, E-Mail-Kopien entfernen, zuletzt Firebase-Identität und lokales Konto löschen.
 3. Nach jedem erfolgreichen Schritt wird das Ledger fortgeschrieben. Bei Teilfehler kann Support denselben Vorgang mit auditierter Aktion fortsetzen. Der tägliche Lauf behandelt nur fällige Datenlöschungen, nicht reguläre Benutzerlöschungen.
 4. Konfigurierbare Retentionsfristen für Archive, Nachrichten, Bilder und Zahlungsnachweise implementieren, sobald rechtlich freigegeben.
 5. Backups, Restore und anschliessende Anwendung des Löschledgers in einer isolierten Umgebung üben.

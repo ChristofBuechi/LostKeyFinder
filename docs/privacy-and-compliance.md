@@ -12,7 +12,7 @@ Draft-Inhalte werden nach Abschluss oder Ablauf sofort logisch entfernt; ein min
 
 Die endgültigen Fristen für Archive, Nachrichten, Bilder und minimale Zahlungsnachweise sind Go-live-Entscheidungen. Bis zur rechtlichen Freigabe werden sie konfigurierbar gehalten und nicht als unbefristet oder zehnjährig festgeschrieben. Stillgelegte Tags, öffentliche IDs und für Archivberechtigungen benötigte `membershipId`-Referenzen bleiben mindestens so lange wie abhängige Archive erhalten; öffentliche IDs werden nie wiederverwendet. Backups dürfen gelöschte Daten nur innerhalb ihrer beschränkten Betriebsfrist enthalten. Ein aktuelles Löschledger bleibt mindestens über diese Frist erhalten und wird nach jedem Restore vor fachlicher Freigabe zusammen mit dem täglichen Wartungslauf angewendet.
 
-Account-Löschung entzieht sofort fachlichen Zugriff. Eine wiederaufnehmbare Kaskade pseudonymisiert notwendige historische Referenzen mit einem eindeutigen Ersatzwert, entfernt E-Mail-Kopien und löscht Supabase- sowie lokales Benutzerkonto.
+Account-Löschung entzieht sofort fachlichen Zugriff. Eine wiederaufnehmbare Kaskade pseudonymisiert notwendige historische Referenzen mit einem eindeutigen Ersatzwert, entfernt E-Mail-Kopien und löscht Firebase- sowie lokales Benutzerkonto.
 
 ## Missbrauch und Support
 
@@ -21,3 +21,7 @@ Rate Limits schützen öffentliche Auflösung, Drafts, Magic Links, Tags und Nac
 Inhaltsmeldungen blenden Inhalte nicht automatisch aus. Support darf nur die gemeldete Nachricht über einen auditierten Least-Privilege-Pfad lesen. Manuelle Sperren und Refunds benötigen eine benannte Person, Pflichtgrund und Ticketreferenz; ob eine zweite Freigabe nötig ist, wird vor Go-live verbindlich entschieden. Provideränderungen gelten fachlich erst nach API-Verifikation.
 
 Logs und Metriken enthalten nur Correlation IDs, Ereignistypen und pseudonyme IDs. Support-Lesen, Sperren, Paymentstatus, Löschung und Berechtigungsänderungen werden auditiert.
+
+## Authentifizierungsdaten
+
+Firebase Authentication verarbeitet Anmeldedaten in den USA; dies ist für das Projekt akzeptiert. Die regionale Firestore-Datenbank und Cloud Run in Zürich ändern den Auth-Verarbeitungsstandort nicht. Vor Go-live müssen Datenschutzinformation, Auftragsverarbeitung und Löschabläufe diesen tatsächlich verwendeten Anbieter und Datentransfer beschreiben. Quellen und technische Einrichtung stehen in [Firebase Authentication](firebase-auth-setup.md).

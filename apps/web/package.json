@@ -9,7 +9,9 @@
     "prebuild": "node scripts/write-auth-config.mjs",
     "lint": "eslint \"src/**/*.{ts,html}\"",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:config": "node --test scripts/write-auth-config.spec.mjs",
+    "pretest": "npm run test:config"
   },
   "private": true,
   "packageManager": "npm@11.12.1",
@@ -21,7 +23,7 @@
     "@angular/platform-browser": "21.2.24",
     "@angular/router": "21.2.24",
     "@lost-key-finder/api-client": "*",
-    "@supabase/supabase-js": "2.117.3",
+    "firebase": "13.1.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.16.0"

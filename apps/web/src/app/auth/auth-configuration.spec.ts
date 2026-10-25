@@ -3,7 +3,7 @@ import { loadAuthConfiguration } from './auth-configuration';
 
 describe('Bounded Auth configuration loading', () => {
   const fetchMock = vi.fn<typeof fetch>();
-  const emptyConfiguration = { url: '', publishableKey: '' };
+  const emptyConfiguration = {};
   let controller: AbortController;
 
   beforeEach(() => {
@@ -18,12 +18,20 @@ describe('Bounded Auth configuration loading', () => {
   });
 
   it('loads configuration with a five-second native timeout', async () => {
-    const configuration = { url: 'https://example.supabase.co', publishableKey: 'sb_publishable_test' };
+    const configuration = { projectId: 'test', apiKey: 'test-key', authDomain: 'test.firebaseapp.com', appId: 'test-app' };
     fetchMock.mockResolvedValue(new Response(JSON.stringify(configuration)));
     expect(await loadAuthConfiguration()).toEqual(configuration);
     expect(AbortSignal.timeout).toHaveBeenCalledWith(5000);
     expect(fetchMock).toHaveBeenCalledWith('/auth-config.json', { cache: 'no-store', signal: controller.signal });
   });
+
+  it.each([null, [], 'configuration', {}, { apiKey: 'key' },
+    { apiKey: 'key', authDomain: 'test.firebaseapp.com', projectId: ' ', appId: 'app' },
+    { apiKey: 42, authDomain: 'test.firebaseapp.com', projectId: 'test', appId: 'app' }])(
+    'keeps public pages available for invalid configuration %j', async configuration => {
+      fetchMock.mockResolvedValue(new Response(JSON.stringify(configuration)));
+      expect(await loadAuthConfiguration()).toEqual({});
+    });
 
   it.each(['request', 'body'])('falls back when the %s stalls until timeout', async (stage) => {
     fetchMock.mockImplementation((_url, options) => {

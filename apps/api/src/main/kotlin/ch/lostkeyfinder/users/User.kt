@@ -12,14 +12,14 @@ enum class UserStatus { ACTIVE, DISABLED, DELETING }
 @Document("users")
 data class User(
     @field:Id val id: String,
-    val supabaseUserId: String,
+    val firebaseUserId: String,
     val email: String,
     val status: UserStatus,
     val createdAt: Instant,
     val updatedAt: Instant,
 ) {
     init {
-        require(UUID.fromString(id).version() == 4 && UUID.fromString(supabaseUserId).version() == 4)
+        require(UUID.fromString(id).version() == 4 && firebaseUserId.isNotBlank() && firebaseUserId.length <= 128)
         require(email == normalizeEmail(email))
         require(!updatedAt.isBefore(createdAt))
     }

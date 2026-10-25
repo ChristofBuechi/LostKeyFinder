@@ -1,15 +1,24 @@
 export interface AuthCallbackData {
-  code: string;
+  link: string;
   failed: boolean;
 }
 
-// Run before configuration fetches, Supabase initialization and Angular routing.
+// Remove credentials before configuration fetches, SDK initialization and routing.
 export function consumeAuthCallback(location: Location, history: History): AuthCallbackData {
-  const data = { code: '', failed: false };
+  const data = { link: '', failed: false };
   if (location.pathname !== '/auth/callback') return data;
   const parameters = new URLSearchParams(location.search);
-  data.code = parameters.get('code') ?? '';
-  data.failed = parameters.has('error') || !!location.hash || !data.code;
+  data.failed = parameters.has('error') || !!location.hash || parameters.get('mode') !== 'signIn' ||
+    !parameters.get('oobCode') || !parameters.get('apiKey');
+  if (!data.failed) {
+    // Keep only the fields Firebase needs, in memory only.
+    const link = new URL(location.origin + '/auth/callback');
+    for (const name of ['apiKey', 'oobCode', 'mode', 'tenantId']) {
+      const value = parameters.get(name);
+      if (value) link.searchParams.set(name, value);
+    }
+    data.link = link.href;
+  }
   history.replaceState(null, '', '/auth/callback');
   return data;
 }

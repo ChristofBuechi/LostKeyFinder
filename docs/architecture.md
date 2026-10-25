@@ -5,9 +5,9 @@
 | Bereich | Entscheidung |
 | --- | --- |
 | Frontend | Angular auf Firebase Hosting |
-| API | Modularer NestJS-Monolith mit Fastify auf Node.js LTS und Cloud Run `europe-west6` |
+| API | Modularer Kotlin-/Spring-Boot-Monolith auf Java 25 und Cloud Run `europe-west6` |
 | Daten | Firestore Enterprise mit MongoDB-Kompatibilität in `europe-west6` |
-| Identität | Supabase Auth in `eu-central-2` |
+| Identität | Firebase Authentication; Auth-Verarbeitung in den USA akzeptiert |
 | Extern | Mollie Hosted Checkout und providerneutrales SMTP |
 
 `dev` und `prod` verwenden getrennte Projekte, Daten, Identitäten, Schlüssel und Service Accounts. Microservices, Broker und Event Sourcing sind nicht vorgesehen.
@@ -22,7 +22,7 @@ Mehrdokument-Invarianten verwenden Firestore-Transaktionen über die MongoDB-Sch
 
 ## API
 
-Die API verwendet JSON, UTC nach ISO 8601, `/api/v1`, Cursor-Pagination und RFC-9457-Problem-Details. NestJS-DTOs mit `class-validator` und `@nestjs/swagger` führen den Vertrag; CI erzeugt daraus den Angular-Client.
+Die API verwendet JSON, UTC nach ISO 8601, `/api/v1`, Cursor-Pagination und RFC-9457-Problem-Details. Kotlin-DTOs mit Bean Validation und springdoc-openapi führen den Vertrag; CI erzeugt daraus den Angular-Client.
 
 Tag-Erstellung und jeder logische Checkout verwenden einen UUID-v4-`Idempotency-Key`; HTTP-Retries verwenden denselben Schlüssel. Wiederholungen liefern dieselbe Operation oder Ressourcenidentität, dynamische Felder wie Checkout-URLs werden erneut autorisiert und dürfen fehlen.
 
@@ -30,19 +30,23 @@ Bilder kommen als `multipart/form-data`, werden serverseitig bereinigt und nie i
 
 ## Authentifizierung
 
-Supabase verwaltet Magic Links und Sessions; das Backend entscheidet jede fachliche Berechtigung aus Firestore. Ein NestJS-Guard prüft JWT-Signatur und `iss`, `aud`, `exp`, `nbf` sowie `sub` gegen die Projekt-JWKS. Rollen oder E-Mail allein gewähren keinen Ressourcenzugriff.
+Firebase Authentication verwaltet E-Mail-Links und Sitzungen; das Backend entscheidet jede fachliche Berechtigung aus Firestore. Spring Security prüft RS256-Signatur, Google-JWKS, projektbezogene `iss` und `aud`, `exp`, optionales `nbf`, `iat`, `auth_time` und eine nicht leere Firebase-UID bis 128 Zeichen als `sub`. Rollen oder E-Mail allein gewähren keinen Ressourcenzugriff.
 
-Magic Links gelten vier Stunden, Access Tokens 60 Minuten und erneuerbare Sessions 30 Tage. Ein noch nicht versandter Finder-Draft läuft nach 15 Minuten ab; nach Versand endet er spätestens mit dem ersten Link.
+Firebase-ID-Tokens gelten normalerweise eine Stunde. Die API begrenzt die maximale Sitzungsdauer unabhängig vom SDK-Refresh auf 30 Tage ab dem signierten `auth_time`. Danach ist eine neue Anmeldung erforderlich. Die Gültigkeit eines Auth-Links bestimmt Firebase; eine anwendungsspezifische Vier-Stunden-Gültigkeit wird nicht vorausgesetzt. Finder-Drafts haben eigene serverseitige Fristen, die unabhängig von der Linkgültigkeit bei jeder Completion geprüft werden.
 
-Finder-PKCE-Verifier werden für den geräteübergreifenden Ablauf kurzzeitig verschlüsselt im Draft gehalten. Das initiale Callback-Dokument setzt `Referrer-Policy: no-referrer`, entfernt Code und `flowId` vor asynchronen Aufrufen und tauscht den Code nur über das Backend. Die nicht cachebare Exchange-Antwort übergibt Access- und Refresh-Token einmalig im Response-Body an die Angular-Anwendung, die sie mit dem Supabase-Client als normale SPA-Session setzt; Sessions stehen nie in URLs oder Logs. Es werden keine Auth-Cookies eingeführt.
+Der Client löst den E-Mail-Link mit Firebase ein. Im selben Browser stammt die E-Mail aus lokalem Speicher; auf einem anderen Gerät wird sie erneut abgefragt. Das initiale Callback-Dokument setzt `Referrer-Policy: no-referrer`, entfernt Query und Fragment synchron und behält nur die benötigten Auth-Linkfelder bis zur Einlösung im Speicher. E-Mail-Adressen und Sessions werden nicht in Callback-URLs geschrieben. Die API erhält ausschliesslich aktuelle ID-Tokens als Bearer-Token, keine Refresh-Tokens. Es werden keine Auth-Cookies eingeführt.
 
-`email-normalization-v1` trimmt, verlangt genau ein `@`, wandelt die gesamte Adresse passend zu Supabase in Kleinschreibung um und verwendet `domainToASCII()` für die Domain. Der Local Part ist 1 bis 64 Zeichen aus `a-z0-9.!#$%&'*+/=?^_{}|~-`, ohne Punkt am Rand oder doppelte Punkte. Die konvertierte Domain darf nicht leer sein; jedes Label ist 1 bis 63 Zeichen lang, enthält nur `a-z`, `0-9` und `-` und beginnt oder endet nicht mit `-`. Die Domain ist höchstens 253, die Gesamtadresse höchstens 254 Zeichen lang.
+Der geplante Finder-Ablauf ergänzt eine nicht geheime `flowId` zur Draft-Zuordnung im Continue-Link. Die Callback-Verarbeitung muss diese vor dem Bereinigen separat erfassen und nach erfolgreicher Firebase-Anmeldung die Completion aufrufen. Der Zugriff auf den Draft verlangt unabhängig von `flowId` die exakt passende normalisierte, bestätigte E-Mail; ein Statuszugang benötigt zusätzlich ein eigenes nicht erratbares Draft-Token. Dieser Finder-Ablauf ist noch zu implementieren und geräteübergreifend abzunehmen.
 
-Benötigte Auth-Konfiguration: `SUPABASE_URL`, Publishable/Anon Key, JWT-Audience und -Algorithmus sowie ein nur dem Identity-Adapter zugängliches Secret für Account-Löschung. Standard-Issuer und JWKS-URL werden aus `SUPABASE_URL` abgeleitet.
+Beim ersten Zugriff bestätigt `FirebaseIdentity` UID und verifizierte E-Mail zusätzlich über `accounts:lookup`; ein eindeutiger Index auf `users.firebaseUserId` sichert die Anlage. Lokale Kontosperren und Löschstatus gelten bei jedem Request sofort. Eine ausschliesslich in Firebase gesetzte Sperre oder ein Token-Widerruf wird bei bestehenden lokalen Konten derzeit nicht pro Request abgefragt; ein bereits ausgestelltes ID-Token kann bis zu seinem Ablauf weiter gültig sein. Support muss daher zuerst den lokalen Status sperren; ein sofortiger providerseitiger Widerruf benötigt künftig eine zusätzliche Statusprüfung.
+
+`email-normalization-v1` trimmt, verlangt genau ein `@`, wandelt die gesamte Adresse nach der gemeinsamen Anwendungsregel in Kleinschreibung um und verwendet `domainToASCII()` für die Domain. Der Local Part ist 1 bis 64 Zeichen aus `a-z0-9.!#$%&'*+/=?^_{}|~-`, ohne Punkt am Rand oder doppelte Punkte. Die konvertierte Domain darf nicht leer sein; jedes Label ist 1 bis 63 Zeichen lang, enthält nur `a-z`, `0-9` und `-` und beginnt oder endet nicht mit `-`. Die Domain ist höchstens 253, die Gesamtadresse höchstens 254 Zeichen lang.
+
+Benötigte Auth-Konfiguration: `FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN` und `FIREBASE_APP_ID`. Backend und Browser müssen dasselbe Projekt verwenden. Administrative Kontolöschung wird bei ihrer Implementierung über einen dedizierten Firebase-Admin-Zugriff mit minimalen IAM-Rechten umgesetzt. Einrichtung und Grenzen sind in [Firebase Authentication](firebase-auth-setup.md) dokumentiert.
 
 ## Datenbank und Betrieb
 
-Die Anwendung verwendet `mongodb` 6.x, mindestens 6.7; ein anderer Major wird erst nach Freigabe durch Firestore übernommen. Produktion nutzt TLS, `loadBalanced=true`, `retryWrites=false` und eingebautes GCP-OIDC über `ENVIRONMENT:gcp,TOKEN_RESOURCE:FIRESTORE`. Der Cloud-Run-Service-Account erhält nur `roles/datastore.user`; ein eigener OIDC-Callback ist dafür nicht nötig. Indizes werden vor dem Anwendungsdeployment durch eine getrennte CI-Identität mit den nötigen administrativen Rechten angelegt, nie durch den Runtime-Service-Account.
+Die Anwendung verwendet Spring Data MongoDB und den von Spring Boot verwalteten MongoDB-JVM-Treiber 5.x. Verwendete Operationen müssen gegen Firestore mit MongoDB-Kompatibilität geprüft werden. Produktion nutzt TLS, `loadBalanced=true`, `retryWrites=false` und eingebautes GCP-OIDC über `ENVIRONMENT:gcp,TOKEN_RESOURCE:FIRESTORE`. Der Cloud-Run-Service-Account erhält nur `roles/datastore.user`; ein eigener OIDC-Callback ist dafür nicht nötig. Indizes werden vor dem Anwendungsdeployment durch eine getrennte CI-Identität mit den nötigen administrativen Rechten angelegt, nie durch den Runtime-Service-Account.
 
 Domainlogik wird mit Unit-Tests geprüft, jede verwendete Query, Transaktion und jeder Index zusätzlich gegen eine isolierte Firestore-Dev-Datenbank. Eine zweite MongoDB-Testumgebung ist kein fachlicher Ersatz für Firestore.
 
