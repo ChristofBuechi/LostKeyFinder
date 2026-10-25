@@ -10,10 +10,10 @@ Hardware-Tags werden ohne Aktivierungscode registriert. Die erste explizite Zuor
 
 1. **Meldung:** Die Tag-Seite nennt einen noch festzulegenden Supportkanal für „Tag bereits registriert“. Sie gibt keine Daten des bisherigen Besitzers preis. Anfangs ist kein eigenes Ticket-/Uploadsystem nötig.
 2. **Zielkonto:** Antragsteller meldet sich regulär an, sodass ein aktives Konto mit bestätigter E-Mail existiert. Eine im Ticket genannte Adresse allein berechtigt nicht zur Übernahme.
-3. **Prüfung:** Support prüft Tag-ID, Kauf-/Ausgabebeleg und den nachvollziehbaren Bezug zum konkreten Tag; bei Bedarf Angaben von Händler/Hersteller und Foto von Tag/Verpackung. Kenntnis der UUID oder ein QR-Foto allein reichen nicht. Auch ein allgemeiner Kaufbeleg ohne Bezug zum Tag ist nicht automatisch ausreichend.
-4. **Konfliktklärung:** Support prüft Registrierungszeitpunkt und bestehende Zuordnung. Soweit erreichbar, bisherigen Benutzer um Stellungnahme bitten; dessen Kontaktdaten bleiben gegenüber dem Antragsteller verborgen. Fehlende Antwort allein beweist keinen Anspruch. Frist und Kommunikationsvorlagen sind noch festzulegen. Der Plan autorisiert keinen tatsächlichen Nachrichtenversand.
+3. **Foto prüfen:** Keine Zuordnung von Kauf-/Ausgabebelegen zu einzelnen Tags voraussetzen. Stattdessen aktuelles Foto des physischen Tags mit lesbarer ID bzw. QR und einer vom Support vorgegebenen Vorgangsreferenz auf einem danebenliegenden Zettel anfordern; bei Bedarf Vorder-/Rückseite. Ein QR-Screenshot oder eine bekannte UUID allein genügt nicht. Das Foto dient als pragmatischer Hinweis auf aktuellen Zugriff auf den Tag, beweist aber weder Kauf noch berechtigten Besitz; auch ein Finder könnte den Tag fotografieren.
+4. **Rückfrage:** Support prüft Registrierungszeitpunkt und bestehende Zuordnung und fragt den bisherigen Benutzer über dessen bestätigte Kontaktadresse an. Dessen Kontaktdaten bleiben gegenüber dem Antragsteller verborgen. Vorschlag für die Antwortfrist: sieben Tage. Zustimmung erlaubt die weitere Prüfung; bei Widerspruch oder widersprüchlichen Angaben keine einfache Neuzuordnung. Ohne Antwort darf Support anhand des aktuellen Fotos und der Gesamtumstände entscheiden; Schweigen allein genügt nicht und löst keine automatische Übertragung aus. Frist und genaue Kriterien sind noch zu bestätigen. Der Plan autorisiert keinen tatsächlichen Nachrichtenversand.
 5. **Optionale Sperre:** Bei plausiblem Missbrauch kann berechtigter Support den Tag mit Grund und Ticketreferenz reversibel auf `BLOCKED` setzen. Eine blosse Anfrage löst keine automatische Sperre aus. Die Besitzerreferenz bleibt erhalten.
-6. **Entscheidung:** Nur bei belegter Fehlzuordnung gezielt auf das bestätigte Zielkonto korrigieren. Bei unklaren oder widersprüchlichen Nachweisen keine Übertragung; ein Ersatztag ist gegebenenfalls die praktikablere Lösung.
+6. **Entscheidung:** Bei nach Supportprüfung plausibler Fehlzuordnung gezielt auf das bestätigte Zielkonto korrigieren. Bei nicht auflösbarem Konflikt keine Übertragung. Der Antragsteller kann dann einen anderen Tag verwenden und den physischen Tag entsorgen; ein Ersatz ist keine automatisch zugesagte Leistung. Keine zusätzliche Hardware-Bescheinigung oder Händlerdatenbank verlangen.
 7. **Abschluss:** Ergebnis und Grund dokumentieren, Beteiligte über den festgelegten Supportkanal informieren. Tag niemals zwischenzeitlich öffentlich unzugewiesen setzen. Unabhängige Sperrgründe bleiben wirksam; nicht pauschal entsperren.
 
 ## Technische Leitplanken einer späteren Funktion
@@ -33,17 +33,20 @@ Für die aktuelle Tag-/Admin-Vorbereitung ist dies ein Vorschlag. Die verbindlic
 
 Vor Verkauf freigegebener Hardware-Tags müssen Supportkanal, berechtigte Personen, Nachweiskriterien, Fristen, Streitfallbehandlung und Aufbewahrung feststehen. Ein geregelter Ersatzprozess kann eine Zwischenlösung sein.
 
+Entsorgen des physischen Tags ist von einer technischen Stilllegung zu unterscheiden. Eine unbestätigte Anfrage oder das Ausbleiben einer Antwort darf einem möglicherweise berechtigten bisherigen Besitzer nicht automatisch seinen Tag sperren oder endgültig stilllegen. Eine technische Stilllegung benötigt eine gesondert begründete Supportentscheidung oder den vorgesehenen Besitzerprozess. Die öffentliche UUID wird niemals wiederverwendet.
+
 ## Noch zu besprechen
 
-- Welche Nachweise kann Händler/Produktion einem einzelnen Tag tatsächlich zuordnen?
+- Foto mit frischer Supportreferenz als Prüfgrundlage; keine Händler-/Belegzuordnung erforderlich. Genaue Kriterien für eine manuelle Entscheidung ohne Antwort festlegen.
 - Genügt ein berechtigter Supportbenutzer oder ist eine zweite Freigabe gewünscht?
-- Welcher Supportkanal und welche Prüf-/Antwortfrist werden verwendet?
-- Wann wird ein Ersatztag angeboten, falls die Zuordnung nicht zuverlässig geklärt werden kann?
+- Welcher Supportkanal wird verwendet, und übernehmen wir die vorgeschlagene Antwortfrist von sieben Tagen?
+- Gibt es bei ungeklärtem Konflikt ein Ersatzangebot? Andernfalls keine Neuzuordnung; Antragsteller kann den Tag entsorgen und einen anderen verwenden.
 
 ## Abnahme einer späteren Implementierung
 
 - Normale Benutzer und reine Bestandsadmins können keine Besitzerkorrektur auslösen.
 - Anfragen oder Kenntnis der UUID entziehen niemandem automatisch Rechte.
+- Foto allein und Fristablauf führen zu keiner automatischen Übertragung oder Stilllegung; bei Widerspruch greift keine einfache Neuzuordnung.
 - Inaktives/falsches Zielkonto, geänderter Ausgangszustand und bereits benutzte Tags werden abgelehnt.
 - Wiederholung nach Timeout erzeugt dieselbe Korrektur und genau einen Audit-Eintrag.
 - Kein Dritter kann während der Korrektur den Tag neu registrieren.

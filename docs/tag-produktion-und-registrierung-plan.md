@@ -144,7 +144,7 @@ Für einen zugewiesenen aktiven Tag wird der geplante Finder-Prozess implementie
 
 Die neue Registrierung darf nicht als fertiggestellter Kontaktprozess gelten. Der Finder-Durchstich ist ausdrücklich ein späterer Umsetzungsschritt und blockiert die aktuelle Tag-/Admin-Umsetzung nicht. Bis dahin zeigt die Folgeseite zugewiesener fremder Tags einen ehrlichen Hinweis, dass Fundmeldung und Kontaktaufnahme noch nicht verfügbar sind. Bilder, Backup Owner und Zahlungen werden entsprechend der bestehenden Roadmap ergänzt.
 
-Für Fehlregistrierungen liegt ein gesonderter [Support-Vorschlag](fehlregistrierung-support-ansatz.md) vor: Nachweise prüfen, gegebenenfalls reversibel sperren und eine belegte Fehlzuordnung gezielt korrigieren, ohne den Tag öffentlich freizugeben. Nachweiskriterien und Korrekturberechtigung sind noch zu besprechen. Der Vorschlag ist keine bereits beschlossene oder implementierte Übertragungsfunktion.
+Für Fehlregistrierungen liegt ein gesonderter [Support-Vorschlag](fehlregistrierung-support-ansatz.md) vor: aktuelles Foto des physischen Tags mit frischer Supportreferenz prüfen, beim bisherigen Besitzer rückfragen und nach manueller Entscheidung gegebenenfalls gezielt korrigieren. Eine Händler-/Kaufbelegzuordnung wird nicht vorausgesetzt. Ohne klärbares Ergebnis keine Neuzuordnung; der Antragsteller kann den Tag entsorgen und einen anderen verwenden. Foto oder Fristablauf allein lösen keine automatische Übertragung/Stilllegung aus. Kriterien und Korrekturberechtigung sind noch zu besprechen; es handelt sich nicht um eine bereits implementierte Übertragungsfunktion.
 
 ## 7. Admin und Hardware-Produktion
 
