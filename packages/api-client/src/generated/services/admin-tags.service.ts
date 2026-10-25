@@ -12,10 +12,13 @@ import { StrictHttpResponse } from '../strict-http-response';
 
 import { adminTagControllerDetail } from '../fn/admin-tags/admin-tag-controller-detail';
 import { AdminTagControllerDetail$Params } from '../fn/admin-tags/admin-tag-controller-detail';
+import { adminTagControllerHistory } from '../fn/admin-tags/admin-tag-controller-history';
+import { AdminTagControllerHistory$Params } from '../fn/admin-tags/admin-tag-controller-history';
 import { adminTagControllerList } from '../fn/admin-tags/admin-tag-controller-list';
 import { AdminTagControllerList$Params } from '../fn/admin-tags/admin-tag-controller-list';
 import { adminTagControllerSummary } from '../fn/admin-tags/admin-tag-controller-summary';
 import { AdminTagControllerSummary$Params } from '../fn/admin-tags/admin-tag-controller-summary';
+import { TagHistoryPage } from '../models/tag-history-page';
 import { TagPage } from '../models/tag-page';
 import { TagResponse } from '../models/tag-response';
 import { TagSummary } from '../models/tag-summary';
@@ -104,6 +107,33 @@ export class AdminTagsService extends BaseService {
     const resp = this.adminTagControllerDetail$Response(params, context);
     return resp.pipe(
       map((r: StrictHttpResponse<TagResponse>): TagResponse => r.body)
+    );
+  }
+
+  /** Path part for operation `adminTagControllerHistory()` */
+  static readonly AdminTagControllerHistoryPath = '/api/v1/admin/tags/{tagId}/history';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `adminTagControllerHistory()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  adminTagControllerHistory$Response(params: AdminTagControllerHistory$Params, context?: HttpContext): Observable<StrictHttpResponse<TagHistoryPage>> {
+    const obs = adminTagControllerHistory(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `adminTagControllerHistory$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  adminTagControllerHistory(params: AdminTagControllerHistory$Params, context?: HttpContext): Observable<TagHistoryPage> {
+    const resp = this.adminTagControllerHistory$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<TagHistoryPage>): TagHistoryPage => r.body)
     );
   }
 

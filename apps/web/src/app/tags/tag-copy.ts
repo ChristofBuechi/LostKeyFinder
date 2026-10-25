@@ -39,6 +39,14 @@ export class TagCopy {
     rateLimit: 'Zu viele Anfragen. Bitte versuche es später erneut.', details: 'Tag-Details', registeredAt: 'Registriert am',
     validation: 'Bitte prüfe deine Eingaben.', back: 'Zur Übersicht', email: 'E-Mail-Adresse',
     prepareRelease: 'Freigabe vorbereiten', cancel: 'Abbrechen',
+    changes: 'Änderungen', before: 'Vorher', after: 'Nachher', updated: 'Aktualisiert am', notSet: 'Nicht gesetzt', emptyValue: 'Leer',
+    BATCH_CREATED: 'Produktionsserie erstellt',
+    history: 'Historie', actor: 'Benutzerreferenz', TAG_CREATED: 'Tag erstellt', TAG_REGISTERED: 'Tag registriert',
+    TAG_ACTIVATED: 'Tag aktiviert', TAG_DEACTIVATED: 'Tag deaktiviert', TAG_DELETED: 'Tag gelöscht (Soft Delete)',
+    TAG_RELEASED: 'Besitzerzuordnung freigegeben', BATCH_RELEASED: 'Serie für die Registrierung freigegeben', BATCH_EXPORTED: 'Serie als CSV exportiert',
+    deleteTag: 'Tag löschen', releaseTag: 'Tag freigeben', deletedAt: 'Gelöscht am',
+    deleteConfirm: 'Diesen selbst erstellten Tag löschen? Sein QR-Code wird deaktiviert. Die Daten bleiben für die Historie erhalten.',
+    releaseConfirm: 'Die Besitzerzuordnung dieses Hardware-Tags lösen? Danach kann jemand anderes ihn registrieren. Deine private Bezeichnung wird entfernt.',
   } : {
     mine: 'My tags', admin: 'Tag inventory', account: 'My account', adminLink: 'Administration',
     intro: 'Create your own tag and download its QR code.',
@@ -74,5 +82,13 @@ export class TagCopy {
     rateLimit: 'Too many requests. Please try again later.', details: 'Tag details', registeredAt: 'Registered at',
     validation: 'Please check your input.', back: 'Back to list', email: 'Email address',
     prepareRelease: 'Review release', cancel: 'Cancel',
+    changes: 'Changes', before: 'Before', after: 'After', updated: 'Updated at', notSet: 'Not set', emptyValue: 'Empty',
+    BATCH_CREATED: 'Production batch created',
+    history: 'History', actor: 'User reference', TAG_CREATED: 'Tag created', TAG_REGISTERED: 'Tag registered',
+    TAG_ACTIVATED: 'Tag activated', TAG_DEACTIVATED: 'Tag deactivated', TAG_DELETED: 'Tag deleted (soft delete)',
+    TAG_RELEASED: 'Ownership released', BATCH_RELEASED: 'Batch released for registration', BATCH_EXPORTED: 'Batch exported as CSV',
+    deleteTag: 'Delete tag', releaseTag: 'Release tag', deletedAt: 'Deleted at',
+    deleteConfirm: 'Delete this self-created tag? Its QR code will be deactivated. The data is retained for history.',
+    releaseConfirm: 'Release ownership of this hardware tag? Someone else can then register it. Your private label will be removed.',
   });
 }

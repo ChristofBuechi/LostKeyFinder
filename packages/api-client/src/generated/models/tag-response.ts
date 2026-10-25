@@ -4,11 +4,11 @@
 export interface TagResponse {
   batchId: string | null;
   createdAt: string;
+  deletedAt: string | null;
   id: string;
   inventoryStatus: ('PREPARED' | 'RELEASED') | null;
   label: string;
   origin: 'SELF_CREATED' | 'PREPRODUCED';
-  position: number | null;
   primaryOwnerUserId: string | null;
   publicId: string;
   registeredAt: string | null;

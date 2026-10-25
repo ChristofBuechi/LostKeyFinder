@@ -7,7 +7,7 @@ Stand: 25. Oktober 2026. Branch `feature/tag-registration-admin`, PR #6.
 - Lokales `users.isAdmin`, sicherer Standard `false` auch für bestehende Dokumente ohne Feld, nur lesbare Ausgabe in `/api/v1/me`.
 - Backend prüft vor jedem Admin-Aufruf das aktuelle lokale Konto und die Berechtigung. Manuelle Vergaben bleiben bei erneutem Login erhalten; Entzug und lokale Kontosperre wirken beim nächsten Request.
 - Authentifizierte Selbsterstellung mit UUID-v4, atomarer unmittelbarer Besitzerzuordnung, benutzerbezogenem Idempotenzschlüssel und privater Bezeichnung bis 80 Zeichen.
-- Besitzerliste und Detail-API sowie Aktivieren/Deaktivieren. Besitzerliste und Admin-Tagbestand verwenden nummerierte Seiten à 25 Tags, direkte Seitenwahl, Gesamtseitenzahl und sichtbaren Bereich (z. B. 26–50 von 100); Gesamtzahlen beziehen sich auf Besitzer bzw. aktive Filter. Fremde Ressourcen und Änderungen an gesperrten/stillgelegten Tags werden abgelehnt.
+- Besitzerliste und Detail-API sowie Aktivieren/Deaktivieren. Selbst erstellte Tags lassen sich nach Bestätigung aus Übersicht und Details per Soft Delete entfernen: `deletedAt` und `RETIRED`, vollständiger Datensatz und Besitzerreferenz bleiben erhalten. Besitzerlisten/-details blenden sie aus; Admin-Bestand und Admin-Details zeigen sie weiterhin. Ein altes Create-Retry kann sie nicht wiederbeleben. Besitzerliste und Admin-Tagbestand verwenden nummerierte Seiten à 25 Tags, direkte Seitenwahl, Gesamtseitenzahl und sichtbaren Bereich (z. B. 26–50 von 100); Gesamtzahlen beziehen sich auf Besitzer bzw. aktive Filter. Fremde Ressourcen und Änderungen an gesperrten/stillgelegten Tags werden abgelehnt.
 - Globale Admin-Tagübersicht mit Herkunft, Status, Zuordnung, öffentlicher ID, Serie und Produktionsfreigabe als Filtern; konsistente Bestandszahlen aus einer serverseitigen Aggregation und geschützte Detailansichten.
 - Stabile Cursor-Pagination mit 25 Einträgen über `(createdAt, id)` für Besitzer- und Adminlisten. Bei zwischenzeitlich neu erzeugten Tags führt „Zur ersten Seite“ zum aktualisierten Anfang; keine Snapshot-Sitzung über mehrere Seiten.
 - Angular-Ansichten `/tags` und `/admin/tags` auf Deutsch/Englisch, Zugriff über das Konto. Nach normalem E-Mail-Login führt ein Admin zur Gesamtübersicht; seine eigene Kontoseite bleibt erreichbar.
@@ -23,9 +23,25 @@ Stand: 25. Oktober 2026. Branch `feature/tag-registration-admin`, PR #6.
 - Begrenzte öffentliche Auflösung, Entwurfserstellung und Registrierung; feste serverseitige Zeitfenster und atomare Zähler. IP-/E-Mail-Kontexte stehen nur als HMAC-Prüfwerte in Zählern. Die Zähler liegen in `rateLimits`; ihr privater Schlüssel kommt aus Secret Manager und wird zwischen Backend-Replikaten geteilt.
 - TTL-Indizes bereinigen Entwürfe und Zähler automatisch. Fristprüfungen erfolgen unabhängig davon bei jedem fachlichen Zugriff; die physische TTL-Löschung ist asynchron und kein präziser Vier-Stunden-Timer.
 
+## Historie und CSV-Reihenfolge
+
+Die Tag-Details zeigen eine seitenweise Historie (25 Ereignisse, neueste zuerst) aus `auditLog`, einschliesslich Registrierung, Aktivierung/Deaktivierung, Besitzerfreigabe, Soft Delete und zugehöriger Serienfreigaben/-exporte. Bei früheren Tags ohne Erstellungs-Audit wird das vorhandene `createdAt` als Eckpunkt gezeigt; es gibt keinen Backfill. Bereits vorhandene Audit-Ereignisse werden angezeigt; frühere nicht protokollierte Statuswechsel können nicht rekonstruiert werden. Änderungsdetails halten alte und neue Feldwerte fest, insbesondere Besitzerzuordnungen und beim Freigeben entfernte Daten. Eigene Neuanlagen erhalten jetzt ebenfalls einen atomaren Audit-Eintrag. Statusänderung und Audit sind atomar; eine Wiederholung desselben Status erzeugt kein zusätzliches Ereignis.
+
+Nur der aktuelle Besitzer kann seine Tag-Historie abrufen; Admins auch die Historie stillgelegter/soft-gelöschter Tags. Benutzerreferenzen der Akteure werden ausschliesslich an Admins ausgegeben. Die öffentliche Scan-API liefert keine Historie. Verbindliche Chat-Verknüpfung und bestätigter Admin-Lesezugriff für den späteren Chat-Prozess: [Tag-Historie](tag-history.md).
+
+`position` entfällt im Tag-Dokumentmodell und in der Tag-API. CSV behält die Spalte `position` als berechnete Zeilennummer ab 1; Sortierung nach unveränderlicher Tag-ID hält wiederholte Exporte stabil. UUID-Eindeutigkeit und Seriengrösse sichern die Vollständigkeit. Bestehende Positionsfelder werden ignoriert; kein Datenreset oder Backfill.
+
+Vor Deployment in jeder Umgebung einmal `firestore:tag-indexes` ausführen: Der explizite Operator-Schritt entfernt den bisherigen eindeutigen `(batchId, position)`-Index und legt `(batchId, _id)` sowie den Audit-Historienindex an. Der alte Sparse-Index würde neue Tags ohne Position sonst fälschlich als Duplikate behandeln. Runtime und normale CI ändern keine Indizes.
+
+## Besitzerzuordnung freiwillig lösen
+
+Besitzer können aktive oder inaktive Hardware-Tags nach Bestätigung freigeben. Der Tag bleibt mit UUID, Serie und Produktionsfreigabe erhalten; Besitzerreferenz, Registrierungszeitpunkt und private Bezeichnung werden entfernt und der Status wird `ACTIVE`. Danach ist der Tag wieder registrierbar. Alte Registrierungsentwürfe werden im selben Commit ungültig (Ablaufzeitpunkt setzen, E-Mail entfernen); TTL übernimmt ihre Bereinigung. `TAG_RELEASED` hält den bisherigen Besitzer im Audit fest. Soft Delete schreibt `TAG_DELETED`; beide Vorgänge verwenden dieselbe Transaktionsgrenze wie Registrierung und Serienfreigabe. Fremde, gesperrte oder stillgelegte Tags sowie die falsche Herkunft werden abgelehnt. Admin-Ansichten bieten keine pauschale Besitzerfreigabe an.
+
+Keine neue Collection, kein Backfill und keine Wiederherstellungsfunktion. Fehlendes `deletedAt` bedeutet weiterhin nicht gelöscht. Physisches Löschen von selbst erstellten Tags ist keine Benutzeraktion.
+
 ## Vereinbarter Umfang abgeschlossen; spätere Funktionen
 
-Fundmeldung, Benachrichtigungen, Kontakt/Chat und formatierte Druckvorlagen folgen später. Der Support-Ablauf bei Fehlregistrierungen ist gesondert beschrieben; dieser Umfang implementiert weder allgemeine Besitzerübertragung noch Support-Korrektur. Der separate Foto-/Rückfrageprozess bleibt eine manuelle Support-Konzeption und verspricht keine automatische Korrekturmöglichkeit.
+Fundmeldung, Benachrichtigungen, Kontakt/Chat und formatierte Druckvorlagen folgen später. Der Support-Ablauf bei Fehlregistrierungen ist gesondert beschrieben; direkte Übertragung auf ein bestimmtes anderes Konto und Support-Korrektur bleiben ausgenommen. Der separate Foto-/Rückfrageprozess bleibt eine manuelle Support-Konzeption und verspricht keine automatische Korrekturmöglichkeit.
 
 ## Admin manuell vergeben
 
@@ -52,7 +68,7 @@ npm run firestore:tag-indexes --workspace=@lost-key-finder/api
 npm run firestore:verify --workspace=@lost-key-finder/api
 ```
 
-Der Helper ist ausdrücklich auf Projekt `lost-key-finder-dev`, Datenbank `dev1`, begrenzt. Er bezieht kurzlebige Credentials, ohne sie auszugeben. `provisionTagIndexes` legt eindeutige Indizes für `publicId`, den optionalen `creationKey` (sparse), Serien-Idempotenz und `(batchId, position)` (sparse), Sortier-/Listenindizes sowie TTL-Indizes für Entwürfe und Zähler an. Unabhängige Indexanlagen laufen parallel. Indexaufbau kann mehrere Minuten dauern. Der Runtime-Service-Account benötigt keine Indexadministration.
+Der Helper ist ausdrücklich auf Projekt `lost-key-finder-dev`, Datenbank `dev1`, begrenzt. Er bezieht kurzlebige Credentials, ohne sie auszugeben. `provisionTagIndexes` legt eindeutige Indizes für `publicId`, den optionalen `creationKey` (sparse), Serien-Idempotenz, `(batchId, _id)` für stabil sortierte Exporte, Audit-Historien nach Ressource/Zeit sowie Sortier-/Listenindizes sowie TTL-Indizes für Entwürfe und Zähler an. Unabhängige Indexanlagen laufen parallel. Indexaufbau kann mehrere Minuten dauern. Der Runtime-Service-Account benötigt keine Indexadministration.
 
 Reale Integrationstests legen isolierte Probedaten mit zufälligen Referenzen an und entfernen sie im `finally`-Block. Sie prüfen parallele Wiederholungen, vollständige 100er-Serien, konkurrierende Registrierungen, Entwurfsverbrauch, Filter, Cursor, Bestandsaggregation und transaktionalen Rollback einer fehlgeschlagenen Freigabe. Vor einem späteren Deployment in eine weitere Umgebung müssen dort die erforderlichen Indizes separat eingerichtet und geprüft werden.
 

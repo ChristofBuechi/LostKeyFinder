@@ -14,12 +14,14 @@ import ch.lostkeyfinder.tags.TagRegistrationDraft
 import ch.lostkeyfinder.tags.TagRegistrationService
 import ch.lostkeyfinder.tags.TagService
 import ch.lostkeyfinder.tags.TagStatus
+import ch.lostkeyfinder.tags.TagTransactions
 import ch.lostkeyfinder.users.User
 import ch.lostkeyfinder.users.UserStatus
 import com.mongodb.ConnectionString
 import com.mongodb.client.MongoClients
 import org.bson.Document
 import org.junit.jupiter.api.Test
+import org.springframework.data.mongodb.core.MongoOperations
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria.where
 import org.springframework.data.mongodb.core.query.Query.query
@@ -87,7 +89,7 @@ class FirestoreHardwareIntegrationTest {
                 val selection = query(where("batchId").`is`(id))
                 assertEquals(100L, template.count(selection, Tag::class.java))
                 val tags = template.find(selection, Tag::class.java)
-                assertEquals(100, tags.map { it.position }.toSet().size)
+                assertEquals(100, tags.map { it.id }.toSet().size)
                 batches.release(admin, id)
                 batches.release(admin, id)
                 assertEquals(
@@ -124,12 +126,51 @@ class FirestoreHardwareIntegrationTest {
                 registrations.complete(flowId, owners[0], owners[0].email)
                 assertEquals(null, template.findById(flowId, TagRegistrationDraft::class.java)!!.email)
                 assertEquals(owners[0].id, template.findById(draftTag.id, Tag::class.java)!!.primaryOwnerUserId)
-                val tagService = TagService(template, TagCreationLimit(template))
+                val tagService = TagService(template, TagCreationLimit(template), transactions)
                 val summary = tagService.summary(TagFilter(batchId = id, inventoryStatus = InventoryStatus.RELEASED))
                 assertEquals(100L, summary.total)
                 assertEquals(2L, summary.assigned)
                 assertEquals(98L, summary.unassigned)
                 assertEquals(25, tagService.list(filter = TagFilter(batchId = id, inventoryStatus = InventoryStatus.RELEASED)).items.size)
+
+                val history = tagService.history(draftTag.id)
+                assertEquals(
+                    setOf("TAG_CREATED", "TAG_REGISTERED", "BATCH_CREATED", "BATCH_RELEASED", "BATCH_EXPORTED"),
+                    history.items.map { it.action }.toSet(),
+                )
+                val beforeRelease = template.findById(draftTag.id, Tag::class.java)!!
+                val aborting =
+                    object : TagTransactions {
+                        override fun <T : Any> run(action: (MongoOperations) -> T): T =
+                            transactions.run { ops ->
+                                action(ops)
+                                error("Abort after tag update, draft invalidation and audit insertion")
+                            }
+                    }
+                assertFailsWith<IllegalStateException> {
+                    TagService(template, TagCreationLimit(template), aborting).release(owners[0], draftTag.id)
+                }
+                assertEquals(beforeRelease, template.findById(draftTag.id, Tag::class.java))
+                assertNotNull(template.findById(flowId, TagRegistrationDraft::class.java))
+                assertEquals(
+                    0L,
+                    template.count(query(where("resourceId").`is`(draftTag.id).and("action").`is`("TAG_RELEASED")), TagAudit::class.java),
+                )
+                tagService.release(owners[0], draftTag.id)
+                kotlin.test.assertTrue(!template.findById(flowId, TagRegistrationDraft::class.java)!!.expiresAt.isAfter(Instant.now()))
+                assertEquals(null, template.findById(draftTag.id, Tag::class.java)!!.primaryOwnerUserId)
+                assertEquals(
+                    404,
+                    assertFailsWith<ResponseStatusException> {
+                        registrations.complete(flowId, owners[0], owners[0].email)
+                    }.statusCode.value(),
+                )
+                registrations.direct(draftTag.publicId, owners[1])
+                assertEquals(owners[1].id, template.findById(draftTag.id, Tag::class.java)!!.primaryOwnerUserId)
+                assertEquals(
+                    404,
+                    assertFailsWith<ResponseStatusException> { tagService.release(owners[0], draftTag.id) }.statusCode.value(),
+                )
 
                 val badBatch = batches.create(admin, UUID.randomUUID().toString(), 3, "rollback")
                 batchIds += badBatch.id

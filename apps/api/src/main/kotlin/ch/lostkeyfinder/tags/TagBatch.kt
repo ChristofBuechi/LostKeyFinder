@@ -42,6 +42,7 @@ data class TagAudit(
     val action: String,
     val resourceId: String,
     val createdAt: Instant,
+    val changes: List<TagChange> = emptyList(),
 )
 
 @Schema(requiredProperties = ["total", "assigned", "unassigned", "blocked", "retired", "prepared", "released"])

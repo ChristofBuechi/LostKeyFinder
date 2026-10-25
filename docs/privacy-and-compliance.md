@@ -26,7 +26,7 @@ Inhaltsmeldungen blenden Inhalte nicht automatisch aus. Support darf nur die gem
 
 Logs und Metriken enthalten nur Correlation IDs, Ereignistypen und pseudonyme IDs. Support-Lesen, Sperren, Paymentstatus, Löschung und Berechtigungsänderungen werden auditiert.
 
-Adminrechte werden manuell über das lokale `users.isAdmin` vergeben und entzogen; diese direkten Datenbankänderungen sind im Betriebsprotokoll festzuhalten, da kein API-Audit ausgelöst wird. Die globale Admin-Tagübersicht zeigt Bestands- und Zuordnungsmetadaten, keine privaten Chattexte oder Auth-Tokens. Serienerstellung, Freigabe und autorisierte Produktionsexporte werden durch die Anwendung auditiert. Adminrechte ersetzen keine Support-Inhaltsberechtigung.
+Adminrechte werden manuell über das lokale `users.isAdmin` vergeben und entzogen; diese direkten Datenbankänderungen sind im Betriebsprotokoll festzuhalten, da kein API-Audit ausgelöst wird. Die globale Admin-Tagübersicht zeigt Bestands- und Zuordnungsmetadaten, keine privaten Chattexte oder Auth-Tokens. Serienerstellung, Freigabe und autorisierte Produktionsexporte werden durch die Anwendung auditiert. Für die spätere Chat-Umsetzung ist zusätzlich bestätigt: Admins dürfen über die Historie sämtliche Chats eines Tags lesen; normale Benutzer dürfen die Chats lesen, in denen sie im Chat-Objekt als Owner oder Teilnehmer hinterlegt sind. Ein Wechsel des Tag-Besitzers ändert diese Zuordnung nicht. Siehe [Tag-Historie](tag-history.md).
 
 ## Authentifizierungsdaten
 

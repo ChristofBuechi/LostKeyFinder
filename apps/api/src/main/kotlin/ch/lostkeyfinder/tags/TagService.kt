@@ -21,6 +21,7 @@ import java.util.UUID
 class TagService(
     private val template: MongoTemplate,
     private val creationLimit: TagCreationLimit,
+    private val transactions: TagTransactions,
 ) {
     fun create(
         owner: User,
@@ -33,31 +34,42 @@ class TagService(
         val existing = template.findOne(selection, Tag::class.java)
         if (existing != null) return createdResponse(existing, label)
         creationLimit.reserve(owner.id)
-        val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
-        val update =
-            Update()
-                .setOnInsert("_id", UUID.randomUUID().toString())
-                .setOnInsert("publicId", UUID.randomUUID().toString())
-                .setOnInsert("origin", TagOrigin.SELF_CREATED)
-                .setOnInsert("primaryOwnerUserId", owner.id)
-                .setOnInsert("status", TagStatus.ACTIVE)
-                .setOnInsert("label", label.trim())
-                .setOnInsert("createdAt", now)
-                .setOnInsert("updatedAt", now)
-                .setOnInsert("registeredAt", now)
-        val tag =
-            try {
-                template.findAndModify(selection, update, FindAndModifyOptions.options().upsert(true).returnNew(true), Tag::class.java)
-            } catch (ex: DuplicateKeyException) {
-                template.findOne(selection, Tag::class.java)
-            } ?: throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE)
-        return createdResponse(tag, label)
+        return try {
+            transactions.run { ops ->
+                val saved = ops.findOne(selection, Tag::class.java)
+                if (saved != null) {
+                    createdResponse(saved, label)
+                } else {
+                    val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
+                    val tag =
+                        Tag(
+                            UUID.randomUUID().toString(),
+                            UUID.randomUUID().toString(),
+                            TagOrigin.SELF_CREATED,
+                            owner.id,
+                            TagStatus.ACTIVE,
+                            label.trim(),
+                            now,
+                            now,
+                            creationKey = creationKey,
+                            registeredAt = now,
+                        )
+                    ops.insert(tag)
+                    ops.insert(TagAudit(UUID.randomUUID().toString(), owner.id, "TAG_CREATED", tag.id, now, tagChanges(null, tag)))
+                    TagResponse.from(tag)
+                }
+            }
+        } catch (ex: DuplicateKeyException) {
+            val tag = template.findOne(selection, Tag::class.java) ?: throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE)
+            createdResponse(tag, label)
+        }
     }
 
     private fun createdResponse(
         tag: Tag,
         label: String,
     ): TagResponse {
+        if (tag.deletedAt != null) throw ResponseStatusException(HttpStatus.CONFLICT, "Tag deleted")
         if (tag.label != label.trim()) throw ResponseStatusException(HttpStatus.CONFLICT, "Idempotency key already used")
         return TagResponse.from(tag)
     }
@@ -68,8 +80,17 @@ class TagService(
     ): TagResponse {
         uuid(id)
         return template
-            .findOne(query(where("_id").`is`(id).and("primaryOwnerUserId").`is`(owner.id)), Tag::class.java)
-            ?.let(TagResponse::from) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
+            .findOne(
+                query(
+                    where("_id")
+                        .`is`(id.lowercase())
+                        .and("primaryOwnerUserId")
+                        .`is`(owner.id)
+                        .and("deletedAt")
+                        .`is`(null),
+                ),
+                Tag::class.java,
+            )?.let(TagResponse::from) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
     }
 
     fun changeStatus(
@@ -88,16 +109,180 @@ class TagService(
                     .and("primaryOwnerUserId")
                     .`is`(owner.id)
                     .and("status")
-                    .`in`(TagStatus.ACTIVE, TagStatus.INACTIVE),
+                    .`in`(TagStatus.ACTIVE, TagStatus.INACTIVE)
+                    .and("deletedAt")
+                    .`is`(null),
             )
-        val tag =
-            template.findAndModify(
-                selection,
-                Update.update("status", status).set("updatedAt", Instant.now().truncatedTo(ChronoUnit.MILLIS)),
-                FindAndModifyOptions.options().returnNew(true),
-                Tag::class.java,
-            ) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
-        return TagResponse.from(tag)
+        return transactions.run { ops ->
+            val before =
+                ops.findOne(selection, Tag::class.java)
+                    ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
+            if (before.status == status) {
+                TagResponse.from(before)
+            } else {
+                val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
+                ops.updateFirst(selection, Update.update("status", status).set("updatedAt", now), Tag::class.java)
+                ops.insert(
+                    TagAudit(
+                        UUID.randomUUID().toString(),
+                        owner.id,
+                        if (status == TagStatus.ACTIVE) "TAG_ACTIVATED" else "TAG_DEACTIVATED",
+                        before.id,
+                        now,
+                        tagChanges(before, before.copy(status = status, updatedAt = now)),
+                    ),
+                )
+                TagResponse.from(before.copy(status = status, updatedAt = now))
+            }
+        }
+    }
+
+    fun history(
+        id: String,
+        page: Int = 1,
+        owner: User? = null,
+    ): TagHistoryPage {
+        if (page < 1) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid page")
+        val tag = if (owner == null) adminDetail(id) else owned(owner, id)
+        val selection = query(where("resourceId").`in`(listOfNotNull(tag.id, tag.batchId)))
+        val hasCreation = template.exists(query(where("resourceId").`is`(tag.id).and("action").`is`("TAG_CREATED")), TagAudit::class.java)
+        val count = template.count(selection, TagAudit::class.java) + if (hasCreation) 0 else 1
+        val totalPages = maxOf(1, ((count + PAGE_SIZE - 1) / PAGE_SIZE).toInt())
+        val current = minOf(page, totalPages)
+        val offset = (current.toLong() - 1) * PAGE_SIZE
+        val entries =
+            template
+                .find(
+                    selection
+                        .with(Sort.by(Sort.Direction.DESC, "createdAt", "_id"))
+                        .skip(offset)
+                        .limit(PAGE_SIZE),
+                    TagAudit::class.java,
+                ).map {
+                    val changes =
+                        it.changes.ifEmpty {
+                            when (it.action) {
+                                "TAG_REGISTERED" -> listOf(TagChange("primaryOwnerUserId", null, it.actorUserId))
+                                "TAG_RELEASED" -> listOf(TagChange("primaryOwnerUserId", it.actorUserId, null))
+                                else -> emptyList()
+                            }
+                        }
+                    val visible =
+                        if (owner == null) {
+                            changes
+                        } else {
+                            changes.filter { change ->
+                                change.field != "primaryOwnerUserId" &&
+                                    (change.field !in listOf("label", "batchLabel") || it.actorUserId == owner.id)
+                            }
+                        }
+                    TagHistoryEntry(it.id, it.action, it.createdAt, if (owner == null) it.actorUserId else null, visible)
+                }.toMutableList()
+        // ponytail: creation is already stored on every tag; derive it without backfilling audit records.
+        if (!hasCreation && current == totalPages && entries.size < PAGE_SIZE) {
+            entries += TagHistoryEntry(tag.id, "TAG_CREATED", tag.createdAt, null, emptyList())
+        }
+        return TagHistoryPage(entries, current, totalPages)
+    }
+
+    fun delete(
+        owner: User,
+        id: String,
+    ) {
+        uuid(id)
+        val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
+        transactions.run { ops ->
+            val changed =
+                ops.findAndModify(
+                    query(
+                        where("_id")
+                            .`is`(id.lowercase())
+                            .and("primaryOwnerUserId")
+                            .`is`(owner.id)
+                            .and("origin")
+                            .`is`(TagOrigin.SELF_CREATED)
+                            .and("status")
+                            .`in`(TagStatus.ACTIVE, TagStatus.INACTIVE)
+                            .and("deletedAt")
+                            .`is`(null),
+                    ),
+                    Update.update("deletedAt", now).set("status", TagStatus.RETIRED).set("updatedAt", now),
+                    FindAndModifyOptions.options().returnNew(false),
+                    Tag::class.java,
+                )
+            if (changed == null) throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
+            ops.insert(
+                TagAudit(
+                    UUID.randomUUID().toString(),
+                    owner.id,
+                    "TAG_DELETED",
+                    id.lowercase(),
+                    now,
+                    tagChanges(changed, changed.copy(status = TagStatus.RETIRED, deletedAt = now, updatedAt = now)),
+                ),
+            )
+        }
+    }
+
+    fun release(
+        owner: User,
+        id: String,
+    ) {
+        uuid(id)
+        val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
+        transactions.run { ops ->
+            val changed =
+                ops.findAndModify(
+                    query(
+                        where("_id")
+                            .`is`(id.lowercase())
+                            .and("primaryOwnerUserId")
+                            .`is`(owner.id)
+                            .and("origin")
+                            .`is`(TagOrigin.PREPRODUCED)
+                            .and("inventoryStatus")
+                            .`is`(InventoryStatus.RELEASED)
+                            .and("status")
+                            .`in`(TagStatus.ACTIVE, TagStatus.INACTIVE)
+                            .and("deletedAt")
+                            .`is`(null),
+                    ),
+                    Update()
+                        .unset("primaryOwnerUserId")
+                        .unset("registeredAt")
+                        .set("label", "")
+                        .set("status", TagStatus.ACTIVE)
+                        .set("updatedAt", now),
+                    FindAndModifyOptions.options().returnNew(false),
+                    Tag::class.java,
+                )
+            if (changed == null) throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
+            // ponytail: invalidate old flows in the same transaction; no ownership-epoch machinery.
+            ops.updateMulti(
+                query(where("tagId").`is`(id.lowercase())),
+                Update.update("expiresAt", now).unset("email"),
+                TagRegistrationDraft::class.java,
+            )
+            ops.insert(
+                TagAudit(
+                    UUID.randomUUID().toString(),
+                    owner.id,
+                    "TAG_RELEASED",
+                    id.lowercase(),
+                    now,
+                    tagChanges(
+                        changed,
+                        changed.copy(
+                            primaryOwnerUserId = null,
+                            registeredAt = null,
+                            label = "",
+                            status = TagStatus.ACTIVE,
+                            updatedAt = now,
+                        ),
+                    ),
+                ),
+            )
+        }
     }
 
     fun list(
@@ -135,7 +320,14 @@ class TagService(
         uuid(publicId)
         return template
             .findOne(
-                query(where("publicId").`is`(publicId.lowercase()).and("primaryOwnerUserId").`is`(owner.id)),
+                query(
+                    where("publicId")
+                        .`is`(publicId.lowercase())
+                        .and("primaryOwnerUserId")
+                        .`is`(owner.id)
+                        .and("deletedAt")
+                        .`is`(null),
+                ),
                 Tag::class.java,
             )?.let(TagResponse::from) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
     }

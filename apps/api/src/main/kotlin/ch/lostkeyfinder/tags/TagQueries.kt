@@ -16,7 +16,10 @@ data class TagFilter(
 ) {
     fun criteria(ownerId: String? = null): Criteria {
         val filters = mutableListOf<Criteria>()
-        ownerId?.let { filters += where("primaryOwnerUserId").`is`(it) }
+        ownerId?.let {
+            filters += where("primaryOwnerUserId").`is`(it)
+            filters += where("deletedAt").`is`(null)
+        }
         origin?.let { filters += where("origin").`is`(it) }
         status?.let { filters += where("status").`is`(it) }
         assigned?.let { filters += if (it) where("primaryOwnerUserId").ne(null) else where("primaryOwnerUserId").`is`(null) }

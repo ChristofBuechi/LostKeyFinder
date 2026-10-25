@@ -14,12 +14,19 @@ import { tagControllerChangeStatus } from '../fn/tags/tag-controller-change-stat
 import { TagControllerChangeStatus$Params } from '../fn/tags/tag-controller-change-status';
 import { tagControllerCreate } from '../fn/tags/tag-controller-create';
 import { TagControllerCreate$Params } from '../fn/tags/tag-controller-create';
+import { tagControllerDelete } from '../fn/tags/tag-controller-delete';
+import { TagControllerDelete$Params } from '../fn/tags/tag-controller-delete';
 import { tagControllerDetail } from '../fn/tags/tag-controller-detail';
 import { TagControllerDetail$Params } from '../fn/tags/tag-controller-detail';
+import { tagControllerHistory } from '../fn/tags/tag-controller-history';
+import { TagControllerHistory$Params } from '../fn/tags/tag-controller-history';
 import { tagControllerList } from '../fn/tags/tag-controller-list';
 import { TagControllerList$Params } from '../fn/tags/tag-controller-list';
 import { tagControllerOwnedPublic } from '../fn/tags/tag-controller-owned-public';
 import { TagControllerOwnedPublic$Params } from '../fn/tags/tag-controller-owned-public';
+import { tagControllerRelease } from '../fn/tags/tag-controller-release';
+import { TagControllerRelease$Params } from '../fn/tags/tag-controller-release';
+import { TagHistoryPage } from '../models/tag-history-page';
 import { TagPage } from '../models/tag-page';
 import { TagResponse } from '../models/tag-response';
 
@@ -134,6 +141,87 @@ export class TagsService extends BaseService {
     const resp = this.tagControllerDetail$Response(params, context);
     return resp.pipe(
       map((r: StrictHttpResponse<TagResponse>): TagResponse => r.body)
+    );
+  }
+
+  /** Path part for operation `tagControllerDelete()` */
+  static readonly TagControllerDeletePath = '/api/v1/tags/{tagId}';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `tagControllerDelete()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  tagControllerDelete$Response(params: TagControllerDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+    const obs = tagControllerDelete(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `tagControllerDelete$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  tagControllerDelete(params: TagControllerDelete$Params, context?: HttpContext): Observable<void> {
+    const resp = this.tagControllerDelete$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<void>): void => r.body)
+    );
+  }
+
+  /** Path part for operation `tagControllerHistory()` */
+  static readonly TagControllerHistoryPath = '/api/v1/tags/{tagId}/history';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `tagControllerHistory()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  tagControllerHistory$Response(params: TagControllerHistory$Params, context?: HttpContext): Observable<StrictHttpResponse<TagHistoryPage>> {
+    const obs = tagControllerHistory(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `tagControllerHistory$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  tagControllerHistory(params: TagControllerHistory$Params, context?: HttpContext): Observable<TagHistoryPage> {
+    const resp = this.tagControllerHistory$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<TagHistoryPage>): TagHistoryPage => r.body)
+    );
+  }
+
+  /** Path part for operation `tagControllerRelease()` */
+  static readonly TagControllerReleasePath = '/api/v1/tags/{tagId}/release';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `tagControllerRelease()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  tagControllerRelease$Response(params: TagControllerRelease$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+    const obs = tagControllerRelease(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `tagControllerRelease$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  tagControllerRelease(params: TagControllerRelease$Params, context?: HttpContext): Observable<void> {
+    const resp = this.tagControllerRelease$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<void>): void => r.body)
     );
   }
 

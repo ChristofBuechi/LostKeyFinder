@@ -17,6 +17,8 @@ export type { AdminTagControllerSummary$Params as AdminTagControllerSummary$Para
 export { adminTagControllerSummary as adminTagControllerSummary } from './fn/admin-tags/admin-tag-controller-summary';
 export type { AdminTagControllerDetail$Params as AdminTagControllerDetail$Params } from './fn/admin-tags/admin-tag-controller-detail';
 export { adminTagControllerDetail as adminTagControllerDetail } from './fn/admin-tags/admin-tag-controller-detail';
+export type { AdminTagControllerHistory$Params as AdminTagControllerHistory$Params } from './fn/admin-tags/admin-tag-controller-history';
+export { adminTagControllerHistory as adminTagControllerHistory } from './fn/admin-tags/admin-tag-controller-history';
 export type { HealthControllerLive$Params as HealthControllerLive$Params } from './fn/health/health-controller-live';
 export { healthControllerLive as healthControllerLive } from './fn/health/health-controller-live';
 export type { HealthControllerReady$Params as HealthControllerReady$Params } from './fn/health/health-controller-ready';
@@ -41,6 +43,12 @@ export type { TagControllerOwnedPublic$Params as TagControllerOwnedPublic$Params
 export { tagControllerOwnedPublic as tagControllerOwnedPublic } from './fn/tags/tag-controller-owned-public';
 export type { TagControllerDetail$Params as TagControllerDetail$Params } from './fn/tags/tag-controller-detail';
 export { tagControllerDetail as tagControllerDetail } from './fn/tags/tag-controller-detail';
+export type { TagControllerDelete$Params as TagControllerDelete$Params } from './fn/tags/tag-controller-delete';
+export { tagControllerDelete as tagControllerDelete } from './fn/tags/tag-controller-delete';
+export type { TagControllerHistory$Params as TagControllerHistory$Params } from './fn/tags/tag-controller-history';
+export { tagControllerHistory as tagControllerHistory } from './fn/tags/tag-controller-history';
+export type { TagControllerRelease$Params as TagControllerRelease$Params } from './fn/tags/tag-controller-release';
+export { tagControllerRelease as tagControllerRelease } from './fn/tags/tag-controller-release';
 export type { TagControllerChangeStatus$Params as TagControllerChangeStatus$Params } from './fn/tags/tag-controller-change-status';
 export { tagControllerChangeStatus as tagControllerChangeStatus } from './fn/tags/tag-controller-change-status';
 export type { VersionControllerVersion$Params as VersionControllerVersion$Params } from './fn/version/version-controller-version';

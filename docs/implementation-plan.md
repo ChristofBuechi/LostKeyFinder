@@ -1,5 +1,7 @@
 # Implementierungsplan Phase 1
 
+Aktualisierung vom 25. Oktober 2026: Für Chat-Lesen gelten die bestätigten Regeln aus [Tag-Historie](tag-history.md): im Chat gespeicherter Owner/Teilnehmer oder Admin. Die älteren Grant-basierten Owner-Lesesperren in den nachfolgenden Phasen 6/7 sind vor der Chat-Umsetzung daran anzupassen. Besitzerzeiträume und aktuelle Tag-Zuordnung allein entscheiden nicht über das Leserecht.
+
 ## Ziel und Leitplanken
 
 Dieser Plan setzt die in den übrigen Dokumenten beschriebene Phase 1 als modularen Kotlin-/Spring-Boot-Monolithen und Angular-Anwendung um. Der bestehende HTML-/LocalStorage-Prototyp ist keine technische Grundlage und wird nicht migriert.

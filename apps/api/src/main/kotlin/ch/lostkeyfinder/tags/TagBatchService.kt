@@ -63,7 +63,7 @@ class TagBatchService(
                 val batch = TagBatch(UUID.randomUUID().toString(), creationKey, count, label.trim(), admin.id, now)
                 ops.insert(batch)
                 ops.insert(
-                    (1..count).map { position ->
+                    (1..count).map {
                         Tag(
                             UUID.randomUUID().toString(),
                             UUID.randomUUID().toString(),
@@ -75,12 +75,20 @@ class TagBatchService(
                             now,
                             batchId = batch.id,
                             inventoryStatus = InventoryStatus.PREPARED,
-                            position = position,
                         )
                     },
                     Tag::class.java,
                 )
-                ops.insert(TagAudit(UUID.randomUUID().toString(), admin.id, "BATCH_CREATED", batch.id, now))
+                ops.insert(
+                    TagAudit(
+                        UUID.randomUUID().toString(),
+                        admin.id,
+                        "BATCH_CREATED",
+                        batch.id,
+                        now,
+                        listOf(TagChange("count", null, count.toString()), TagChange("batchLabel", null, label.trim())),
+                    ),
+                )
                 TagBatchResponse.from(batch)
             }
         }
@@ -140,7 +148,19 @@ class TagBatchService(
                     throw ResponseStatusException(HttpStatus.CONFLICT, "Batch is not ready for release")
                 }
                 ops.updateFirst(query(where("_id").`is`(batch.id)), Update.update("releasedAt", now), TagBatch::class.java)
-                ops.insert(TagAudit(UUID.randomUUID().toString(), admin.id, "BATCH_RELEASED", batch.id, now))
+                ops.insert(
+                    TagAudit(
+                        UUID.randomUUID().toString(),
+                        admin.id,
+                        "BATCH_RELEASED",
+                        batch.id,
+                        now,
+                        listOf(
+                            TagChange("inventoryStatus", InventoryStatus.PREPARED.name, InventoryStatus.RELEASED.name),
+                            TagChange("batchReleasedAt", null, now.toString()),
+                        ),
+                    ),
+                )
                 TagBatchResponse.from(batch.copy(releasedAt = now))
             }
         }
@@ -157,17 +177,19 @@ class TagBatchService(
             )
         }
         val batch = batch(id)
-        val tags = template.find(query(where("batchId").`is`(batch.id)).with(Sort.by("position")), Tag::class.java)
-        if (tags.size != batch.count || tags.map { it.position } != (1..batch.count).toList() ||
+        val tags = template.find(query(where("batchId").`is`(batch.id)).with(Sort.by("_id")), Tag::class.java)
+        if (tags.size != batch.count ||
             tags.map { it.publicId }.toSet().size != batch.count
         ) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Batch incomplete")
         }
         template.insert(TagAudit(UUID.randomUUID().toString(), admin.id, "BATCH_EXPORTED", batch.id, Instant.now()))
         return "batchId,position,publicId,url\r\n" +
-            tags.joinToString("\r\n", postfix = "\r\n") { tag ->
-                listOf(batch.id, tag.position.toString(), tag.publicId, "${properties.publicBaseUrl.trimEnd('/')}/f/${tag.publicId}")
-                    .joinToString(",") { "\"${it.replace("\"", "\"\"")}\"" }
-            }
+            tags
+                .mapIndexed { index, tag ->
+                    // ponytail: CSV row numbers are presentation, not persistent tag state.
+                    listOf(batch.id, (index + 1).toString(), tag.publicId, "${properties.publicBaseUrl.trimEnd('/')}/f/${tag.publicId}")
+                        .joinToString(",") { "\"${it.replace("\"", "\"\"")}\"" }
+                }.joinToString("\r\n", postfix = "\r\n")
     }
 }

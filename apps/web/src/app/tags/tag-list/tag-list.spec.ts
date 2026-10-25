@@ -108,6 +108,20 @@ describe('Tag management', () => {
     TestBed.inject(HttpTestingController).verify();
   });
 
+  it('reloads the overview after removing a tag, including a now empty last page', async () => {
+    const fixture = TestBed.createComponent(TagList);
+    await response('/api/v1/tags', { items: [tag], page: 1, pageSize: 25, totalItems: 1, totalPages: 1 });
+    await fixture.whenStable();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    fixture.nativeElement.querySelector('app-tag-removal button').click();
+    const deletion = await response(`/api/v1/tags/${id}`, {});
+    expect(deletion.request.method).toBe('DELETE');
+    await response('/api/v1/tags', { items: [], page: 1, pageSize: 25, totalItems: 0, totalPages: 1 });
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('tbody')).toBeNull();
+    confirm.mockRestore(); TestBed.inject(HttpTestingController).verify();
+  });
+
   it('keeps large inventories compact and supports jumping directly to the last page', async () => {
     const fixture = TestBed.createComponent(TagList);
     await response('/api/v1/tags', { items: [tag], page: 1, pageSize: 25, totalItems: 10000, totalPages: 400 });

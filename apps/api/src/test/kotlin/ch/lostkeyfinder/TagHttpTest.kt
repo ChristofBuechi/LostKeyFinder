@@ -2,8 +2,10 @@ package ch.lostkeyfinder
 
 import ch.lostkeyfinder.tags.InventoryStatus
 import ch.lostkeyfinder.tags.Tag
+import ch.lostkeyfinder.tags.TagAudit
 import ch.lostkeyfinder.tags.TagFilter
 import ch.lostkeyfinder.tags.TagOrigin
+import ch.lostkeyfinder.tags.TagRegistrationDraft
 import ch.lostkeyfinder.tags.TagService
 import ch.lostkeyfinder.tags.TagStatus
 import ch.lostkeyfinder.users.User
@@ -24,6 +26,7 @@ import org.springframework.data.mongodb.core.query.Update
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
@@ -31,6 +34,7 @@ import tools.jackson.databind.json.JsonMapper
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -52,6 +56,8 @@ class TagHttpTest {
 
     @BeforeEach fun reset() {
         template.remove(Query(), Tag::class.java)
+        template.remove(Query(), TagAudit::class.java)
+        template.remove(Query(), TagRegistrationDraft::class.java)
         template.remove(Query(), User::class.java)
         template.indexOps(User::class.java).createIndex(Index().on("firebaseUserId", Sort.Direction.ASC).unique())
         template.indexOps(Tag::class.java).createIndex(Index().on("publicId", Sort.Direction.ASC).unique())
@@ -98,6 +104,10 @@ class TagHttpTest {
         assertEquals(4, UUID.fromString(node["publicId"].asString()).version())
         assertEquals(4, UUID.fromString(node["id"].asString()).version())
         assertEquals(1L, template.count(Query(), Tag::class.java))
+        val creation = template.findAll(TagAudit::class.java).single()
+        assertEquals("TAG_CREATED", creation.action)
+        assertEquals(null, creation.changes.single { it.field == "label" }.before)
+        assertEquals("Keys", creation.changes.single { it.field == "label" }.after)
         assertEquals(template.findAll(User::class.java).single().id, node["primaryOwnerUserId"].asString())
         mvc
             .post("/api/v1/tags") {
@@ -153,6 +163,191 @@ class TagHttpTest {
                 contentType = MediaType.APPLICATION_JSON
                 content = "{\"status\":\"ACTIVE\"}"
             }.andExpect { status { isNotFound() } }
+    }
+
+    @Test fun `soft delete keeps tag data and history but hides owner reads and cannot be undone by retries`() {
+        val token = login()
+        val key = UUID.randomUUID().toString()
+        val response = mapper.readTree(create(token, key))
+        val id = response["id"].asString()
+        val original = template.findById(id, Tag::class.java)!!
+        val other = login()
+        mvc.delete("/api/v1/tags/$id").andExpect { status { isUnauthorized() } }
+        mvc.delete("/api/v1/tags/$id") { header("Authorization", "Bearer $other") }.andExpect { status { isNotFound() } }
+        mvc.post("/api/v1/tags/$id/release") { header("Authorization", "Bearer $token") }.andExpect { status { isNotFound() } }
+        mvc.delete("/api/v1/tags/$id") { header("Authorization", "Bearer $token") }.andExpect { status { isNoContent() } }
+        val deleted = template.findById(id, Tag::class.java)!!
+        assertEquals(original.copy(status = TagStatus.RETIRED, deletedAt = deleted.deletedAt, updatedAt = deleted.updatedAt), deleted)
+        kotlin.test.assertNotNull(deleted.deletedAt)
+        assertEquals(1L, template.count(query(where("resourceId").`is`(id).and("action").`is`("TAG_DELETED")), TagAudit::class.java))
+        mvc.get("/api/v1/tags") { header("Authorization", "Bearer $token") }.andExpect { jsonPath("$.totalItems") { value(0) } }
+        mvc.get("/api/v1/tags/$id") { header("Authorization", "Bearer $token") }.andExpect { status { isNotFound() } }
+        mvc
+            .get(
+                "/api/v1/tags/by-public/${original.publicId}",
+            ) { header("Authorization", "Bearer $token") }
+            .andExpect { status { isNotFound() } }
+        mvc.get("/api/v1/public/tags/${original.publicId}").andExpect { jsonPath("$.action") { value("UNAVAILABLE") } }
+        mvc
+            .patch("/api/v1/tags/$id/status") {
+                header("Authorization", "Bearer $token")
+                contentType = MediaType.APPLICATION_JSON
+                content = "{\"status\":\"ACTIVE\"}"
+            }.andExpect { status { isNotFound() } }
+        mvc
+            .post("/api/v1/tags") {
+                header("Authorization", "Bearer $token")
+                header("Idempotency-Key", key)
+                contentType = MediaType.APPLICATION_JSON
+                content = "{\"label\":\"Keys\"}"
+            }.andExpect { status { isConflict() } }
+        template.updateFirst(query(where("_id").`is`(original.primaryOwnerUserId)), Update.update("isAdmin", true), User::class.java)
+        mvc.get("/api/v1/admin/tags/$id") { header("Authorization", "Bearer $token") }.andExpect {
+            jsonPath("$.deletedAt") { exists() }
+            jsonPath("$.label") { value(original.label) }
+        }
+    }
+
+    @Test fun `hardware tags can only be released by their owner and old flows cannot reclaim them`() {
+        val token = login()
+        val owner = template.findAll(User::class.java).single()
+        val other = login()
+        val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
+        val hardware =
+            Tag(
+                UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
+                TagOrigin.PREPRODUCED,
+                owner.id,
+                TagStatus.INACTIVE,
+                "Private",
+                now,
+                now,
+                batchId = UUID.randomUUID().toString(),
+                inventoryStatus = InventoryStatus.RELEASED,
+                registeredAt = now,
+            )
+        template.insert(hardware)
+        val flow = TagRegistrationDraft(UUID.randomUUID().toString(), hardware.id, hardware.publicId, null, now.plusSeconds(3600), owner.id)
+        template.insert(flow)
+        mvc.delete("/api/v1/tags/${hardware.id}") { header("Authorization", "Bearer $token") }.andExpect { status { isNotFound() } }
+        mvc.post("/api/v1/tags/${hardware.id}/release").andExpect { status { isUnauthorized() } }
+        mvc.post("/api/v1/tags/${hardware.id}/release") { header("Authorization", "Bearer $other") }.andExpect { status { isNotFound() } }
+        template.updateFirst(query(where("_id").`is`(hardware.id)), Update.update("status", TagStatus.BLOCKED), Tag::class.java)
+        mvc.post("/api/v1/tags/${hardware.id}/release") { header("Authorization", "Bearer $token") }.andExpect { status { isNotFound() } }
+        template.updateFirst(query(where("_id").`is`(hardware.id)), Update.update("status", TagStatus.INACTIVE), Tag::class.java)
+        mvc.post("/api/v1/tags/${hardware.id}/release") { header("Authorization", "Bearer $token") }.andExpect { status { isNoContent() } }
+        val released = template.findById(hardware.id, Tag::class.java)!!
+        assertEquals(
+            hardware.copy(
+                primaryOwnerUserId = null,
+                registeredAt = null,
+                label = "",
+                status = TagStatus.ACTIVE,
+                updatedAt = released.updatedAt,
+            ),
+            released,
+        )
+        kotlin.test.assertTrue(!template.findById(flow.id, TagRegistrationDraft::class.java)!!.expiresAt.isAfter(Instant.now()))
+        assertEquals(
+            1L,
+            template.count(query(where("resourceId").`is`(hardware.id).and("action").`is`("TAG_RELEASED")), TagAudit::class.java),
+        )
+        mvc.get("/api/v1/public/tags/${hardware.publicId}").andExpect { jsonPath("$.action") { value("REGISTER") } }
+        mvc.get("/api/v1/tags/${hardware.id}") { header("Authorization", "Bearer $token") }.andExpect { status { isNotFound() } }
+        mvc
+            .post(
+                "/api/v1/tag-registrations/${flow.id}/complete",
+            ) { header("Authorization", "Bearer $token") }
+            .andExpect { status { isNotFound() } }
+        mvc.post("/api/v1/tags/${hardware.publicId}/register") { header("Authorization", "Bearer $other") }.andExpect { status { isOk() } }
+        mvc.post("/api/v1/tags/${hardware.id}/release") { header("Authorization", "Bearer $token") }.andExpect { status { isNotFound() } }
+        val history =
+            mvc
+                .get("/api/v1/tags/${hardware.id}/history") {
+                    header("Authorization", "Bearer $other")
+                }.andExpect { status { isOk() } }
+                .andReturn()
+                .response.contentAsString
+        kotlin.test.assertFalse(history.contains("Private"))
+        kotlin.test.assertFalse(history.contains(owner.id))
+        val releaseAudit =
+            template.findOne(
+                query(where("resourceId").`is`(hardware.id).and("action").`is`("TAG_RELEASED")),
+                TagAudit::class.java,
+            )!!
+        assertEquals(owner.id, releaseAudit.changes.single { it.field == "primaryOwnerUserId" }.before)
+        assertEquals(null, releaseAudit.changes.single { it.field == "primaryOwnerUserId" }.after)
+        assertEquals("Private", releaseAudit.changes.single { it.field == "label" }.before)
+        assertEquals("", releaseAudit.changes.single { it.field == "label" }.after)
+        // Existing records without detailed deltas still expose the known owner transition to admins.
+        template.updateFirst(
+            query(where("resourceId").`is`(hardware.id).and("action").`is`("TAG_REGISTERED")),
+            Update().unset("changes"),
+            TagAudit::class.java,
+        )
+        template.updateFirst(query(where("_id").`is`(owner.id)), Update.update("isAdmin", true), User::class.java)
+        val adminHistory =
+            mapper.readTree(
+                mvc
+                    .get("/api/v1/admin/tags/${hardware.id}/history") {
+                        header("Authorization", "Bearer $token")
+                    }.andExpect { status { isOk() } }
+                    .andReturn()
+                    .response.contentAsString,
+            )
+        val registration = adminHistory["items"].single { it["action"].asString() == "TAG_REGISTERED" }
+        assertEquals("primaryOwnerUserId", registration["changes"][0]["field"].asString())
+        assertEquals(template.findById(hardware.id, Tag::class.java)!!.primaryOwnerUserId, registration["changes"][0]["after"].asString())
+        kotlin.test.assertTrue(adminHistory.toString().contains("Private"))
+    }
+
+    @Test fun `history is owner scoped paginated and exposes actor references only to admins`() {
+        val token = login()
+        val id = mapper.readTree(create(token))["id"].asString()
+        val owner = template.findAll(User::class.java).single()
+        mvc.get("/api/v1/tags/$id/history") { header("Authorization", "Bearer $token") }.andExpect {
+            status { isOk() }
+            jsonPath("$.items.length()") { value(1) }
+            jsonPath("$.items[0].action") { value("TAG_CREATED") }
+        }
+        repeat(26) { index ->
+            val state = if (index % 2 == 0) "INACTIVE" else "ACTIVE"
+            repeat(2) {
+                mvc
+                    .patch("/api/v1/tags/$id/status") {
+                        header("Authorization", "Bearer $token")
+                        contentType = MediaType.APPLICATION_JSON
+                        content = "{\"status\":\"$state\"}"
+                    }.andExpect { status { isOk() } }
+            }
+        }
+        assertEquals(27L, template.count(query(where("resourceId").`is`(id)), TagAudit::class.java))
+
+        fun history(page: Int) =
+            mapper.readTree(
+                mvc
+                    .get("/api/v1/tags/$id/history?page=$page") {
+                        header("Authorization", "Bearer $token")
+                    }.andExpect { status { isOk() } }
+                    .andReturn()
+                    .response.contentAsString,
+            )
+        val first = history(1)
+        val second = history(2)
+        assertEquals(25, first["items"].size())
+        assertEquals(2, second["items"].size())
+        assertEquals("TAG_CREATED", second["items"].last()["action"].asString())
+        assertEquals(27, (first["items"].toList() + second["items"].toList()).map { it["id"].asString() }.toSet().size)
+        kotlin.test.assertTrue(first["items"].all { it["actorUserId"].isNull })
+        val other = login()
+        mvc.get("/api/v1/tags/$id/history") { header("Authorization", "Bearer $other") }.andExpect { status { isNotFound() } }
+        mvc.get("/api/v1/admin/tags/$id/history") { header("Authorization", "Bearer $other") }.andExpect { status { isForbidden() } }
+        mvc.get("/api/v1/tags/$id/history?page=0") { header("Authorization", "Bearer $token") }.andExpect { status { isBadRequest() } }
+        template.updateFirst(query(where("_id").`is`(owner.id)), Update.update("isAdmin", true), User::class.java)
+        mvc.get("/api/v1/admin/tags/$id/history") { header("Authorization", "Bearer $token") }.andExpect {
+            jsonPath("$.items[0].actorUserId") { value(owner.id) }
+        }
     }
 
     @Test fun `admin is database controlled and revocation applies to the next request`() {
