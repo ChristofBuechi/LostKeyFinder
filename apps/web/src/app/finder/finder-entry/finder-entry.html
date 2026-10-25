@@ -1,0 +1,31 @@
+<section class="finder-panel" aria-labelledby="finder-title">
+  <p class="eyebrow">{{ language.copy().finderEyebrow }}</p>
+  <h2 id="finder-title">{{ language.copy().finderEntryTitle }}</h2>
+  <p class="intro">{{ language.copy().finderEntryIntro }}</p>
+  <div class="scan-actions">
+    <button class="scan-button" type="button" (click)="startScanner()" [disabled]="scanning() || readingImage()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h6v6H3zm12 0h6v6h-6zM3 15h6v6H3zm12-2v3h3v-3zm3 5h3v3h-6v-3zm-7-7h3v3h-3z" /></svg>
+      {{ language.copy().scanQr }}
+    </button>
+    <label class="image-button" for="qr-image">{{ language.copy().chooseQrImage }}</label>
+    <input class="file-input" id="qr-image" type="file" accept="image/*" (change)="scanImage($event)" [disabled]="readingImage()">
+  </div>
+  <div class="camera" [hidden]="!scanning()">
+    <div #preview class="camera-preview"></div>
+    <p>{{ language.copy().scanInstruction }}</p>
+    <button type="button" class="stop-button" (click)="closeScanner()">{{ language.copy().scanStop }}</button>
+  </div>
+  <form id="tag-entry" (submit)="submitTag($event)" novalidate>
+    <label for="tag-id">{{ language.copy().tagId }}</label>
+    <div class="tag-input-row">
+      <input #tagInput id="tag-id" type="text" autocomplete="off" spellcheck="false" maxlength="2048"
+        [value]="tag()" (input)="tag.set(tagInput.value); error.set('')"
+        [attr.aria-invalid]="error() === 'invalidTag' ? 'true' : null" aria-describedby="tag-hint finder-error">
+      <button type="submit">{{ language.copy().openTag }}</button>
+    </div>
+    <p id="tag-hint">{{ language.copy().tagHint }}</p>
+  </form>
+  <p id="finder-error" class="error" role="alert">@if (error(); as key) { {{ language.copy()[key] }} }</p>
+  @if (readingImage()) { <p role="status">{{ language.copy().imageBusy }}</p> }
+  <p class="privacy">{{ language.copy().scanPrivacy }}</p>
+</section>

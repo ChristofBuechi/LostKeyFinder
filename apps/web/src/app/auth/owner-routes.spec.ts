@@ -1,3 +1,5 @@
+import { HealthService } from '@lost-key-finder/api-client';
+import { of } from 'rxjs';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -20,7 +22,7 @@ describe('Owner route access and callback', () => {
     needsEmail.set(false);
     completeCallback.mockReset();
     signOut.mockReset().mockImplementation(async () => signedIn.set(false));
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideRouter(routes),
+    TestBed.configureTestingModule({ providers: [{ provide: HealthService, useValue: { healthControllerReady: () => of({ status: 'ok' }) } }, provideZonelessChangeDetection(), provideRouter(routes),
       provideHttpClient(), provideHttpClientTesting(), { provide: Auth, useValue: {
         signedIn, needsEmail, configured: true, ready: Promise.resolve(), completeCallback, signOut,
       } }] });
@@ -29,8 +31,16 @@ describe('Owner route access and callback', () => {
   it('redirects an unauthenticated account visit to login without calling the API', async () => {
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/account');
-    expect(TestBed.inject(Router).url).toBe('/login');
+    expect(TestBed.inject(Router).url).toBe('/#owner');
     TestBed.inject(HttpTestingController).expectNone('/api/v1/me');
+  });
+
+  it('preserves the finder destination when an old login bookmark is opened', async () => {
+    const harness = await RouterTestingHarness.create('/login#finder');
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe('/#finder');
+    expect(harness.routeNativeElement!.querySelector('#finder #tag-id')).not.toBeNull();
+    expect(harness.routeNativeElement!.querySelector('#owner #email')).not.toBeNull();
   });
 
   it('shows a safe callback failure with a path to request a new link', async () => {
@@ -40,7 +50,7 @@ describe('Owner route access and callback', () => {
     await harness.fixture.whenStable();
     expect(harness.routeNativeElement?.textContent).toContain('ungültig');
     expect(harness.routeNativeElement?.textContent).not.toContain('private-provider-code');
-    expect(harness.routeNativeElement?.querySelector('a')?.getAttribute('href')).toBe('/login');
+    expect(harness.routeNativeElement?.querySelector('a')?.getAttribute('href')).toBe('/#owner');
   });
 
   it('requests email on another device and submits it before navigating', async () => {
@@ -85,7 +95,7 @@ describe('Owner route access and callback', () => {
     harness.routeNativeElement?.querySelector('button')?.click();
     await harness.fixture.whenStable();
     expect(signOut).toHaveBeenCalledTimes(1);
-    expect(TestBed.inject(Router).url).toBe('/login');
+    expect(TestBed.inject(Router).url).toBe('/#owner');
     expect(harness.routeNativeElement?.textContent).not.toContain('owner@example.com');
     http.verify();
   });

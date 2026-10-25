@@ -6,5 +6,5 @@ export const authGuard: CanActivateFn = async () => {
   const auth = inject(Auth);
   const router = inject(Router);
   await auth.ready;
-  return auth.signedIn() || router.parseUrl('/login');
+  return auth.signedIn() || router.parseUrl('/#owner');
 };

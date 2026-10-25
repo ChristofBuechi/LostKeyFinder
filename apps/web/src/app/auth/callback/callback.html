@@ -8,5 +8,5 @@
       <button type="submit">{{ language.copy().confirm }}</button>
     </form>
   }
-  @if (failed()) { <a routerLink="/login">{{ language.copy().backToLogin }}</a> }
+  @if (failed()) { <a routerLink="/" fragment="owner">{{ language.copy().backToLogin }}</a> }
 </section>

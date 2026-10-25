@@ -12,6 +12,6 @@
   @if (error() === 'accountFailed') {
     <button type="button" (click)="load()" [disabled]="loading()">{{ language.copy().retry }}</button>
   }
-  @if (error() === 'sessionExpired') { <a routerLink="/login">{{ language.copy().backToLogin }}</a> }
+  @if (error() === 'sessionExpired') { <a routerLink="/" fragment="owner">{{ language.copy().backToLogin }}</a> }
   <button type="button" (click)="logout()" [disabled]="signingOut()">{{ language.copy().logout }}</button>
 </section>

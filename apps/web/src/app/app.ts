@@ -3,6 +3,7 @@ import { DOCUMENT } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { Auth } from './auth/auth';
 import { LanguageService } from './core/language.service';
 
 @Component({
@@ -13,6 +14,7 @@ import { LanguageService } from './core/language.service';
 })
 export class App {
   protected readonly language = inject(LanguageService);
+  protected readonly auth = inject(Auth);
   private readonly document = inject(DOCUMENT);
 
   constructor() {

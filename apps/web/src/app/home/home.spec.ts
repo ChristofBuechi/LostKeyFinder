@@ -2,9 +2,10 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ApiConfiguration } from '@lost-key-finder/api-client';
+import { provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 import { beforeEach, afterEach, describe, expect, it } from 'vitest';
-import { LanguageService } from '../core/language.service';
+import { Auth } from '../auth/auth';
 import { Home } from './home';
 
 describe('Home', () => {
@@ -17,19 +18,11 @@ describe('Home', () => {
     TestBed.configureTestingModule({
       imports: [Home],
       providers: [
+        provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ApiConfiguration, useValue: new ApiConfiguration() },
-        {
-          provide: LanguageService,
-          useValue: {
-            copy: signal({
-              checking: 'Verbindung wird geprüft',
-              available: 'Dienst verfügbar',
-              unavailable: 'Dienst vorübergehend nicht verfügbar',
-            }),
-          },
-        },
+        { provide: Auth, useValue: { configured: true, signedIn: signal(false), sendLink: () => Promise.resolve() } },
       ],
     });
     fixture = TestBed.createComponent(Home);
@@ -38,6 +31,15 @@ describe('Home', () => {
   });
 
   afterEach(() => http?.verify());
+
+  it('offers finder and owner forms directly on the home page', async () => {
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('#finder #tag-id')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('#finder .scan-button').textContent).toContain('QR-Code scannen');
+    expect(fixture.nativeElement.querySelector('#owner #email')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('h1').textContent).toContain('Wie können wir dir helfen');
+    http!.expectOne('/api/v1/health/ready').flush({ status: 'ok' });
+  });
 
   it('starts with a checking status and calls the versioned readiness endpoint', () => {
     expect(fixture.nativeElement.querySelector('.service-status').textContent.trim())
