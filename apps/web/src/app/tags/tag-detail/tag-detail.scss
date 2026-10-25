@@ -6,3 +6,15 @@
 
 .changes dd span { display: block; overflow-wrap: anywhere; }
 summary { cursor: pointer; padding-block: .4rem; }
+
+.tag-detail { max-width: 48rem; margin-block: 3rem; padding: clamp(1rem, 4vw, 2rem); }
+.tag-data { display: grid; grid-template-columns: minmax(8.5rem, auto) minmax(0, 1fr); gap: .65rem 1.25rem;
+  padding: 1.25rem; border: 1px solid var(--line); border-radius: .5rem; }
+.tag-data dt { font-weight: 600; }
+.detail-actions { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-block: 1.5rem 2rem; }
+@media (max-width: 36rem) {
+  .tag-detail { margin-block: 1.5rem; }
+  .tag-data { grid-template-columns: 1fr; gap: .25rem; }
+  .tag-data dd { margin-bottom: .75rem; }
+  .detail-actions { flex-direction: column; align-items: stretch; }
+}

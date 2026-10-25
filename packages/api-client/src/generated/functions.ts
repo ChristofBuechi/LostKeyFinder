@@ -17,6 +17,8 @@ export type { AdminTagControllerSummary$Params as AdminTagControllerSummary$Para
 export { adminTagControllerSummary as adminTagControllerSummary } from './fn/admin-tags/admin-tag-controller-summary';
 export type { AdminTagControllerDetail$Params as AdminTagControllerDetail$Params } from './fn/admin-tags/admin-tag-controller-detail';
 export { adminTagControllerDetail as adminTagControllerDetail } from './fn/admin-tags/admin-tag-controller-detail';
+export type { AdminTagControllerDelete$Params as AdminTagControllerDelete$Params } from './fn/admin-tags/admin-tag-controller-delete';
+export { adminTagControllerDelete as adminTagControllerDelete } from './fn/admin-tags/admin-tag-controller-delete';
 export type { AdminTagControllerHistory$Params as AdminTagControllerHistory$Params } from './fn/admin-tags/admin-tag-controller-history';
 export { adminTagControllerHistory as adminTagControllerHistory } from './fn/admin-tags/admin-tag-controller-history';
 export type { HealthControllerLive$Params as HealthControllerLive$Params } from './fn/health/health-controller-live';

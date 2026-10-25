@@ -1,13 +1,13 @@
-<section class="auth-panel" aria-labelledby="tag-detail-title">
+<section class="auth-panel tag-detail" aria-labelledby="tag-detail-title">
   <h1 id="tag-detail-title">{{ copy().details }}</h1>
   @if (tag.isLoading()) { <p role="status">{{ copy().loading }}</p> }
   @if (tag.error(); as error) { <p role="alert">{{ errorText(error) }}</p><button type="button" (click)="tag.reload()">{{ copy().retry }}</button> }
   @if (tag.hasValue()) {
-    <dl>
+    <dl class="tag-data">
       <dt>{{ copy().tag }}</dt><dd>{{ tag.value().publicId }}</dd>
       <dt>{{ copy().label }}</dt><dd>{{ tag.value().label || '—' }}</dd>
       <dt>{{ copy().origin }}</dt><dd>{{ copy()[tag.value().origin] }}</dd>
-      <dt>{{ copy().status }}</dt><dd>{{ copy()[tag.value().status] }}</dd>
+      <dt>{{ copy().status }}</dt><dd>{{ tag.value().deletedAt ? copy().deleted : copy()[tag.value().status] }}</dd>
       <dt>{{ copy().created }}</dt><dd>{{ tag.value().createdAt | date:'yyyy-MM-dd HH:mm' }}</dd>
       @if (tag.value().registeredAt) { <dt>{{ copy().registeredAt }}</dt><dd>{{ tag.value().registeredAt | date:'yyyy-MM-dd HH:mm' }}</dd> }
       @if (admin) {
@@ -18,6 +18,10 @@
       }
     </dl>
     <p><a [routerLink]="['/f', tag.value().publicId]">{{ copy().publicLink }}</a></p>
+    <div class="detail-actions">
+      <a class="tag-action" [routerLink]="admin ? '/admin/tags' : '/tags'">{{ copy().back }}</a>
+      <app-tag-removal [tag]="tag.value()" [admin]="admin" (removed)="removed()" />
+    </div>
     <section aria-labelledby="tag-history-title">
       <h2 id="tag-history-title">{{ copy().history }}</h2>
       @if (history.isLoading()) { <p role="status">{{ copy().loading }}</p> }
@@ -52,7 +56,7 @@
       }
     </section>
     <p>{{ copy().note }}</p>
-    @if (!admin) { <app-tag-removal [tag]="tag.value()" (removed)="router.navigateByUrl('/tags', { replaceUrl: true })" /> }
+  } @else {
+    <p><a class="tag-action" [routerLink]="admin ? '/admin/tags' : '/tags'">{{ copy().back }}</a></p>
   }
-  <a [routerLink]="admin ? '/admin/tags' : '/tags'">{{ copy().back }}</a>
 </section>

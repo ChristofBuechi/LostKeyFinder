@@ -37,6 +37,7 @@ import javax.crypto.spec.SecretKeySpec
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class FirestoreHardwareIntegrationTest {
     @Test fun `real transactions preserve whole series and exactly one winning owner including draft consumption`() {
@@ -171,6 +172,21 @@ class FirestoreHardwareIntegrationTest {
                     404,
                     assertFailsWith<ResponseStatusException> { tagService.release(owners[0], draftTag.id) }.statusCode.value(),
                 )
+
+                val deleteTarget = template.findById(tags[2].id, Tag::class.java)!!
+                assertFailsWith<IllegalStateException> {
+                    TagService(template, TagCreationLimit(template), aborting).adminDelete(admin, deleteTarget.id)
+                }
+                assertEquals(deleteTarget, template.findById(deleteTarget.id, Tag::class.java))
+                tagService.adminDelete(admin, deleteTarget.id)
+                val deleted = template.findById(deleteTarget.id, Tag::class.java)!!
+                assertNotNull(deleted.deletedAt)
+                assertEquals(deleteTarget.publicId, deleted.publicId)
+                assertEquals(100L, template.count(selection, Tag::class.java))
+                val remainingCsv = batches.export(admin, id).trimEnd().lines()
+                assertEquals(100, remainingCsv.size)
+                assertTrue(remainingCsv.none { it.contains(deleted.publicId) })
+                assertEquals((1..99).map { it.toString() }, remainingCsv.drop(1).map { it.split(',')[1].trim('"') })
 
                 val badBatch = batches.create(admin, UUID.randomUUID().toString(), 3, "rollback")
                 batchIds += badBatch.id

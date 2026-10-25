@@ -42,5 +42,9 @@ export class TagDetail {
     if (value === '') return this.copy().emptyValue;
     return ['origin', 'status', 'inventoryStatus'].includes(field) ? this.historyText(value) : value;
   }
+  protected async removed(): Promise<void> {
+    if (this.admin) { this.tag.reload(); this.history.reload(); }
+    else await this.router.navigateByUrl('/tags', { replaceUrl: true });
+  }
   protected errorText(error: unknown): string { return tagError(error, this.copy()); }
 }

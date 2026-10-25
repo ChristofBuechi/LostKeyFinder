@@ -14,7 +14,7 @@ describe('Production batches', () => {
     localStorage.clear(); TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), provideRouter([]),
       { provide: Auth, useValue: { signedIn: signal(true) } }] });
   });
-  async function respond(url: string, body: object, status = 200) {
+  async function respond(url: string, body: object | string, status = 200) {
     const request = await vi.waitFor(() => TestBed.inject(HttpTestingController).expectOne(url));
     request.flush(body, { status, statusText: 'Response' }); return request;
   }

@@ -138,6 +138,23 @@ describe('Tag management', () => {
     TestBed.inject(HttpTestingController).verify();
   });
 
+  it('deletes from admin inventory and refreshes both the retained record and counts', async () => {
+    TestBed.overrideProvider(ActivatedRoute, { useValue: { snapshot: { data: { admin: true } } } });
+    const fixture = TestBed.createComponent(TagList);
+    const totals = { total: 1, assigned: 1, unassigned: 0, blocked: 0, retired: 0, prepared: 0, released: 0 };
+    await response('/api/v1/admin/tags', { items: [tag], page: 1, pageSize: 25, totalItems: 1, totalPages: 1 });
+    await response('/api/v1/admin/tags/summary', totals); await fixture.whenStable();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    fixture.nativeElement.querySelector('.admin-actions button').click();
+    const deletion = await response(`/api/v1/admin/tags/${id}`, {});
+    expect(deletion.request.method).toBe('DELETE');
+    await response('/api/v1/admin/tags', { items: [{ ...tag, status: 'RETIRED', deletedAt: '2026-10-25T00:00:00Z' }], page: 1, pageSize: 25, totalItems: 1, totalPages: 1 });
+    await response('/api/v1/admin/tags/summary', { ...totals, retired: 1 }); await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('tbody').textContent).toContain('Gelöscht');
+    expect(fixture.nativeElement.querySelector('.admin-actions button')).toBeNull();
+    confirm.mockRestore(); TestBed.inject(HttpTestingController).verify();
+  });
+
   it('rejects invalid search input and renders backend access denial without data', async () => {
     TestBed.overrideProvider(ActivatedRoute, { useValue: { snapshot: { data: { admin: true } } } });
     const fixture = TestBed.createComponent(TagList);

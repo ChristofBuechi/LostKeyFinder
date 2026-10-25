@@ -35,9 +35,17 @@ Vor Deployment in jeder Umgebung einmal `firestore:tag-indexes` ausführen: Der 
 
 ## Besitzerzuordnung freiwillig lösen
 
-Besitzer können aktive oder inaktive Hardware-Tags nach Bestätigung freigeben. Der Tag bleibt mit UUID, Serie und Produktionsfreigabe erhalten; Besitzerreferenz, Registrierungszeitpunkt und private Bezeichnung werden entfernt und der Status wird `ACTIVE`. Danach ist der Tag wieder registrierbar. Alte Registrierungsentwürfe werden im selben Commit ungültig (Ablaufzeitpunkt setzen, E-Mail entfernen); TTL übernimmt ihre Bereinigung. `TAG_RELEASED` hält den bisherigen Besitzer im Audit fest. Soft Delete schreibt `TAG_DELETED`; beide Vorgänge verwenden dieselbe Transaktionsgrenze wie Registrierung und Serienfreigabe. Fremde, gesperrte oder stillgelegte Tags sowie die falsche Herkunft werden abgelehnt. Admin-Ansichten bieten keine pauschale Besitzerfreigabe an.
+Besitzer können aktive oder inaktive Hardware-Tags nach Bestätigung freigeben. Der Tag bleibt mit UUID, Serie und Produktionsfreigabe erhalten; Besitzerreferenz, Registrierungszeitpunkt und private Bezeichnung werden entfernt und der Status wird `ACTIVE`. Danach ist der Tag wieder registrierbar. Alte Registrierungsentwürfe werden im selben Commit ungültig (Ablaufzeitpunkt setzen, E-Mail entfernen); TTL übernimmt ihre Bereinigung. `TAG_RELEASED` hält den bisherigen Besitzer im Audit fest. Soft Delete schreibt `TAG_DELETED`; beide Vorgänge verwenden dieselbe Transaktionsgrenze wie Registrierung und Serienfreigabe. Bei normalen Besitzeraktionen werden fremde, gesperrte oder stillgelegte Tags sowie die falsche Herkunft abgelehnt. Admin-Ansichten bieten keine pauschale Besitzerfreigabe an.
 
 Keine neue Collection, kein Backfill und keine Wiederherstellungsfunktion. Fehlendes `deletedAt` bedeutet weiterhin nicht gelöscht. Physisches Löschen von selbst erstellten Tags ist keine Benutzeraktion.
+
+## Admin-Soft-Delete und Detailansicht
+
+Admins können über den Tag-Bestand und die Admin-Tag-Details jeden noch nicht soft-gelöschten Tag stilllegen, unabhängig von Herkunft, Besitzerzuordnung oder bisherigem Status. Ein separater Admin-DELETE-Endpunkt prüft das aktuelle aktive lokale Konto und `isAdmin`. Die Aktion nutzt dieselbe transaktionale Soft-Delete-Logik und protokolliert den tatsächlich handelnden Admin samt Vorher-/Nachher-Werten. Tag-Dokument, Besitzerreferenz und Produktionsdaten bleiben bestehen; der öffentliche QR-Link ist danach nicht verfügbar. Bereits gelöschte Tags bleiben mit Kennzeichnung und Löschzeitpunkt im Admin-Bestand sichtbar und haben keinen weiteren Löschbutton. Normale Besitzerrechte bleiben unverändert.
+
+Der CSV-Export überspringt soft-gelöschte Tags und nummeriert die verbleibenden Zeilen lückenlos. Sind alle Tags gelöscht, enthält die Datei nur die Kopfzeile. Die Vollständigkeitsprüfung berücksichtigt weiterhin sämtliche erhaltenen Tag-Dokumente der Serie. Auch reduzierte und leere Exporte werden als erfolgreiche Exportereignisse protokolliert.
+
+Die Detailansicht gliedert Tag-Informationen, Aktionsleiste und Historie. „Zur Übersicht“ und Löschen/Freigeben verwenden gemeinsame Abmessungen und Button-Stile, Navigation neutral und Löschen rot umrandet; mobil stehen sie untereinander. Nach einer Besitzeraktion erfolgt die Rückkehr zur eigenen Liste. Nach Admin-Löschen bleiben die Admin-Details geöffnet und laden Daten/Historie neu; die Admin-Liste aktualisiert Bestand und Bestandszahlen.
 
 ## Vereinbarter Umfang abgeschlossen; spätere Funktionen
 

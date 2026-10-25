@@ -41,17 +41,19 @@
         <div class="table-scroll" tabindex="0" role="region" [attr.aria-label]="copy().table">
           <table>
             <caption>{{ copy().table }}</caption>
-            <thead><tr><th scope="col">{{ copy().label }}</th><th scope="col">{{ copy().publicLink }}</th><th scope="col">{{ copy().origin }}</th><th scope="col">{{ copy().status }}</th><th scope="col">{{ copy().created }}</th>@if (admin) { <th scope="col">{{ copy().owner }}</th><th scope="col">{{ copy().batch }}</th><th scope="col">{{ copy().inventory }}</th> } @else { <th scope="col">{{ copy().actions }}</th> }</tr></thead>
+            <thead><tr><th scope="col">{{ copy().label }}</th><th scope="col">{{ copy().publicLink }}</th><th scope="col">{{ copy().origin }}</th><th scope="col">{{ copy().status }}</th><th scope="col">{{ copy().created }}</th>@if (admin) { <th scope="col">{{ copy().owner }}</th><th scope="col">{{ copy().batch }}</th><th scope="col">{{ copy().inventory }}</th> }<th scope="col">{{ copy().actions }}</th></tr></thead>
             <tbody>
               @for (tag of page.value().items; track tag.id) {
                 <tr>
                   <td><a [routerLink]="[admin ? '/admin/tags' : '/tags', tag.id]">{{ tag.label || copy().details }}</a></td>
                   <td><a [routerLink]="['/f', tag.publicId]">{{ tag.publicId }}</a></td>
                   <td>{{ tag.origin ? copy()[tag.origin] : '—' }}</td>
-                  <td>{{ tag.status ? copy()[tag.status] : '—' }}</td>
+                  <td>{{ tag.deletedAt ? copy().deleted : tag.status ? copy()[tag.status] : '—' }}
+                    @if (admin && tag.deletedAt) { <small>{{ tag.deletedAt | date:'yyyy-MM-dd HH:mm' }}</small> }</td>
                   <td>{{ tag.createdAt | date:'yyyy-MM-dd HH:mm' }}</td>
                   @if (admin) {
                     <td>{{ tag.primaryOwnerUserId || copy().free }}</td><td>{{ tag.batchId || '—' }}</td><td>{{ tag.inventoryStatus ? copy()[tag.inventoryStatus] : '—' }}</td>
+                    <td class="admin-actions"><app-tag-removal [tag]="tag" [admin]="true" (removed)="page.reload(); summary.reload()" /></td>
                   } @else {
                     <td class="actions"><button type="button" (click)="download(tag)" [disabled]="busy()">{{ copy().qr }}</button>
                     @if (tag.status === 'ACTIVE' || tag.status === 'INACTIVE') { <button type="button" (click)="toggle(tag)" [disabled]="busy()">{{ tag.status === 'ACTIVE' ? copy().deactivate : copy().activate }}</button> }

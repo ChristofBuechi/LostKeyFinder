@@ -37,6 +37,23 @@ describe('Owner tag removal', () => {
     http.verify();
   });
 
+  it.each(['SELF_CREATED', 'PREPRODUCED'] as const)('uses admin deletion for %s including blocked tags', async origin => {
+    const fixture = TestBed.createComponent(TagRemoval);
+    fixture.componentRef.setInput('admin', true);
+    fixture.componentRef.setInput('tag', { id, publicId: id, origin, status: 'BLOCKED' } as TagResponse);
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    await fixture.whenStable(); fixture.nativeElement.querySelector('button').click();
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('Administrator'));
+    const http = TestBed.inject(HttpTestingController);
+    const request = await vi.waitFor(() => http.expectOne(`/api/v1/admin/tags/${id}`));
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null, { status: 204, statusText: 'No Content' });
+    await fixture.whenStable();
+    fixture.componentRef.setInput('tag', { id, publicId: id, origin, status: 'RETIRED', deletedAt: '2026-10-25T00:00:00Z' } as TagResponse);
+    await fixture.whenStable(); expect(fixture.nativeElement.querySelector('button')).toBeNull();
+    http.verify();
+  });
+
   it('retains the view after a failed request and hides actions for blocked or retired tags', async () => {
     const fixture = TestBed.createComponent(TagRemoval);
     fixture.componentRef.setInput('tag', { id, publicId: id, origin: 'SELF_CREATED', status: 'ACTIVE' } as TagResponse);
