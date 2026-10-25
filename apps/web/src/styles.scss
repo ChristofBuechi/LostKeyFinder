@@ -31,3 +31,14 @@ button, a { -webkit-tap-highlight-color: transparent; }
   dd { margin: 0; overflow-wrap: anywhere; }
   .field-error { color: var(--signal); }
 }
+
+// Shared dimensions for tag navigation links and destructive actions, including nested components.
+.tag-action, .auth-panel .tag-action {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 3rem; padding: .75rem 1.1rem; margin: 0;
+  border: 1px solid var(--muted); border-radius: .35rem;
+  background: var(--paper); color: var(--ink); font: inherit; font-weight: 600; line-height: 1.25;
+  text-decoration: none; cursor: pointer;
+}
+.tag-action--danger, .auth-panel .tag-action--danger { border-color: var(--signal); color: var(--signal); }
+.tag-action:disabled { opacity: .6; cursor: wait; }

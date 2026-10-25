@@ -27,6 +27,7 @@ import org.springframework.data.mongodb.core.query.Update
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.web.server.ResponseStatusException
@@ -211,6 +212,57 @@ class HardwareTagHttpTest {
             jsonPath("$.releasedAt") { exists() }
             jsonPath("$.creationKey") { doesNotExist() }
         }
+    }
+
+    @Test fun `admin soft deletes all tag types while owner rules remain and CSV refuses deleted inventory`() {
+        val adminToken = login(true)
+        val admin = template.findAll(User::class.java).single()
+        val batchId = batch(adminToken, 2)
+        val ownerToken = login()
+        val owner = template.findAll(User::class.java).single { it.id != admin.id }
+        val hardware = template.find(query(where("batchId").`is`(batchId)), Tag::class.java)
+        template.updateFirst(
+            query(where("_id").`is`(hardware[0].id)),
+            Update.update("primaryOwnerUserId", owner.id).set("status", TagStatus.BLOCKED).set("label", "Private hardware"),
+            Tag::class.java,
+        )
+        val selfJson =
+            mvc
+                .post("/api/v1/tags") {
+                    header("Authorization", "Bearer $ownerToken")
+                    header("Idempotency-Key", UUID.randomUUID().toString())
+                    contentType = MediaType.APPLICATION_JSON
+                    content = "{\"label\":\"Personal tag\"}"
+                }.andExpect { status { isOk() } }
+                .andReturn()
+                .response.contentAsString
+        val selfId = mapper.readTree(selfJson)["id"].asString()
+        for (id in hardware.map { it.id } + selfId) {
+            mvc.delete("/api/v1/admin/tags/$id").andExpect { status { isUnauthorized() } }
+            mvc.delete("/api/v1/admin/tags/$id") { header("Authorization", "Bearer $ownerToken") }.andExpect { status { isForbidden() } }
+            val before = template.findById(id, Tag::class.java)!!
+            mvc.delete("/api/v1/admin/tags/$id") { header("Authorization", "Bearer $adminToken") }.andExpect { status { isNoContent() } }
+            val deleted = template.findById(id, Tag::class.java)!!
+            kotlin.test.assertNotNull(deleted.deletedAt)
+            assertEquals(before.copy(status = TagStatus.RETIRED, deletedAt = deleted.deletedAt, updatedAt = deleted.updatedAt), deleted)
+            mvc
+                .get(
+                    "/api/v1/admin/tags/$id",
+                ) { header("Authorization", "Bearer $adminToken") }
+                .andExpect { jsonPath("$.deletedAt") { exists() } }
+            mvc.get("/api/v1/public/tags/${before.publicId}").andExpect { jsonPath("$.action") { value("UNAVAILABLE") } }
+            val audit = template.findOne(query(where("resourceId").`is`(id).and("action").`is`("TAG_DELETED")), TagAudit::class.java)!!
+            assertEquals(admin.id, audit.actorUserId)
+            mvc.delete("/api/v1/admin/tags/$id") { header("Authorization", "Bearer $adminToken") }.andExpect { status { isNotFound() } }
+        }
+        assertEquals(2L, template.count(query(where("batchId").`is`(batchId)), Tag::class.java))
+        mvc.get("/api/v1/admin/tag-batches/$batchId/export") { header("Authorization", "Bearer $adminToken") }.andExpect {
+            status { isConflict() }
+            jsonPath("$.detail") { value("Batch contains deleted tags") }
+        }
+        assertEquals(0L, template.count(query(where("action").`is`("BATCH_EXPORTED")), TagAudit::class.java))
+        template.updateFirst(query(where("_id").`is`(admin.id)), Update.update("isAdmin", false), User::class.java)
+        mvc.delete("/api/v1/admin/tags/$selfId") { header("Authorization", "Bearer $adminToken") }.andExpect { status { isForbidden() } }
     }
 
     @Test fun `global inventory summary and filters include assignments and both lifecycle dimensions`() {

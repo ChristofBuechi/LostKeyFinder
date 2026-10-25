@@ -21,3 +21,6 @@ td.actions { min-width: 15rem; button { margin: 0 .5rem .5rem 0; } }
 .pagination button[aria-current="page"] { background: var(--signal); opacity: 1; font-weight: 700; }
 .pagination button:disabled { cursor: default; }
 .pagination button:focus-visible { outline: 3px solid var(--signal); outline-offset: 3px; }
+
+.admin-actions { min-width: 11rem; }
+td small { display: block; color: var(--muted); }

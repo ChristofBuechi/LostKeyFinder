@@ -172,6 +172,18 @@ class FirestoreHardwareIntegrationTest {
                     assertFailsWith<ResponseStatusException> { tagService.release(owners[0], draftTag.id) }.statusCode.value(),
                 )
 
+                val deleteTarget = template.findById(tags[2].id, Tag::class.java)!!
+                assertFailsWith<IllegalStateException> {
+                    TagService(template, TagCreationLimit(template), aborting).adminDelete(admin, deleteTarget.id)
+                }
+                assertEquals(deleteTarget, template.findById(deleteTarget.id, Tag::class.java))
+                tagService.adminDelete(admin, deleteTarget.id)
+                val deleted = template.findById(deleteTarget.id, Tag::class.java)!!
+                assertNotNull(deleted.deletedAt)
+                assertEquals(deleteTarget.publicId, deleted.publicId)
+                assertEquals(100L, template.count(selection, Tag::class.java))
+                assertEquals(409, assertFailsWith<ResponseStatusException> { batches.export(admin, id) }.statusCode.value())
+
                 val badBatch = batches.create(admin, UUID.randomUUID().toString(), 3, "rollback")
                 batchIds += badBatch.id
                 template.updateFirst(query(where("batchId").`is`(badBatch.id)), Update.update("status", TagStatus.BLOCKED), Tag::class.java)

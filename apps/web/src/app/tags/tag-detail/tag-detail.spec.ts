@@ -33,6 +33,10 @@ describe('Private tag detail', () => {
     expect(fixture.nativeElement.textContent).toContain('Tag erstellt');
     expect(fixture.nativeElement.textContent).toContain('Seite 2 von 2');
     expect(fixture.nativeElement.textContent).toContain('Private keys');
+    const actionBar = fixture.nativeElement.querySelector('.detail-actions') as HTMLElement;
+    expect(actionBar.querySelector('a.tag-action')?.getAttribute('href')).toBe('/tags');
+    expect(actionBar.querySelector('app-tag-removal button.tag-action--danger')).not.toBeNull();
+    expect(actionBar.compareDocumentPosition(fixture.nativeElement.querySelector('#tag-history-title')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     fixture.nativeElement.querySelector('app-tag-removal button').click();
@@ -45,5 +49,32 @@ describe('Private tag detail', () => {
     signedIn.set(false); await fixture.whenStable();
     expect(fixture.nativeElement.textContent).not.toContain('Private keys');
     http.verify();
+  });  it('keeps admin details open after deletion and reloads data and history', async () => {
+    const id = '550e8400-e29b-41d4-a716-446655440000';
+    const paramMap = convertToParamMap({ tagId: id });
+    localStorage.clear();
+    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), provideRouter([]),
+      { provide: Auth, useValue: { signedIn: signal(true) } },
+      { provide: ActivatedRoute, useValue: { paramMap: of(paramMap), snapshot: { paramMap, data: { admin: true } } } }] });
+    const fixture = TestBed.createComponent(TagDetail);
+    const http = TestBed.inject(HttpTestingController);
+    const tag = { id, publicId: id, label: 'Hardware', origin: 'PREPRODUCED', status: 'ACTIVE', createdAt: '2026-01-01T00:00:00Z', registeredAt: null };
+    (await vi.waitFor(() => http.expectOne(`/api/v1/admin/tags/${id}`))).flush(tag);
+    (await vi.waitFor(() => http.expectOne(`/api/v1/admin/tags/${id}/history?page=1`))).flush({ items: [], page: 1, totalPages: 1 });
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.detail-actions a').getAttribute('href')).toBe('/admin/tags');
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    fixture.nativeElement.querySelector('app-tag-removal button').click();
+    const deletion = await vi.waitFor(() => http.expectOne(`/api/v1/admin/tags/${id}`));
+    expect(deletion.request.method).toBe('DELETE'); deletion.flush(null, { status: 204, statusText: 'No Content' });
+    (await vi.waitFor(() => http.expectOne(`/api/v1/admin/tags/${id}`))).flush({ ...tag, status: 'RETIRED', deletedAt: '2026-10-25T00:00:00Z' });
+    (await vi.waitFor(() => http.expectOne(`/api/v1/admin/tags/${id}/history?page=1`))).flush({ items: [], page: 1, totalPages: 1 });
+    await fixture.whenStable();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Gelöscht');
+    expect(fixture.nativeElement.querySelector('app-tag-removal button')).toBeNull();
+    confirm.mockRestore(); navigate.mockRestore(); http.verify();
   });
+
 });

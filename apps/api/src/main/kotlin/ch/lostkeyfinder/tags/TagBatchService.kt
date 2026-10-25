@@ -178,6 +178,9 @@ class TagBatchService(
         }
         val batch = batch(id)
         val tags = template.find(query(where("batchId").`is`(batch.id)).with(Sort.by("_id")), Tag::class.java)
+        if (tags.any { it.deletedAt != null }) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Batch contains deleted tags")
+        }
         if (tags.size != batch.count ||
             tags.map { it.publicId }.toSet().size != batch.count
         ) {

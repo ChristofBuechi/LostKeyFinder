@@ -10,6 +10,8 @@ import { BaseService } from '../base-service';
 import { ApiConfiguration } from '../api-configuration';
 import { StrictHttpResponse } from '../strict-http-response';
 
+import { adminTagControllerDelete } from '../fn/admin-tags/admin-tag-controller-delete';
+import { AdminTagControllerDelete$Params } from '../fn/admin-tags/admin-tag-controller-delete';
 import { adminTagControllerDetail } from '../fn/admin-tags/admin-tag-controller-detail';
 import { AdminTagControllerDetail$Params } from '../fn/admin-tags/admin-tag-controller-detail';
 import { adminTagControllerHistory } from '../fn/admin-tags/admin-tag-controller-history';
@@ -107,6 +109,33 @@ export class AdminTagsService extends BaseService {
     const resp = this.adminTagControllerDetail$Response(params, context);
     return resp.pipe(
       map((r: StrictHttpResponse<TagResponse>): TagResponse => r.body)
+    );
+  }
+
+  /** Path part for operation `adminTagControllerDelete()` */
+  static readonly AdminTagControllerDeletePath = '/api/v1/admin/tags/{tagId}';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `adminTagControllerDelete()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  adminTagControllerDelete$Response(params: AdminTagControllerDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+    const obs = adminTagControllerDelete(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `adminTagControllerDelete$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  adminTagControllerDelete(params: AdminTagControllerDelete$Params, context?: HttpContext): Observable<void> {
+    const resp = this.adminTagControllerDelete$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<void>): void => r.body)
     );
   }
 

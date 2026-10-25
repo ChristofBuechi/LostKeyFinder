@@ -188,37 +188,48 @@ class TagService(
     fun delete(
         owner: User,
         id: String,
+    ) = softDelete(owner, id, false)
+
+    fun adminDelete(
+        admin: User,
+        id: String,
+    ) = softDelete(admin, id, true)
+
+    private fun softDelete(
+        actor: User,
+        id: String,
+        asAdmin: Boolean,
     ) {
         uuid(id)
+        val selection = query(where("_id").`is`(id.lowercase()).and("deletedAt").`is`(null))
+        if (!asAdmin) {
+            selection.addCriteria(
+                where("primaryOwnerUserId")
+                    .`is`(actor.id)
+                    .and("origin")
+                    .`is`(TagOrigin.SELF_CREATED)
+                    .and("status")
+                    .`in`(TagStatus.ACTIVE, TagStatus.INACTIVE),
+            )
+        }
         val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
         transactions.run { ops ->
-            val changed =
+            val before =
                 ops.findAndModify(
-                    query(
-                        where("_id")
-                            .`is`(id.lowercase())
-                            .and("primaryOwnerUserId")
-                            .`is`(owner.id)
-                            .and("origin")
-                            .`is`(TagOrigin.SELF_CREATED)
-                            .and("status")
-                            .`in`(TagStatus.ACTIVE, TagStatus.INACTIVE)
-                            .and("deletedAt")
-                            .`is`(null),
-                    ),
+                    selection,
                     Update.update("deletedAt", now).set("status", TagStatus.RETIRED).set("updatedAt", now),
                     FindAndModifyOptions.options().returnNew(false),
                     Tag::class.java,
                 )
-            if (changed == null) throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
+                    ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
             ops.insert(
                 TagAudit(
                     UUID.randomUUID().toString(),
-                    owner.id,
+                    actor.id,
                     "TAG_DELETED",
-                    id.lowercase(),
+                    before.id,
                     now,
-                    tagChanges(changed, changed.copy(status = TagStatus.RETIRED, deletedAt = now, updatedAt = now)),
+                    tagChanges(before, before.copy(status = TagStatus.RETIRED, deletedAt = now, updatedAt = now)),
                 ),
             )
         }

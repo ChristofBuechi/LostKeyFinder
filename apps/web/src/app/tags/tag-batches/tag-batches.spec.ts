@@ -14,7 +14,7 @@ describe('Production batches', () => {
     localStorage.clear(); TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), provideRouter([]),
       { provide: Auth, useValue: { signedIn: signal(true) } }] });
   });
-  async function respond(url: string, body: object, status = 200) {
+  async function respond(url: string, body: object | string, status = 200) {
     const request = await vi.waitFor(() => TestBed.inject(HttpTestingController).expectOne(url));
     request.flush(body, { status, statusText: 'Response' }); return request;
   }
@@ -44,5 +44,15 @@ describe('Production batches', () => {
     await respond(`/api/v1/admin/tag-batches/${id}/release`, { ...batch, releasedAt: '2026-01-02T00:00:00Z' });
     await respond('/api/v1/admin/tag-batches', { items: [{ ...batch, releasedAt: '2026-01-02T00:00:00Z' }], nextCursor: null }); await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('.release-panel')).toBeNull(); TestBed.inject(HttpTestingController).verify();
+  });  it('explains why CSV export is blocked when a batch contains deleted tags', async () => {
+    const fixture = TestBed.createComponent(TagBatches);
+    await respond('/api/v1/admin/tag-batches', { items: [batch], nextCursor: null }); await fixture.whenStable();
+    const download = [...fixture.nativeElement.querySelectorAll('button')].find((button: unknown) => (button as HTMLButtonElement).textContent.includes('CSV herunterladen')) as HTMLButtonElement;
+    download.click();
+    await respond(`/api/v1/admin/tag-batches/${id}/export`, JSON.stringify({ detail: 'Batch contains deleted tags' }), 409);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('Diese Serie enthält gelöschte Tags');
+    TestBed.inject(HttpTestingController).verify();
   });
+
 });

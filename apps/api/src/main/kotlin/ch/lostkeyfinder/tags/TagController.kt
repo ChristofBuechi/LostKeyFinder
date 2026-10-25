@@ -112,6 +112,14 @@ class AdminTagController(
     private val users: UserService,
     private val tags: TagService,
 ) {
+    @DeleteMapping("/{tagId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(operationId = "AdminTagController_delete")
+    fun delete(
+        @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
+        @PathVariable tagId: String,
+    ) = tags.adminDelete(users.requireAdmin(jwt), tagId)
+
     @GetMapping
     @Operation(operationId = "AdminTagController_list")
     fun list(
