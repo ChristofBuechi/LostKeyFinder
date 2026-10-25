@@ -159,7 +159,7 @@ werden separat eingerichtet.
 Vor dem ersten Owner-Deployment ist `users.firebaseUserId` eindeutig zu indizieren.
 Der Firebase-Index ist seit dem 24. Oktober 2026 in `dev1` angelegt und `READY`;
 Runtime und Provider-Test erstellen keine Indizes.
-Die administrative Identität verwendet dafür:
+Für eine leere Datenbank legt `npm run firestore:tag-indexes --workspace=@lost-key-finder/api` auch diesen Benutzerindex an. Alternativ verwendet die administrative Identität:
 
 ```bash
 gcloud firestore indexes composite create \

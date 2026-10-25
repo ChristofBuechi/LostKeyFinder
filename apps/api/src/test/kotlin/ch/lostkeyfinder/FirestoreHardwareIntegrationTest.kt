@@ -56,7 +56,12 @@ class FirestoreHardwareIntegrationTest {
             val admin = user().copy(isAdmin = true)
             val owners = listOf(user(), user())
             val batches = TagBatchService(template, transactions, TagProperties("https://example.test"))
-            val registrations = TagRegistrationService(template, transactions, PublicRequestLimits(template))
+            val registrations =
+                TagRegistrationService(
+                    template,
+                    transactions,
+                    PublicRequestLimits(template, requireNotNull(System.getenv("PUBLIC_RATE_LIMIT_HMAC_KEY"))),
+                )
             val batchIds = mutableListOf<String>()
             val flowId = UUID.randomUUID().toString()
             val key = UUID.randomUUID().toString()
@@ -124,7 +129,7 @@ class FirestoreHardwareIntegrationTest {
                 assertEquals(100L, summary.total)
                 assertEquals(2L, summary.assigned)
                 assertEquals(98L, summary.unassigned)
-                assertEquals(25, tagService.list(batchId = id, inventoryStatus = InventoryStatus.RELEASED).items.size)
+                assertEquals(25, tagService.list(filter = TagFilter(batchId = id, inventoryStatus = InventoryStatus.RELEASED)).items.size)
 
                 val badBatch = batches.create(admin, UUID.randomUUID().toString(), 3, "rollback")
                 batchIds += badBatch.id
@@ -146,9 +151,8 @@ class FirestoreHardwareIntegrationTest {
                 template.remove(query(where("actorUserId").`in`((owners + admin).map { it.id })), TagAudit::class.java)
                 template.remove(query(where("_id").`is`(flowId)), TagRegistrationDraft::class.java)
                 // Clean only the exact isolated users' buckets; never remove live users' limits.
-                val stored = template.findById("public-v1", Document::class.java, "rateLimitKeys")
-                if (stored != null) {
-                    val secret = Base64.getDecoder().decode(stored.getString("key"))
+                run {
+                    val secret = Base64.getDecoder().decode(requireNotNull(System.getenv("PUBLIC_RATE_LIMIT_HMAC_KEY")))
                     for (owner in owners) {
                         for (window in (now.epochSecond / 3600)..(Instant.now().epochSecond / 3600)) {
                             val mac = Mac.getInstance("HmacSHA256").apply { init(SecretKeySpec(secret, "HmacSHA256")) }
@@ -156,7 +160,7 @@ class FirestoreHardwareIntegrationTest {
                                 Base64.getUrlEncoder().withoutPadding().encodeToString(
                                     mac.doFinal("registration-user:${owner.id}:$window".toByteArray()),
                                 )
-                            template.remove(query(where("_id").`is`(bucket)), "publicRequestLimits")
+                            template.remove(query(where("_id").`is`(bucket)), "rateLimits")
                         }
                     }
                 }

@@ -9,6 +9,11 @@ import java.util.UUID
 
 enum class UserStatus { ACTIVE, DISABLED, DELETING }
 
+data class TagCreationWindow(
+    val day: String,
+    val count: Int,
+)
+
 @Document("users")
 data class User(
     @field:Id val id: String,
@@ -18,6 +23,7 @@ data class User(
     val createdAt: Instant,
     val updatedAt: Instant,
     val isAdmin: Boolean = false,
+    val tagCreationLimit: TagCreationWindow? = null,
 ) {
     init {
         require(UUID.fromString(id).version() == 4 && firebaseUserId.isNotBlank() && firebaseUserId.length <= 128)

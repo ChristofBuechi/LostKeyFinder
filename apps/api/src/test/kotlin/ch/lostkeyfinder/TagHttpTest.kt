@@ -2,6 +2,7 @@ package ch.lostkeyfinder
 
 import ch.lostkeyfinder.tags.InventoryStatus
 import ch.lostkeyfinder.tags.Tag
+import ch.lostkeyfinder.tags.TagFilter
 import ch.lostkeyfinder.tags.TagOrigin
 import ch.lostkeyfinder.tags.TagService
 import ch.lostkeyfinder.tags.TagStatus
@@ -52,7 +53,6 @@ class TagHttpTest {
     @BeforeEach fun reset() {
         template.remove(Query(), Tag::class.java)
         template.remove(Query(), User::class.java)
-        template.remove(Query(), "tagCreationLimits")
         template.indexOps(User::class.java).createIndex(Index().on("firebaseUserId", Sort.Direction.ASC).unique())
         template.indexOps(Tag::class.java).createIndex(Index().on("publicId", Sort.Direction.ASC).unique())
         template.indexOps(Tag::class.java).createIndex(Index().on("creationKey", Sort.Direction.ASC).unique().sparse())
@@ -243,10 +243,14 @@ class TagHttpTest {
             }
         assertEquals(
             28,
-            tags.list(ownerId = owner.id, origin = TagOrigin.SELF_CREATED, status = TagStatus.ACTIVE, assigned = true).let {
-                it.items.size +
-                    tags.list(ownerId = owner.id, cursor = it.nextCursor).items.size
-            },
+            tags
+                .list(
+                    ownerId = owner.id,
+                    filter = TagFilter(origin = TagOrigin.SELF_CREATED, status = TagStatus.ACTIVE, assigned = true),
+                ).let {
+                    it.items.size +
+                        tags.list(ownerId = owner.id, cursor = it.nextCursor).items.size
+                },
         )
     }
 
@@ -287,8 +291,7 @@ class TagHttpTest {
         val key = UUID.randomUUID().toString()
         val created = create(token, key)
         val owner = template.findAll(User::class.java).single()
-        val limitId = "${owner.id}:${LocalDate.now(ZoneOffset.UTC)}"
-        template.updateFirst(query(where("_id").`is`(limitId)), Update.update("count", 100), "tagCreationLimits")
+        template.updateFirst(query(where("_id").`is`(owner.id)), Update.update("tagCreationLimit.count", 100), User::class.java)
         assertEquals(created, create(token, key))
         mvc
             .post("/api/v1/tags") {

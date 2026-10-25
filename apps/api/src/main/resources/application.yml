@@ -38,3 +38,5 @@ springdoc:
   paths-to-match: /api/v1/**
 tags:
   public-base-url: ${TAG_PUBLIC_BASE_URL:}
+rate-limits:
+  hmac-key: ${PUBLIC_RATE_LIMIT_HMAC_KEY:}

@@ -104,14 +104,9 @@ class TagService(
     fun list(
         ownerId: String? = null,
         cursor: String? = null,
-        origin: TagOrigin? = null,
-        status: TagStatus? = null,
-        assigned: Boolean? = null,
-        publicId: String? = null,
-        batchId: String? = null,
-        inventoryStatus: InventoryStatus? = null,
+        filter: TagFilter = TagFilter(),
     ): TagPage {
-        val filters = TagFilter(origin, status, assigned, publicId, batchId, inventoryStatus).criteria(ownerId)
+        val filters = filter.criteria(ownerId)
         val criteria = if (cursor == null) filters else Criteria().andOperator(filters, tagCursor(cursor))
         val tags =
             template.find(

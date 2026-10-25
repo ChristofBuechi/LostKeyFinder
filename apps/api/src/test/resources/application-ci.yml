@@ -6,3 +6,5 @@ logging:
     de.bwaldvogel.mongo: WARN
 tags:
   public-base-url: https://example.test
+rate-limits:
+  hmac-key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=

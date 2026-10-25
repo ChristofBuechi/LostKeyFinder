@@ -23,13 +23,17 @@ uri.searchParams.set('authSource', '$external');
 uri.searchParams.set('serverSelectionTimeoutMS', '15000');
 
 const task = { verify: 'integrationTest', start: 'bootRun', 'tag-indexes': 'provisionTagIndexes' }[mode];
-const result = spawnSync('./gradlew', [task, '-Pkotlin.compiler.execution.strategy=in-process'], {
+const argumentsForTask = [task, '-Pkotlin.compiler.execution.strategy=in-process'];
+const needsKey = ['verify', 'start'].includes(mode);
+const rateLimitKey = needsKey ? gcloud(['secrets', 'versions', 'access', '1', '--secret=public-rate-limit-hmac', '--project=lost-key-finder-dev']) : '';
+const result = spawnSync('./gradlew', argumentsForTask, {
   cwd: fileURLToPath(new URL('../', import.meta.url)),
   stdio: 'inherit',
   env: {
     ...process.env,
     SPRING_PROFILES_ACTIVE: 'dev',
     FIRESTORE_MONGODB_URI: uri.toString(),
+    PUBLIC_RATE_LIMIT_HMAC_KEY: rateLimitKey,
   },
 });
 if (result.error) throw result.error;

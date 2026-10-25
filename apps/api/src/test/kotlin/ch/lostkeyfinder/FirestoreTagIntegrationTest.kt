@@ -3,6 +3,7 @@ package ch.lostkeyfinder
 import ch.lostkeyfinder.tags.Tag
 import ch.lostkeyfinder.tags.TagBatch
 import ch.lostkeyfinder.tags.TagCreationLimit
+import ch.lostkeyfinder.tags.TagFilter
 import ch.lostkeyfinder.tags.TagOrigin
 import ch.lostkeyfinder.tags.TagRegistrationDraft
 import ch.lostkeyfinder.tags.TagService
@@ -35,6 +36,11 @@ class FirestoreTagIndexProvisioningTest {
             val indexes = template.indexOps(Tag::class.java)
             val operations: List<() -> Unit> =
                 listOf(
+                    {
+                        // ponytail: one provisioning command also supports a completely empty database.
+                        template.indexOps(User::class.java).createIndex(Index().on("firebaseUserId", Sort.Direction.ASC).unique())
+                        Unit
+                    },
                     {
                         indexes.createIndex(Index().on("publicId", Sort.Direction.ASC).unique())
                         Unit
@@ -71,13 +77,6 @@ class FirestoreTagIndexProvisioningTest {
                         Unit
                     },
                     {
-                        template
-                            .indexOps(
-                                "tagCreationLimits",
-                            ).createIndex(Index().on("expiresAt", Sort.Direction.ASC).expire(Duration.ZERO))
-                        Unit
-                    },
-                    {
                         indexes.createIndex(
                             Index()
                                 .on("batchId", Sort.Direction.ASC)
@@ -108,7 +107,7 @@ class FirestoreTagIndexProvisioningTest {
                     {
                         template
                             .indexOps(
-                                "publicRequestLimits",
+                                "rateLimits",
                             ).createIndex(Index().on("expiresAt", Sort.Direction.ASC).expire(Duration.ZERO))
                         Unit
                     },
@@ -126,8 +125,8 @@ class FirestoreTagIntegrationTest {
             val owner = User(UUID.randomUUID().toString(), UUID.randomUUID().toString(), "probe@example.com", UserStatus.ACTIVE, now, now)
             val tags = TagService(template, TagCreationLimit(template))
             val key = UUID.randomUUID().toString()
-            val limitId = "${owner.id}:${LocalDate.now(ZoneOffset.UTC)}"
             val selection = query(where("primaryOwnerUserId").`is`(owner.id))
+            template.insert(owner)
             try {
                 val results =
                     Executors.newFixedThreadPool(4).use { pool ->
@@ -156,13 +155,19 @@ class FirestoreTagIntegrationTest {
                 val filtered =
                     tags.list(
                         ownerId = owner.id,
-                        origin = TagOrigin.SELF_CREATED,
-                        status = TagStatus.INACTIVE,
-                        assigned = true,
-                        publicId = tag.publicId,
+                        filter =
+                            TagFilter(
+                                origin = TagOrigin.SELF_CREATED,
+                                status = TagStatus.INACTIVE,
+                                assigned = true,
+                                publicId = tag.publicId,
+                            ),
                     )
                 assertEquals(listOf(tag.id), filtered.items.map { it.id })
-                assertEquals(emptyList(), tags.list(ownerId = owner.id, origin = TagOrigin.PREPRODUCED, assigned = false).items)
+                assertEquals(
+                    emptyList(),
+                    tags.list(ownerId = owner.id, filter = TagFilter(origin = TagOrigin.PREPRODUCED, assigned = false)).items,
+                )
                 assertEquals(
                     404,
                     assertFailsWith<ResponseStatusException> {
@@ -171,7 +176,7 @@ class FirestoreTagIntegrationTest {
                 )
             } finally {
                 template.remove(selection, Tag::class.java)
-                template.remove(query(where("_id").`is`(limitId)), "tagCreationLimits")
+                template.remove(query(where("_id").`is`(owner.id)), User::class.java)
             }
         }
 }

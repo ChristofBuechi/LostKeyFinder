@@ -12,7 +12,7 @@ Stand: 25. Oktober 2026. Branch `feature/tag-registration-admin`, PR #6.
 - Stabile Cursor-Pagination mit 25 Einträgen über `(createdAt, id)` für Besitzer- und Adminlisten. Bei zwischenzeitlich neu erzeugten Tags führt „Zur ersten Seite“ zum aktualisierten Anfang; keine Snapshot-Sitzung über mehrere Seiten.
 - Angular-Ansichten `/tags` und `/admin/tags` auf Deutsch/Englisch, Zugriff über das Konto. Nach normalem E-Mail-Login führt ein Admin zur Gesamtübersicht; seine eigene Kontoseite bleibt erreichbar.
 - Lokaler PNG-QR-Download über eine bei Bedarf geladene Bibliothek. Ziel ist die öffentliche `/f/{publicId}`-URL derselben Umgebung. Dev-Codes sind keine Produktionsdruckdaten. Fundmeldung/Kontakt bleiben ausdrücklich noch nicht verfügbar.
-- Tageslimit von 100 Erstellungsversuchen pro lokalem Benutzer in festen UTC-Fenstern, atomarer Zähler in `tagCreationLimits`. Wiederholung eines bereits gespeicherten Tags benötigt keinen neuen Platz. Parallele Wiederholungen vor dem ersten Speicherungserfolg können mehrere Versuche verbrauchen; das ist ein Kostenlimit, keine Abrechnung.
+- Tageslimit von 100 Erstellungsversuchen pro lokalem Benutzer in festen UTC-Fenstern, atomarer Zähler direkt in `users.tagCreationLimit`. Wiederholung eines bereits gespeicherten Tags benötigt keinen neuen Platz. Parallele Wiederholungen vor dem ersten Speicherungserfolg können mehrere Versuche verbrauchen; das ist ein Kostenlimit, keine Abrechnung.
 - Generierter OpenAPI-Client, Offline-HTTP-/Berechtigungstests, UI-/Routingtests und explizite reale Firestore-Tests. Indexanlage erfolgt ausschliesslich über einen gesonderten Operator-Schritt.
 
 - Produktionsserien mit 1–100 Tags, atomarer vollständiger Anlage, benutzerbezogener Idempotenz und genau einem Anlage-Audit. Freigabe nach Produktionskontrolle verlangt eine bewusste UI-Bestätigung und setzt die gesamte Serie transaktional auf `RELEASED`; Wiederholung überschreibt keine Besitzer und erzeugt kein zweites Freigabe-Audit.
@@ -20,7 +20,7 @@ Stand: 25. Oktober 2026. Branch `feature/tag-registration-admin`, PR #6.
 - Öffentliche minimale Auflösung mit `REGISTER`, `REPORT_FOUND` oder `UNAVAILABLE`. Unbekannte IDs erzeugen keine Tags. Bereits angemeldete Besitzer können ihre Verwaltung öffnen; bei fremden registrierten Tags wird der noch fehlende Kontaktprozess ehrlich angezeigt.
 - Direkte bestätigte Registrierung für angemeldete Benutzer sowie E-Mail-gestützter Registrierungsentwurf mit vier Stunden eigener Gültigkeit. Firebase verifiziert vor Abschluss nochmals die Identität. Zuordnung, Verbrauch des Entwurfs und Audit sind atomar; das E-Mail-Feld wird beim Abschluss entfernt.
 - Browserwechsel: Die nicht geheime `registrationId` wird über den festen Firebase-Continue-Link übernommen, getrennt validiert und vor asynchroner Verarbeitung aus der URL entfernt. E-Mail und Auth-Codes sind keine Fortsetzungsparameter. Nach Anmeldung folgt eine geschützte explizite Bestätigung; der ursprüngliche Tab und dessen Speicher sind nicht erforderlich.
-- Begrenzte öffentliche Auflösung, Entwurfserstellung und Registrierung; feste serverseitige Zeitfenster und atomare Zähler. IP-/E-Mail-Kontexte stehen nur als HMAC-Prüfwerte in Zählern. Ein privater, zufällig erzeugter Schlüssel in `rateLimitKeys` wird zwischen Backend-Replikaten geteilt und nicht über APIs ausgegeben.
+- Begrenzte öffentliche Auflösung, Entwurfserstellung und Registrierung; feste serverseitige Zeitfenster und atomare Zähler. IP-/E-Mail-Kontexte stehen nur als HMAC-Prüfwerte in Zählern. Die Zähler liegen in `rateLimits`; ihr privater Schlüssel kommt aus Secret Manager und wird zwischen Backend-Replikaten geteilt.
 - TTL-Indizes bereinigen Entwürfe und Zähler automatisch. Fristprüfungen erfolgen unabhängig davon bei jedem fachlichen Zugriff; die physische TTL-Löschung ist asynchron und kein präziser Vier-Stunden-Timer.
 
 ## Vereinbarter Umfang abgeschlossen; spätere Funktionen
@@ -40,6 +40,8 @@ db.users.updateOne(
 ```
 
 Kein Upsert verwenden. Genau ein existierendes Konto muss getroffen werden. Zum Entziehen `isAdmin: false` setzen. Vergabe/Entzug im Betriebsprotokoll dokumentieren. Danach Kontodaten neu laden; ein neuer Firebase-Token ist nicht erforderlich. `isAdmin` ist ein boolesches Datenbankfeld, kein JWT-Claim und kein editierbares Profilfeld.
+
+Die anschliessende [Schema-Vereinfachung](database-schema.md) bettet das persönliche Tageslimit in `users` ein und startet ohne Migrationslogik mit einer leeren Dev-Datenbank.
 
 ## Dev-Indizes und Prüfung
 

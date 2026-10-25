@@ -1,6 +1,6 @@
 package ch.lostkeyfinder.tags
 
-import org.bson.Document
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria.where
@@ -9,7 +9,6 @@ import org.springframework.data.mongodb.core.query.Update
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
-import java.security.SecureRandom
 import java.time.Instant
 import java.util.Base64
 import javax.crypto.Mac
@@ -18,26 +17,24 @@ import javax.crypto.spec.SecretKeySpec
 @Service
 class PublicRequestLimits(
     private val template: MongoTemplate,
+    @Value("\${rate-limits.hmac-key:}") hmacKey: String,
 ) {
-    // One private per-database key, shared across replicas. Raw IPs/emails never enter bucket documents.
-    private val key: ByteArray by lazy {
-        val selection = query(where("_id").`is`("public-v1"))
-        try {
-            val generated = Base64.getEncoder().encodeToString(ByteArray(32).also { SecureRandom().nextBytes(it) })
-            template.upsert(selection, Update().setOnInsert("key", generated), "rateLimitKeys")
-        } catch (ex: DuplicateKeyException) {
-            // Another replica initialized the same key.
+    // ponytail: one configured secret, decoded once; no separate configuration type.
+    private val key =
+        hmacKey.takeIf { it.isNotBlank() }?.let {
+            Base64.getDecoder().decode(it).also { decoded ->
+                require(decoded.size >= 32) { "Rate limit key must contain at least 32 random bytes" }
+            }
         }
-        Base64.getDecoder().decode(requireNotNull(template.findOne(selection, Document::class.java, "rateLimitKeys")).getString("key"))
-    }
 
     fun reserve(
         scope: String,
         context: String,
         maximum: Int,
-        seconds: Long = 3600,
     ) {
-        val window = Instant.now().epochSecond / seconds
+        val window = Instant.now().epochSecond / 3600
+        val key =
+            key ?: throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Public request limits unavailable")
         val mac = Mac.getInstance("HmacSHA256").apply { init(SecretKeySpec(key, "HmacSHA256")) }
         val id = Base64.getUrlEncoder().withoutPadding().encodeToString(mac.doFinal("$scope:$context:$window".toByteArray()))
         val selection = query(where("_id").`is`(id))
@@ -46,9 +43,9 @@ class PublicRequestLimits(
                 selection,
                 Update().setOnInsert("count", 0).setOnInsert(
                     "expiresAt",
-                    Instant.ofEpochSecond((window + 2) * seconds),
+                    Instant.ofEpochSecond((window + 2) * 3600),
                 ),
-                "publicRequestLimits",
+                "rateLimits",
             )
         } catch (ex: DuplicateKeyException) {
             // Another request initialized the same fixed window.
@@ -57,7 +54,7 @@ class PublicRequestLimits(
             template.updateFirst(
                 query(where("_id").`is`(id).and("count").lt(maximum)),
                 Update().inc("count", 1),
-                "publicRequestLimits",
+                "rateLimits",
             )
         if (result.modifiedCount != 1L) throw ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Too many requests")
     }
