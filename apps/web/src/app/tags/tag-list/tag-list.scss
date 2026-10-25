@@ -1,0 +1,17 @@
+.tag-panel { margin: 3rem auto; padding: 1.5rem; max-width: 90rem; line-height: 1.5; }
+nav, .pagination { display: flex; gap: 1rem; flex-wrap: wrap; margin-block: 1rem; }
+a { color: var(--signal); overflow-wrap: anywhere; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); }
+form { padding: 1.5rem; border: 1px solid var(--line); margin-block: 1.5rem; }
+label { display: block; font-weight: 600; }
+input, select { padding: .7rem; border: 1px solid var(--muted); border-radius: .25rem; font: inherit; max-width: 100%; width: 100%; margin-block: .3rem 1rem; }
+button { padding: .7rem 1rem; border: 0; border-radius: .25rem; background: var(--ink); color: var(--paper); font: inherit; cursor: pointer; }
+button:disabled { opacity: .6; cursor: wait; }
+.filters { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); align-items: end; }
+.filters button { margin-bottom: 1rem; }
+.table-scroll { max-width: 100%; overflow: auto; border: 1px solid var(--line); }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+caption { text-align: left; padding: 1rem; font-weight: 600; }
+th, td { padding: .8rem; border-top: 1px solid var(--line); vertical-align: top; min-width: 9rem; overflow-wrap: anywhere; }
+td.actions { min-width: 15rem; button { margin: 0 .5rem .5rem 0; } }
+[role="alert"] { color: var(--signal); }

@@ -17,6 +17,7 @@ data class User(
     val status: UserStatus,
     val createdAt: Instant,
     val updatedAt: Instant,
+    val isAdmin: Boolean = false,
 ) {
     init {
         require(UUID.fromString(id).version() == 4 && firebaseUserId.isNotBlank() && firebaseUserId.length <= 128)

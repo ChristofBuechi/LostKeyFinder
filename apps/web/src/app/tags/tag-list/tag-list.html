@@ -1,0 +1,62 @@
+<section class="tag-panel" aria-labelledby="tags-title">
+  <nav [attr.aria-label]="copy().account">
+    <a routerLink="/account">{{ copy().account }}</a>
+    @if (admin) { <a routerLink="/tags">{{ copy().mine }}</a> }
+  </nav>
+  <h1 id="tags-title">{{ admin ? copy().admin : copy().mine }}</h1>
+  <p>{{ admin ? copy().adminIntro : copy().intro }}</p>
+  <p>{{ copy().note }}</p>
+  @if (auth.signedIn()) {
+    @if (!admin) {
+      <form (ngSubmit)="create()">
+        <label for="tag-label">{{ copy().label }}</label>
+        <input id="tag-label" name="label" maxlength="80" [(ngModel)]="label" [disabled]="busy() || !!pending()">
+        <button type="submit" [disabled]="busy()">{{ busy() ? copy().creating : copy().create }}</button>
+      </form>
+      @if (pending() && actionError()) { <p>{{ copy().pending }}</p> }
+    } @else {
+      <form class="filters" (ngSubmit)="filter()">
+        <div><label for="public-id">{{ copy().search }}</label><input id="public-id" name="publicId" [(ngModel)]="publicId" maxlength="36" [attr.aria-invalid]="validationError()" [attr.aria-describedby]="validationError() ? 'tag-id-error' : null"></div>
+        <div><label for="origin">{{ copy().origin }}</label><select id="origin" name="origin" [(ngModel)]="origin"><option value="">{{ copy().all }}</option><option value="SELF_CREATED">{{ copy().SELF_CREATED }}</option><option value="PREPRODUCED">{{ copy().PREPRODUCED }}</option></select></div>
+        <div><label for="status">{{ copy().status }}</label><select id="status" name="status" [(ngModel)]="status"><option value="">{{ copy().all }}</option><option value="ACTIVE">{{ copy().ACTIVE }}</option><option value="INACTIVE">{{ copy().INACTIVE }}</option><option value="BLOCKED">{{ copy().BLOCKED }}</option><option value="RETIRED">{{ copy().RETIRED }}</option></select></div>
+        <div><label for="assigned">{{ copy().assignment }}</label><select id="assigned" name="assigned" [(ngModel)]="assigned"><option value="">{{ copy().all }}</option><option value="true">{{ copy().assigned }}</option><option value="false">{{ copy().free }}</option></select></div>
+        <button type="submit">{{ copy().filter }}</button>
+      </form>
+    }
+    @if (validationError()) { <p id="tag-id-error" role="alert">{{ copy().invalid }}</p> }
+    @if (actionError(); as error) { <p role="alert">{{ errorText(error) }}</p> }
+    @if (page.isLoading()) { <p role="status">{{ copy().loading }}</p> }
+    @if (page.error(); as error) { <p role="alert">{{ errorText(error) }}</p><button type="button" (click)="page.reload()">{{ copy().retry }}</button> }
+    @if (page.hasValue() && !page.isLoading()) {
+      @if (page.value().items.length) {
+        <div class="table-scroll" tabindex="0" role="region" [attr.aria-label]="copy().table">
+          <table>
+            <caption>{{ copy().table }}</caption>
+            <thead><tr><th scope="col">{{ copy().label }}</th><th scope="col">{{ copy().publicLink }}</th><th scope="col">{{ copy().origin }}</th><th scope="col">{{ copy().status }}</th><th scope="col">{{ copy().created }}</th>@if (admin) { <th scope="col">{{ copy().owner }}</th><th scope="col">{{ copy().batch }}</th><th scope="col">{{ copy().inventory }}</th> } @else { <th scope="col">{{ copy().actions }}</th> }</tr></thead>
+            <tbody>
+              @for (tag of page.value().items; track tag.id) {
+                <tr>
+                  <td>{{ tag.label || '—' }}</td>
+                  <td><a [routerLink]="['/f', tag.publicId]">{{ tag.publicId }}</a></td>
+                  <td>{{ tag.origin ? copy()[tag.origin] : '—' }}</td>
+                  <td>{{ tag.status ? copy()[tag.status] : '—' }}</td>
+                  <td>{{ tag.createdAt | date:'yyyy-MM-dd HH:mm' }}</td>
+                  @if (admin) {
+                    <td>{{ tag.primaryOwnerUserId || copy().free }}</td><td>{{ tag.batchId || '—' }}</td><td>{{ tag.inventoryStatus ? copy()[tag.inventoryStatus] : '—' }}</td>
+                  } @else {
+                    <td class="actions"><button type="button" (click)="download(tag)" [disabled]="busy()">{{ copy().qr }}</button>
+                    @if (tag.status === 'ACTIVE' || tag.status === 'INACTIVE') { <button type="button" (click)="toggle(tag)" [disabled]="busy()">{{ tag.status === 'ACTIVE' ? copy().deactivate : copy().activate }}</button> }</td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else { <p>{{ copy().empty }}</p> }
+      <div class="pagination">
+        <button type="button" (click)="filter()">{{ copy().first }}</button>
+        @if (page.value().nextCursor; as cursor) { <button type="button" (click)="filter(cursor)">{{ copy().next }}</button> }
+      </div>
+    }
+  }
+</section>

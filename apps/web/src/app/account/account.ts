@@ -1,10 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CurrentUserResponse, UsersService } from '@lost-key-finder/api-client';
 import { firstValueFrom } from 'rxjs';
 import { Auth } from '../auth/auth';
 import { LanguageService } from '../core/language.service';
+import { TagCopy } from '../tags/tag-copy';
 
 @Component({
   selector: 'app-account',
@@ -15,8 +16,10 @@ import { LanguageService } from '../core/language.service';
 export class Account implements OnInit {
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly users = inject(UsersService);
   protected readonly language = inject(LanguageService);
+  protected readonly tagCopy = inject(TagCopy).text;
   protected readonly user = signal<CurrentUserResponse | null>(null);
   protected readonly loading = signal(false);
   protected readonly error = signal<'accountBlocked' | 'accountFailed' | 'sessionExpired' | 'logoutFailed' | null>(null);
@@ -40,7 +43,12 @@ export class Account implements OnInit {
     this.user.set(null);
     try {
       const user = await firstValueFrom(this.users.userControllerMe());
-      if (this.auth.signedIn()) this.user.set(user);
+      if (!this.destroyRef.destroyed && this.auth.signedIn()) {
+        this.user.set(user);
+        if (user.isAdmin && this.router.parseUrl(this.router.url).queryParams['entry'] === 'login') {
+          await this.router.navigateByUrl('/admin/tags', { replaceUrl: true });
+        }
+      }
     } catch (error) {
       this.error.set(error instanceof HttpErrorResponse && error.status === 403 ? 'accountBlocked'
         : error instanceof HttpErrorResponse && error.status === 401 ? 'sessionExpired' : 'accountFailed');

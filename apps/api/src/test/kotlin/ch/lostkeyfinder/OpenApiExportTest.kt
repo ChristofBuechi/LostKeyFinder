@@ -40,11 +40,20 @@ class OpenApiExportTest {
         assertTrue(me["security"][0].has("bearerAuth"))
         assertFalse(me.has("parameters"))
         assertEquals<Set<String>>(
-            setOf("id", "email", "status", "createdAt", "updatedAt"),
+            setOf("id", "email", "status", "createdAt", "updatedAt", "isAdmin"),
             document["components"]["schemas"]["CurrentUserResponse"]["required"].values().map { it.asString() }.toSet(),
         )
         assertEquals(
-            setOf("/api/v1/health/live", "/api/v1/health/ready", "/api/v1/version", "/api/v1/me"),
+            setOf(
+                "/api/v1/health/live",
+                "/api/v1/health/ready",
+                "/api/v1/version",
+                "/api/v1/me",
+                "/api/v1/tags",
+                "/api/v1/tags/{tagId}",
+                "/api/v1/tags/{tagId}/status",
+                "/api/v1/admin/tags",
+            ),
             document["paths"].propertyNames().toSet(),
         )
         Files.writeString(Path.of("openapi.json"), mapper.writerWithDefaultPrettyPrinter().writeValueAsString(document))

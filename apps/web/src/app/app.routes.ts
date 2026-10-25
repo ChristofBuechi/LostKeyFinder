@@ -11,5 +11,7 @@ export const routes: Routes = [
   { path: 'login', pathMatch: 'full', redirectTo: ({ fragment }) => inject(Router).createUrlTree(['/'], { fragment: fragment === 'finder' ? 'finder' : 'owner' }) },
   { path: 'auth/callback', loadComponent: () => import('./auth/callback/callback').then(m => m.Callback), title: 'Lost Key Finder' },
   { path: 'account', canActivate: [authGuard], loadComponent: () => import('./account/account').then(m => m.Account), title: 'Lost Key Finder' },
+  { path: 'tags', canActivate: [authGuard], loadComponent: () => import('./tags/tag-list/tag-list').then(m => m.TagList), title: 'Lost Key Finder' },
+  { path: 'admin/tags', canActivate: [authGuard], data: { admin: true }, loadComponent: () => import('./tags/tag-list/tag-list').then(m => m.TagList), title: 'Lost Key Finder' },
   { path: '**', component: NotFound, title: 'Lost Key Finder' },
 ];

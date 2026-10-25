@@ -99,4 +99,39 @@ describe('Owner route access and callback', () => {
     expect(harness.routeNativeElement?.textContent).not.toContain('owner@example.com');
     http.verify();
   });
+
+  it('opens the global inventory after an admin login while keeping the account reachable', async () => {
+    signedIn.set(true);
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/account?entry=login');
+    const http = TestBed.inject(HttpTestingController);
+    const user = { id: 'local-id', email: 'admin@example.com', status: 'ACTIVE', isAdmin: true,
+      createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' };
+    http.expectOne('/api/v1/me').flush(user);
+    const inventory = await vi.waitFor(() => http.expectOne('/api/v1/admin/tags'));
+    inventory.flush({ items: [], nextCursor: null });
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe('/admin/tags');
+    await harness.navigateByUrl('/account');
+    http.expectOne('/api/v1/me').flush(user);
+    await Promise.resolve();
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe('/account');
+    expect(harness.routeNativeElement?.querySelector('a[href="/admin/tags"]')).not.toBeNull();
+    http.verify();
+  });
+
+  it('does not redirect from a destroyed account after a late admin response', async () => {
+    signedIn.set(true);
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/account?entry=login');
+    const http = TestBed.inject(HttpTestingController);
+    const me = http.expectOne('/api/v1/me');
+    await harness.navigateByUrl('/missing-page');
+    me.flush({ id: 'local-id', email: 'admin@example.com', status: 'ACTIVE', isAdmin: true,
+      createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' });
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe('/missing-page');
+    http.verify();
+  });
 });

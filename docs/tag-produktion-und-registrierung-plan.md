@@ -2,6 +2,8 @@
 
 Stand: 25. Oktober 2026. Grundlage: aktueller Repository-Code und bestehende Fach-/Implementierungsdokumentation nach PR #5. Dieses Dokument beschreibt die vorgeschlagene Umsetzung; es ändert noch keine Anwendung und legt offene Produktentscheidungen nicht eigenmächtig fest.
 
+Die Implementierung ist im Draft-PR #6 begonnen. Bereits gelieferte Fähigkeiten, noch ausstehende Schritte und die manuelle Admin-Einrichtung stehen im [Umsetzungsstand](tag-implementation-status.md). Der Plan unten beschreibt weiterhin den gesamten Zielumfang, nicht ausschliesslich den bereits implementierten Stand.
+
 ## 1. Zielbild
 
 ### Aktuell vereinbarter Umsetzungsumfang

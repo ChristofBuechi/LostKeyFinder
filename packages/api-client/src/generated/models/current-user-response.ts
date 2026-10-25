@@ -5,6 +5,7 @@ export interface CurrentUserResponse {
   createdAt: string;
   email: string;
   id: string;
+  isAdmin: boolean;
   status: 'ACTIVE' | 'DISABLED' | 'DELETING';
   updatedAt: string;
 }

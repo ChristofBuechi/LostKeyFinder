@@ -27,7 +27,7 @@ class UserController(
         @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
     ): CurrentUserResponse {
         val user = users.currentUser(jwt)
-        return CurrentUserResponse(user.id, user.email, user.status, user.createdAt, user.updatedAt)
+        return CurrentUserResponse(user.id, user.email, user.status, user.createdAt, user.updatedAt, user.isAdmin)
     }
 }
 
@@ -37,4 +37,6 @@ data class CurrentUserResponse(
     @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED) val status: UserStatus,
     @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED) val createdAt: Instant,
     @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED) val updatedAt: Instant,
+    @get:com.fasterxml.jackson.annotation.JsonProperty("isAdmin")
+    @get:Schema(requiredMode = Schema.RequiredMode.REQUIRED) val isAdmin: Boolean,
 )
