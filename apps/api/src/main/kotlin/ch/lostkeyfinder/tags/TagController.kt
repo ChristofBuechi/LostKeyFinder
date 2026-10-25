@@ -93,15 +93,7 @@ class AdminTagController(
         @ParameterObject @ModelAttribute filter: TagFilter,
     ): TagPage {
         users.requireAdmin(jwt)
-        return tags.list(
-            cursor = cursor,
-            origin = filter.origin,
-            status = filter.status,
-            assigned = filter.assigned,
-            publicId = filter.publicId,
-            batchId = filter.batchId,
-            inventoryStatus = filter.inventoryStatus,
-        )
+        return tags.list(cursor = cursor, filter = filter)
     }
 
     @GetMapping("/summary")

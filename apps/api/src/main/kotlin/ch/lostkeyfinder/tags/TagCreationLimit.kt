@@ -15,16 +15,16 @@ class TagCreationLimit(
     private val template: MongoTemplate,
 ) {
     fun reserve(ownerId: String) {
-        val day = LocalDate.now(ZoneOffset.UTC)
+        val day = LocalDate.now(ZoneOffset.UTC).toString()
         // Reset a previous day's window atomically; concurrent resets cannot erase today's increments.
         template.updateFirst(
             query(
                 where("_id").`is`(ownerId).orOperator(
                     where("tagCreationLimit.day").exists(false),
-                    where("tagCreationLimit.day").lt(day.toString()),
+                    where("tagCreationLimit.day").lt(day),
                 ),
             ),
-            Update.update("tagCreationLimit", mapOf("day" to day.toString(), "count" to 0)),
+            Update.update("tagCreationLimit", mapOf("day" to day, "count" to 0)),
             "users",
         )
         val increment =
@@ -33,7 +33,7 @@ class TagCreationLimit(
                     where("_id")
                         .`is`(ownerId)
                         .and("tagCreationLimit.day")
-                        .`is`(day.toString())
+                        .`is`(day)
                         .and("tagCreationLimit.count")
                         .lt(100),
                 ),

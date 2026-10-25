@@ -13,7 +13,6 @@
     "test:coverage": "./gradlew jacocoTestReport",
     "firestore:verify": "node scripts/firestore-dev.mjs verify",
     "firestore:tag-indexes": "node scripts/firestore-dev.mjs tag-indexes",
-    "firestore:schema": "node scripts/firestore-dev.mjs schema",
     "firestore:start": "node scripts/firestore-dev.mjs start",
     "openapi": "./gradlew exportOpenApi",
     "generate:client": "npm run openapi && tsx scripts/generate-client.ts"

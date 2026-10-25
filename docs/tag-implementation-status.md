@@ -41,7 +41,7 @@ db.users.updateOne(
 
 Kein Upsert verwenden. Genau ein existierendes Konto muss getroffen werden. Zum Entziehen `isAdmin: false` setzen. Vergabe/Entzug im Betriebsprotokoll dokumentieren. Danach Kontodaten neu laden; ein neuer Firebase-Token ist nicht erforderlich. `isAdmin` ist ein boolesches Datenbankfeld, kein JWT-Claim und kein editierbares Profilfeld.
 
-Die anschliessende [Schema-Vereinfachung](database-schema.md) bettet das persönliche Tageslimit in `users` ein und beschreibt die kontrollierte Entfernung der alten technischen Collections.
+Die anschliessende [Schema-Vereinfachung](database-schema.md) bettet das persönliche Tageslimit in `users` ein und startet ohne Migrationslogik mit einer leeren Dev-Datenbank.
 
 ## Dev-Indizes und Prüfung
 

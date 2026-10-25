@@ -3,6 +3,7 @@ package ch.lostkeyfinder
 import ch.lostkeyfinder.tags.Tag
 import ch.lostkeyfinder.tags.TagBatch
 import ch.lostkeyfinder.tags.TagCreationLimit
+import ch.lostkeyfinder.tags.TagFilter
 import ch.lostkeyfinder.tags.TagOrigin
 import ch.lostkeyfinder.tags.TagRegistrationDraft
 import ch.lostkeyfinder.tags.TagService
@@ -35,6 +36,11 @@ class FirestoreTagIndexProvisioningTest {
             val indexes = template.indexOps(Tag::class.java)
             val operations: List<() -> Unit> =
                 listOf(
+                    {
+                        // ponytail: one provisioning command also supports a completely empty database.
+                        template.indexOps(User::class.java).createIndex(Index().on("firebaseUserId", Sort.Direction.ASC).unique())
+                        Unit
+                    },
                     {
                         indexes.createIndex(Index().on("publicId", Sort.Direction.ASC).unique())
                         Unit
@@ -149,13 +155,19 @@ class FirestoreTagIntegrationTest {
                 val filtered =
                     tags.list(
                         ownerId = owner.id,
-                        origin = TagOrigin.SELF_CREATED,
-                        status = TagStatus.INACTIVE,
-                        assigned = true,
-                        publicId = tag.publicId,
+                        filter =
+                            TagFilter(
+                                origin = TagOrigin.SELF_CREATED,
+                                status = TagStatus.INACTIVE,
+                                assigned = true,
+                                publicId = tag.publicId,
+                            ),
                     )
                 assertEquals(listOf(tag.id), filtered.items.map { it.id })
-                assertEquals(emptyList(), tags.list(ownerId = owner.id, origin = TagOrigin.PREPRODUCED, assigned = false).items)
+                assertEquals(
+                    emptyList(),
+                    tags.list(ownerId = owner.id, filter = TagFilter(origin = TagOrigin.PREPRODUCED, assigned = false)).items,
+                )
                 assertEquals(
                     404,
                     assertFailsWith<ResponseStatusException> {

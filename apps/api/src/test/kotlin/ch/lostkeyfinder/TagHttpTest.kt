@@ -2,6 +2,7 @@ package ch.lostkeyfinder
 
 import ch.lostkeyfinder.tags.InventoryStatus
 import ch.lostkeyfinder.tags.Tag
+import ch.lostkeyfinder.tags.TagFilter
 import ch.lostkeyfinder.tags.TagOrigin
 import ch.lostkeyfinder.tags.TagService
 import ch.lostkeyfinder.tags.TagStatus
@@ -242,10 +243,14 @@ class TagHttpTest {
             }
         assertEquals(
             28,
-            tags.list(ownerId = owner.id, origin = TagOrigin.SELF_CREATED, status = TagStatus.ACTIVE, assigned = true).let {
-                it.items.size +
-                    tags.list(ownerId = owner.id, cursor = it.nextCursor).items.size
-            },
+            tags
+                .list(
+                    ownerId = owner.id,
+                    filter = TagFilter(origin = TagOrigin.SELF_CREATED, status = TagStatus.ACTIVE, assigned = true),
+                ).let {
+                    it.items.size +
+                        tags.list(ownerId = owner.id, cursor = it.nextCursor).items.size
+                },
         )
     }
 

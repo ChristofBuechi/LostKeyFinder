@@ -3,7 +3,6 @@ package ch.lostkeyfinder
 import ch.lostkeyfinder.tags.InventoryStatus
 import ch.lostkeyfinder.tags.MongoTagTransactions
 import ch.lostkeyfinder.tags.PublicRequestLimits
-import ch.lostkeyfinder.tags.RateLimitProperties
 import ch.lostkeyfinder.tags.Tag
 import ch.lostkeyfinder.tags.TagAudit
 import ch.lostkeyfinder.tags.TagBatch
@@ -61,7 +60,7 @@ class FirestoreHardwareIntegrationTest {
                 TagRegistrationService(
                     template,
                     transactions,
-                    PublicRequestLimits(template, RateLimitProperties(requireNotNull(System.getenv("PUBLIC_RATE_LIMIT_HMAC_KEY")))),
+                    PublicRequestLimits(template, requireNotNull(System.getenv("PUBLIC_RATE_LIMIT_HMAC_KEY"))),
                 )
             val batchIds = mutableListOf<String>()
             val flowId = UUID.randomUUID().toString()
@@ -130,7 +129,7 @@ class FirestoreHardwareIntegrationTest {
                 assertEquals(100L, summary.total)
                 assertEquals(2L, summary.assigned)
                 assertEquals(98L, summary.unassigned)
-                assertEquals(25, tagService.list(batchId = id, inventoryStatus = InventoryStatus.RELEASED).items.size)
+                assertEquals(25, tagService.list(filter = TagFilter(batchId = id, inventoryStatus = InventoryStatus.RELEASED)).items.size)
 
                 val badBatch = batches.create(admin, UUID.randomUUID().toString(), 3, "rollback")
                 batchIds += badBatch.id
