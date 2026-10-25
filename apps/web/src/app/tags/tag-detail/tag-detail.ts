@@ -1,9 +1,9 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TagResponse } from '@lost-key-finder/api-client';
+import { TagHistoryPage, TagResponse } from '@lost-key-finder/api-client';
 import { TagCopy } from '../tag-copy';
 import { tagError } from '../tag-error';
 import { TagRemoval } from '../tag-removal/tag-removal';
@@ -25,5 +25,9 @@ export class TagDetail {
   private readonly tagId = computed(() => this.params().get('tagId') ?? '');
   protected readonly tag = httpResource<TagResponse>(() => this.auth.signedIn()
     ? `/api/v1/${this.admin ? 'admin/' : ''}tags/${encodeURIComponent(this.tagId())}` : undefined);
+  protected readonly historyPage = linkedSignal({ source: this.tagId, computation: () => 1 });
+  protected readonly history = httpResource<TagHistoryPage>(() => this.auth.signedIn()
+    ? `/api/v1/${this.admin ? 'admin/' : ''}tags/${encodeURIComponent(this.tagId())}/history?page=${this.historyPage()}` : undefined);
+  protected historyText(action: string): string { return (this.copy() as Record<string, string>)[action] ?? action; }
   protected errorText(error: unknown): string { return tagError(error, this.copy()); }
 }

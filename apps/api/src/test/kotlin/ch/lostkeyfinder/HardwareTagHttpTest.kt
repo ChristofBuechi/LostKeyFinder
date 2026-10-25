@@ -72,9 +72,7 @@ class HardwareTagHttpTest {
             ).createIndex(
                 Index()
                     .on("batchId", Sort.Direction.ASC)
-                    .on("position", Sort.Direction.ASC)
-                    .unique()
-                    .sparse(),
+                    .on("_id", Sort.Direction.ASC),
             )
         template.indexOps(TagBatch::class.java).createIndex(Index().on("creationKey", Sort.Direction.ASC).unique())
         identity.reset()
@@ -168,10 +166,11 @@ class HardwareTagHttpTest {
             100,
             template
                 .findAll(Tag::class.java)
-                .map { it.position }
+                .map { it.id }
                 .toSet()
                 .size,
         )
+        kotlin.test.assertTrue(template.getCollection("tags").find().all { !it.containsKey("position") })
         assertEquals(1L, template.count(Query(), TagAudit::class.java))
         val csv =
             mvc
@@ -191,6 +190,22 @@ class HardwareTagHttpTest {
         release(token, id)
         release(token, id)
         assertEquals(100L, template.count(query(where("inventoryStatus").`is`(InventoryStatus.RELEASED)), Tag::class.java))
+        val repeatedCsv =
+            mvc
+                .get("/api/v1/admin/tag-batches/$id/export") {
+                    header("Authorization", "Bearer $token")
+                }.andExpect { status { isOk() } }
+                .andReturn()
+                .response.contentAsString
+        assertEquals(csv, repeatedCsv)
+        assertEquals(
+            (1..100).toList(),
+            csv
+                .trim()
+                .lines()
+                .drop(1)
+                .map { it.split(',')[1].trim('"').toInt() },
+        )
         assertEquals(1L, template.count(query(where("action").`is`("BATCH_RELEASED")), TagAudit::class.java))
         mvc.get("/api/v1/admin/tag-batches/$id") { header("Authorization", "Bearer $token") }.andExpect {
             jsonPath("$.releasedAt") { exists() }
@@ -225,7 +240,7 @@ class HardwareTagHttpTest {
             .get(
                 "/api/v1/admin/tags/${tag.id}",
             ) { header("Authorization", "Bearer $token") }
-            .andExpect { jsonPath("$.position") { exists() } }
+            .andExpect { jsonPath("$.position") { doesNotExist() } }
         mvc.get("/api/v1/tags/by-public/${tag.publicId}") { header("Authorization", "Bearer $token") }.andExpect { status { isOk() } }
         val other = login()
         mvc.get("/api/v1/tags/by-public/${tag.publicId}") { header("Authorization", "Bearer $other") }.andExpect { status { isNotFound() } }

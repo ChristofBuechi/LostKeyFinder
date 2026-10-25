@@ -37,6 +37,10 @@ class FirestoreTagIndexProvisioningTest {
     @Test fun `provision tag indexes with operator credentials`() =
         withFirestore { template, _ ->
             val indexes = template.indexOps(Tag::class.java)
+            // Operator-only: the old sparse unique index rejects multiple tags without position.
+            indexes.indexInfo
+                .filter { it.indexFields.map { field -> field.key } == listOf("batchId", "position") }
+                .forEach { indexes.dropIndex(it.name) }
             val operations: List<() -> Unit> =
                 listOf(
                     {
@@ -83,9 +87,16 @@ class FirestoreTagIndexProvisioningTest {
                         indexes.createIndex(
                             Index()
                                 .on("batchId", Sort.Direction.ASC)
-                                .on("position", Sort.Direction.ASC)
-                                .unique()
-                                .sparse(),
+                                .on("_id", Sort.Direction.ASC),
+                        )
+                        Unit
+                    },
+                    {
+                        template.indexOps(TagAudit::class.java).createIndex(
+                            Index()
+                                .on("resourceId", Sort.Direction.ASC)
+                                .on("createdAt", Sort.Direction.DESC)
+                                .on("_id", Sort.Direction.DESC),
                         )
                         Unit
                     },
@@ -158,6 +169,9 @@ class FirestoreTagIntegrationTest {
                 val tag = tags.create(owner, key, "Firestore probe")
                 assertEquals(tag, tags.owned(owner, tag.id))
                 assertEquals(TagStatus.INACTIVE, tags.changeStatus(owner, tag.id, TagStatus.INACTIVE).status)
+                val history = tags.history(tag.id, owner = owner)
+                assertEquals(listOf("TAG_DEACTIVATED", "TAG_CREATED"), history.items.map { it.action })
+                kotlin.test.assertTrue(history.items.all { it.actorUserId == null })
                 val filtered =
                     tags.list(
                         ownerId = owner.id,

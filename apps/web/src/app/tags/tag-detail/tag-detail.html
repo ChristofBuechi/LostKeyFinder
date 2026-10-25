@@ -18,6 +18,28 @@
       }
     </dl>
     <p><a [routerLink]="['/f', tag.value().publicId]">{{ copy().publicLink }}</a></p>
+    <section aria-labelledby="tag-history-title">
+      <h2 id="tag-history-title">{{ copy().history }}</h2>
+      @if (history.isLoading()) { <p role="status">{{ copy().loading }}</p> }
+      @if (history.error(); as error) { <p role="alert">{{ errorText(error) }}</p><button type="button" (click)="history.reload()">{{ copy().retry }}</button> }
+      @if (history.hasValue() && !history.isLoading()) {
+        <ol class="history">
+          @for (entry of history.value().items; track entry.id) {
+            <li><time [attr.datetime]="entry.createdAt">{{ entry.createdAt | date:'yyyy-MM-dd HH:mm:ss' }}</time>
+              <span>{{ historyText(entry.action) }}</span>
+              @if (admin && entry.actorUserId) { <small>{{ copy().actor }}: {{ entry.actorUserId }}</small> }
+            </li>
+          }
+        </ol>
+        @if (history.value().totalPages > 1) {
+          <nav class="history-pages" [attr.aria-label]="copy().history">
+            <button type="button" [disabled]="history.value().page === 1" (click)="historyPage.set(history.value().page - 1)">{{ copy().previous }}</button>
+            <span role="status">{{ copy().page }} {{ history.value().page }} {{ copy().of }} {{ history.value().totalPages }}</span>
+            <button type="button" [disabled]="history.value().page === history.value().totalPages" (click)="historyPage.set(history.value().page + 1)">{{ copy().next }}</button>
+          </nav>
+        }
+      }
+    </section>
     <p>{{ copy().note }}</p>
     @if (!admin) { <app-tag-removal [tag]="tag.value()" (removed)="router.navigateByUrl('/tags', { replaceUrl: true })" /> }
   }

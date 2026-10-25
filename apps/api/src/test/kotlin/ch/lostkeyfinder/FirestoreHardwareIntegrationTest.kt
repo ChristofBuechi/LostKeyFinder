@@ -89,7 +89,7 @@ class FirestoreHardwareIntegrationTest {
                 val selection = query(where("batchId").`is`(id))
                 assertEquals(100L, template.count(selection, Tag::class.java))
                 val tags = template.find(selection, Tag::class.java)
-                assertEquals(100, tags.map { it.position }.toSet().size)
+                assertEquals(100, tags.map { it.id }.toSet().size)
                 batches.release(admin, id)
                 batches.release(admin, id)
                 assertEquals(
@@ -133,6 +133,11 @@ class FirestoreHardwareIntegrationTest {
                 assertEquals(98L, summary.unassigned)
                 assertEquals(25, tagService.list(filter = TagFilter(batchId = id, inventoryStatus = InventoryStatus.RELEASED)).items.size)
 
+                val history = tagService.history(draftTag.id)
+                assertEquals(
+                    setOf("TAG_CREATED", "TAG_REGISTERED", "BATCH_RELEASED", "BATCH_EXPORTED"),
+                    history.items.map { it.action }.toSet(),
+                )
                 val beforeRelease = template.findById(draftTag.id, Tag::class.java)!!
                 val aborting =
                     object : TagTransactions {

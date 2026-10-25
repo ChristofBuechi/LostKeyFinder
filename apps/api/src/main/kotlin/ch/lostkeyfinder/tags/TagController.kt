@@ -64,6 +64,14 @@ class TagController(
         @PathVariable tagId: String,
     ) = tags.owned(users.currentUser(jwt), tagId)
 
+    @GetMapping("/{tagId}/history")
+    @Operation(operationId = "TagController_history")
+    fun history(
+        @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
+        @PathVariable tagId: String,
+        @RequestParam(defaultValue = "1") page: Int,
+    ) = tags.history(tagId, page, users.currentUser(jwt))
+
     @GetMapping("/by-public/{publicId}")
     @Operation(operationId = "TagController_ownedPublic")
     fun ownedPublic(
@@ -123,6 +131,17 @@ class AdminTagController(
     ): TagSummary {
         users.requireAdmin(jwt)
         return tags.summary(filter)
+    }
+
+    @GetMapping("/{tagId}/history")
+    @Operation(operationId = "AdminTagController_history")
+    fun history(
+        @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
+        @PathVariable tagId: String,
+        @RequestParam(defaultValue = "1") page: Int,
+    ): TagHistoryPage {
+        users.requireAdmin(jwt)
+        return tags.history(tagId, page)
     }
 
     @GetMapping("/{tagId}")

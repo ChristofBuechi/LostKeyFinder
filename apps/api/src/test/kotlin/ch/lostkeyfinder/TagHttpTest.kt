@@ -221,7 +221,6 @@ class TagHttpTest {
                 now,
                 batchId = UUID.randomUUID().toString(),
                 inventoryStatus = InventoryStatus.RELEASED,
-                position = 1,
                 registeredAt = now,
             )
         template.insert(hardware)
@@ -259,6 +258,54 @@ class TagHttpTest {
             .andExpect { status { isNotFound() } }
         mvc.post("/api/v1/tags/${hardware.publicId}/register") { header("Authorization", "Bearer $other") }.andExpect { status { isOk() } }
         mvc.post("/api/v1/tags/${hardware.id}/release") { header("Authorization", "Bearer $token") }.andExpect { status { isNotFound() } }
+    }
+
+    @Test fun `history is owner scoped paginated and exposes actor references only to admins`() {
+        val token = login()
+        val id = mapper.readTree(create(token))["id"].asString()
+        val owner = template.findAll(User::class.java).single()
+        mvc.get("/api/v1/tags/$id/history") { header("Authorization", "Bearer $token") }.andExpect {
+            status { isOk() }
+            jsonPath("$.items.length()") { value(1) }
+            jsonPath("$.items[0].action") { value("TAG_CREATED") }
+        }
+        repeat(26) { index ->
+            val state = if (index % 2 == 0) "INACTIVE" else "ACTIVE"
+            repeat(2) {
+                mvc
+                    .patch("/api/v1/tags/$id/status") {
+                        header("Authorization", "Bearer $token")
+                        contentType = MediaType.APPLICATION_JSON
+                        content = "{\"status\":\"$state\"}"
+                    }.andExpect { status { isOk() } }
+            }
+        }
+        assertEquals(26L, template.count(query(where("resourceId").`is`(id)), TagAudit::class.java))
+
+        fun history(page: Int) =
+            mapper.readTree(
+                mvc
+                    .get("/api/v1/tags/$id/history?page=$page") {
+                        header("Authorization", "Bearer $token")
+                    }.andExpect { status { isOk() } }
+                    .andReturn()
+                    .response.contentAsString,
+            )
+        val first = history(1)
+        val second = history(2)
+        assertEquals(25, first["items"].size())
+        assertEquals(2, second["items"].size())
+        assertEquals("TAG_CREATED", second["items"].last()["action"].asString())
+        assertEquals(27, (first["items"].toList() + second["items"].toList()).map { it["id"].asString() }.toSet().size)
+        kotlin.test.assertTrue(first["items"].all { it["actorUserId"].isNull })
+        val other = login()
+        mvc.get("/api/v1/tags/$id/history") { header("Authorization", "Bearer $other") }.andExpect { status { isNotFound() } }
+        mvc.get("/api/v1/admin/tags/$id/history") { header("Authorization", "Bearer $other") }.andExpect { status { isForbidden() } }
+        mvc.get("/api/v1/tags/$id/history?page=0") { header("Authorization", "Bearer $token") }.andExpect { status { isBadRequest() } }
+        template.updateFirst(query(where("_id").`is`(owner.id)), Update.update("isAdmin", true), User::class.java)
+        mvc.get("/api/v1/admin/tags/$id/history") { header("Authorization", "Bearer $token") }.andExpect {
+            jsonPath("$.items[0].actorUserId") { value(owner.id) }
+        }
     }
 
     @Test fun `admin is database controlled and revocation applies to the next request`() {

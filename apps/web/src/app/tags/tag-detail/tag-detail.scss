@@ -1,0 +1,5 @@
+
+.history { padding-inline-start: 1.5rem; }
+.history li { padding-block: .7rem; border-bottom: 1px solid var(--line); }
+.history time, .history small { display: block; color: var(--muted); overflow-wrap: anywhere; }
+.history-pages { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin-block: 1rem; }

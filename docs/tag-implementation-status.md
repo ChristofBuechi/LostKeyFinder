@@ -23,9 +23,19 @@ Stand: 25. Oktober 2026. Branch `feature/tag-registration-admin`, PR #6.
 - Begrenzte öffentliche Auflösung, Entwurfserstellung und Registrierung; feste serverseitige Zeitfenster und atomare Zähler. IP-/E-Mail-Kontexte stehen nur als HMAC-Prüfwerte in Zählern. Die Zähler liegen in `rateLimits`; ihr privater Schlüssel kommt aus Secret Manager und wird zwischen Backend-Replikaten geteilt.
 - TTL-Indizes bereinigen Entwürfe und Zähler automatisch. Fristprüfungen erfolgen unabhängig davon bei jedem fachlichen Zugriff; die physische TTL-Löschung ist asynchron und kein präziser Vier-Stunden-Timer.
 
+## Historie und CSV-Reihenfolge
+
+Die Tag-Details zeigen eine seitenweise Historie (25 Ereignisse, neueste zuerst) aus `auditLog`, einschliesslich Registrierung, Aktivierung/Deaktivierung, Besitzerfreigabe, Soft Delete und zugehöriger Serienfreigaben/-exporte. Erstellung wird aus dem vorhandenen `createdAt` des Tags abgeleitet und nicht als zusätzlicher Audit-Datensatz rückgefüllt. Bereits vorhandene Audit-Ereignisse werden angezeigt; frühere nicht protokollierte Statuswechsel können nicht rekonstruiert werden. Statusänderung und Audit sind atomar; eine Wiederholung desselben Status erzeugt kein zusätzliches Ereignis.
+
+Nur der aktuelle Besitzer kann seine Tag-Historie abrufen; Admins auch die Historie stillgelegter/soft-gelöschter Tags. Benutzerreferenzen der Akteure werden ausschliesslich an Admins ausgegeben. Die öffentliche Scan-API liefert keine Historie.
+
+`position` entfällt im Tag-Dokumentmodell und in der Tag-API. CSV behält die Spalte `position` als berechnete Zeilennummer ab 1; Sortierung nach unveränderlicher Tag-ID hält wiederholte Exporte stabil. UUID-Eindeutigkeit und Seriengrösse sichern die Vollständigkeit. Bestehende Positionsfelder werden ignoriert; kein Datenreset oder Backfill.
+
+Vor Deployment in jeder Umgebung einmal `firestore:tag-indexes` ausführen: Der explizite Operator-Schritt entfernt den bisherigen eindeutigen `(batchId, position)`-Index und legt `(batchId, _id)` sowie den Audit-Historienindex an. Der alte Sparse-Index würde neue Tags ohne Position sonst fälschlich als Duplikate behandeln. Runtime und normale CI ändern keine Indizes.
+
 ## Besitzerzuordnung freiwillig lösen
 
-Besitzer können aktive oder inaktive Hardware-Tags nach Bestätigung freigeben. Der Tag bleibt mit UUID, Serie, Position und Produktionsfreigabe erhalten; Besitzerreferenz, Registrierungszeitpunkt und private Bezeichnung werden entfernt und der Status wird `ACTIVE`. Danach ist der Tag wieder registrierbar. Alte Registrierungsentwürfe werden im selben Commit ungültig (Ablaufzeitpunkt setzen, E-Mail entfernen); TTL übernimmt ihre Bereinigung. `TAG_RELEASED` hält den bisherigen Besitzer im Audit fest. Soft Delete schreibt `TAG_DELETED`; beide Vorgänge verwenden dieselbe Transaktionsgrenze wie Registrierung und Serienfreigabe. Fremde, gesperrte oder stillgelegte Tags sowie die falsche Herkunft werden abgelehnt. Admin-Ansichten bieten keine pauschale Besitzerfreigabe an.
+Besitzer können aktive oder inaktive Hardware-Tags nach Bestätigung freigeben. Der Tag bleibt mit UUID, Serie und Produktionsfreigabe erhalten; Besitzerreferenz, Registrierungszeitpunkt und private Bezeichnung werden entfernt und der Status wird `ACTIVE`. Danach ist der Tag wieder registrierbar. Alte Registrierungsentwürfe werden im selben Commit ungültig (Ablaufzeitpunkt setzen, E-Mail entfernen); TTL übernimmt ihre Bereinigung. `TAG_RELEASED` hält den bisherigen Besitzer im Audit fest. Soft Delete schreibt `TAG_DELETED`; beide Vorgänge verwenden dieselbe Transaktionsgrenze wie Registrierung und Serienfreigabe. Fremde, gesperrte oder stillgelegte Tags sowie die falsche Herkunft werden abgelehnt. Admin-Ansichten bieten keine pauschale Besitzerfreigabe an.
 
 Keine neue Collection, kein Backfill und keine Wiederherstellungsfunktion. Fehlendes `deletedAt` bedeutet weiterhin nicht gelöscht. Physisches Löschen von selbst erstellten Tags ist keine Benutzeraktion.
 
@@ -58,7 +68,7 @@ npm run firestore:tag-indexes --workspace=@lost-key-finder/api
 npm run firestore:verify --workspace=@lost-key-finder/api
 ```
 
-Der Helper ist ausdrücklich auf Projekt `lost-key-finder-dev`, Datenbank `dev1`, begrenzt. Er bezieht kurzlebige Credentials, ohne sie auszugeben. `provisionTagIndexes` legt eindeutige Indizes für `publicId`, den optionalen `creationKey` (sparse), Serien-Idempotenz und `(batchId, position)` (sparse), Sortier-/Listenindizes sowie TTL-Indizes für Entwürfe und Zähler an. Unabhängige Indexanlagen laufen parallel. Indexaufbau kann mehrere Minuten dauern. Der Runtime-Service-Account benötigt keine Indexadministration.
+Der Helper ist ausdrücklich auf Projekt `lost-key-finder-dev`, Datenbank `dev1`, begrenzt. Er bezieht kurzlebige Credentials, ohne sie auszugeben. `provisionTagIndexes` legt eindeutige Indizes für `publicId`, den optionalen `creationKey` (sparse), Serien-Idempotenz, `(batchId, _id)` für stabil sortierte Exporte, Audit-Historien nach Ressource/Zeit sowie Sortier-/Listenindizes sowie TTL-Indizes für Entwürfe und Zähler an. Unabhängige Indexanlagen laufen parallel. Indexaufbau kann mehrere Minuten dauern. Der Runtime-Service-Account benötigt keine Indexadministration.
 
 Reale Integrationstests legen isolierte Probedaten mit zufälligen Referenzen an und entfernen sie im `finally`-Block. Sie prüfen parallele Wiederholungen, vollständige 100er-Serien, konkurrierende Registrierungen, Entwurfsverbrauch, Filter, Cursor, Bestandsaggregation und transaktionalen Rollback einer fehlgeschlagenen Freigabe. Vor einem späteren Deployment in eine weitere Umgebung müssen dort die erforderlichen Indizes separat eingerichtet und geprüft werden.
 

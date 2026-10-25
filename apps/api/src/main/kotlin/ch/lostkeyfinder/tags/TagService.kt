@@ -103,14 +103,57 @@ class TagService(
                     .and("deletedAt")
                     .`is`(null),
             )
-        val tag =
-            template.findAndModify(
-                selection,
-                Update.update("status", status).set("updatedAt", Instant.now().truncatedTo(ChronoUnit.MILLIS)),
-                FindAndModifyOptions.options().returnNew(true),
-                Tag::class.java,
-            ) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
-        return TagResponse.from(tag)
+        return transactions.run { ops ->
+            val before =
+                ops.findOne(selection, Tag::class.java)
+                    ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
+            if (before.status == status) {
+                TagResponse.from(before)
+            } else {
+                val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
+                ops.updateFirst(selection, Update.update("status", status).set("updatedAt", now), Tag::class.java)
+                ops.insert(
+                    TagAudit(
+                        UUID.randomUUID().toString(),
+                        owner.id,
+                        if (status == TagStatus.ACTIVE) "TAG_ACTIVATED" else "TAG_DEACTIVATED",
+                        before.id,
+                        now,
+                    ),
+                )
+                TagResponse.from(before.copy(status = status, updatedAt = now))
+            }
+        }
+    }
+
+    fun history(
+        id: String,
+        page: Int = 1,
+        owner: User? = null,
+    ): TagHistoryPage {
+        if (page < 1) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid page")
+        val tag = if (owner == null) adminDetail(id) else owned(owner, id)
+        val selection = query(where("resourceId").`in`(listOfNotNull(tag.id, tag.batchId)).and("action").ne("BATCH_CREATED"))
+        val count = template.count(selection, TagAudit::class.java)
+        val totalPages = maxOf(1, ((count + 1 + PAGE_SIZE - 1) / PAGE_SIZE).toInt())
+        val current = minOf(page, totalPages)
+        val offset = (current.toLong() - 1) * PAGE_SIZE
+        val entries =
+            template
+                .find(
+                    selection
+                        .with(Sort.by(Sort.Direction.DESC, "createdAt", "_id"))
+                        .skip(offset)
+                        .limit(PAGE_SIZE),
+                    TagAudit::class.java,
+                ).map {
+                    TagHistoryEntry(it.id, it.action, it.createdAt, if (owner == null) it.actorUserId else null)
+                }.toMutableList()
+        // ponytail: creation is already stored on every tag; derive it without backfilling audit records.
+        if (current == totalPages && entries.size < PAGE_SIZE) {
+            entries += TagHistoryEntry(tag.id, "TAG_CREATED", tag.createdAt, null)
+        }
+        return TagHistoryPage(entries, current, totalPages)
     }
 
     fun delete(
