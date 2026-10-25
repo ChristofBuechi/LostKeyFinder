@@ -80,6 +80,24 @@ describe('Owner login form and sent page', () => {
     await fixture.whenStable();
   });
 
+  it('does not leave the current route when an earlier email request completes late', async () => {
+    let finish!: () => void;
+    sendLink.mockReturnValue(new Promise<void>(resolve => { finish = resolve; }));
+    const harness = await RouterTestingHarness.create('/');
+    const input = harness.routeNativeElement!.querySelector('#email') as HTMLInputElement;
+    input.value = 'owner@example.com'; input.dispatchEvent(new Event('input'));
+    harness.routeNativeElement!.querySelector('#owner-login')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    expect(sendLink).toHaveBeenCalledTimes(1);
+    const router = TestBed.inject(Router);
+    const destination = '/f/123e4567-e89b-42d3-a456-426614174000';
+    await router.navigateByUrl(destination);
+    const navigate = vi.spyOn(router, 'navigateByUrl');
+    finish();
+    await harness.fixture.whenStable();
+    expect(router.url).toBe(destination);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it('prominently offers a tag input and camera scan without requiring owner authentication', async () => {
     const fixture = TestBed.createComponent(HomeEntry);
     await fixture.whenStable();

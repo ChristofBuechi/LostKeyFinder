@@ -13,7 +13,7 @@ describe('Finder entry and local QR scanning', () => {
   let decode: (result: { data: string }) => void;
   class Reader {
     static scanImage = scanImage;
-    constructor(_video: HTMLVideoElement, onDecode: typeof decode) { decode = onDecode; constructed(); }
+    constructor(readonly video: HTMLVideoElement, onDecode: typeof decode) { decode = onDecode; constructed(video); }
     start = start;
     destroy = destroy;
   }
@@ -55,6 +55,28 @@ describe('Finder entry and local QR scanning', () => {
     expect(destroy).toHaveBeenCalled();
     expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/f', id]);
     expect(fixture.nativeElement.querySelector('.camera').hidden).toBe(true);
+  });
+
+  it('isolates a reopened camera from the previous reader’s delayed cleanup', async () => {
+    const cleanups: (() => void)[] = [];
+    destroy.mockImplementation(function(this: Reader) {
+      const oldVideo = this.video;
+      cleanups.push(() => { oldVideo.srcObject = null; });
+    });
+    const fixture = TestBed.createComponent(FinderEntry); await fixture.whenStable();
+    fixture.nativeElement.querySelector('.scan-button').click(); await fixture.whenStable();
+    const firstVideo = constructed.mock.calls[0][0] as HTMLVideoElement;
+    fixture.nativeElement.querySelector('.stop-button').click(); await fixture.whenStable();
+    expect(firstVideo.isConnected).toBe(false);
+    fixture.nativeElement.querySelector('.scan-button').click(); await fixture.whenStable();
+    const secondVideo = constructed.mock.calls[1][0] as HTMLVideoElement;
+    expect(secondVideo).not.toBe(firstVideo);
+    expect(fixture.nativeElement.querySelectorAll('video')).toHaveLength(1);
+    const currentStream = {} as MediaStream;
+    secondVideo.srcObject = currentStream;
+    cleanups[0](); // qr-scanner can run the old pause cleanup after the restart.
+    expect(secondVideo.srcObject).toBe(currentStream);
+    expect(fixture.nativeElement.querySelector('.camera').hidden).toBe(false);
   });
 
   it('shows manual and image alternatives if camera permission or hardware is unavailable', async () => {

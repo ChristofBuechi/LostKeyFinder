@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormField, disabled, email, form, required, submit } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { FinderEntry } from '../../finder/finder-entry/finder-entry';
@@ -17,6 +17,7 @@ export class HomeEntry {
   protected readonly model = signal({ email: '' });
   protected readonly status = signal<'idle' | 'failed'>('idle');
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly sending = signal(false);
   protected readonly loginForm = form(this.model, path => {
     required(path.email);
@@ -32,6 +33,7 @@ export class HomeEntry {
       this.sending.set(true);
       try {
         await this.auth.sendLink(this.model().email);
+        if (this.destroyRef.destroyed) return;
         await this.router.navigateByUrl('/login/link-sent', { replaceUrl: true });
       } catch {
         this.status.set('failed');

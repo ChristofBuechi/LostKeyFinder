@@ -11,7 +11,7 @@
     <input class="file-input" id="qr-image" type="file" accept="image/*" (change)="scanImage($event)" [disabled]="readingImage()">
   </div>
   <div class="camera" [hidden]="!scanning()">
-    <video #preview muted playsinline [attr.aria-label]="language.copy().scanPreview"></video>
+    <div #preview class="camera-preview"></div>
     <p>{{ language.copy().scanInstruction }}</p>
     <button type="button" class="stop-button" (click)="closeScanner()">{{ language.copy().scanStop }}</button>
   </div>
