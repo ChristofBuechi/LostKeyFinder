@@ -72,7 +72,6 @@ class FirestoreChatIntegrationTest {
                             "Found keys",
                             byteArrayOf(1, 2, 3),
                             UUID.randomUUID().toString(),
-                            UUID.randomUUID().toString(),
                         )
                     }
                 val results =
@@ -136,7 +135,6 @@ class FirestoreChatIntegrationTest {
                         "Extra detail",
                         null,
                         UUID.randomUUID().toString(),
-                        UUID.randomUUID().toString(),
                     )
                 assertEquals(first, chats.complete(nextReport.flowId, finder, finder.email).id)
                 assertEquals(first, chats.complete(nextReport.flowId, finder, finder.email).id)
@@ -155,7 +153,6 @@ class FirestoreChatIntegrationTest {
                             finder.email,
                             "Found again $round",
                             null,
-                            UUID.randomUUID().toString(),
                             UUID.randomUUID().toString(),
                         )
                     val conversation = chats.complete(report.flowId, finder, finder.email)

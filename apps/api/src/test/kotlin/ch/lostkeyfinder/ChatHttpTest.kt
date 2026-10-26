@@ -111,7 +111,7 @@ class ChatHttpTest {
         who: User = finder.second,
         image: ByteArray? = null,
     ): String {
-        val draft = chats.start(tag.publicId, who.email, "Found your keys", image, id(), id())
+        val draft = chats.start(tag.publicId, who.email, "Found your keys", image, id())
         return chats.complete(draft.flowId, who, who.email).id
     }
 
@@ -190,7 +190,7 @@ class ChatHttpTest {
         assertFailsWith<ResponseStatusException> { chats.close(first, finder.second) }
         tags.changeStatus(owner.second, tag.id, TagStatus.INACTIVE)
         assertTrue(chats.detail(first, finder.second).writable)
-        assertFailsWith<ResponseStatusException> { chats.start(tag.publicId, finder.second.email, "Again", null, id(), id()) }
+        assertFailsWith<ResponseStatusException> { chats.start(tag.publicId, finder.second.email, "Again", null, id()) }
         tags.delete(owner.second, tag.id)
         assertFalse(chats.detail(first, finder.second).writable)
         assertFalse(chats.detail(second, owner.second).writable)
@@ -239,17 +239,17 @@ class ChatHttpTest {
 
     @Test fun `validation rejects expired mismatched self reports invalid cursors and empty messages`() {
         val key = id()
-        val draft = chats.start(tag.publicId, finder.second.email, "Found", null, key, id())
-        assertEquals(draft, chats.start(tag.publicId, finder.second.email, "Found", null, key, id()))
-        assertFailsWith<ResponseStatusException> { chats.start(tag.publicId, finder.second.email, "Changed", null, key, id()) }
+        val draft = chats.start(tag.publicId, finder.second.email, "Found", null, key)
+        assertEquals(draft, chats.start(tag.publicId, finder.second.email, "Found", null, key))
+        assertFailsWith<ResponseStatusException> { chats.start(tag.publicId, finder.second.email, "Changed", null, key) }
         template.updateFirst(query(where("_id").`is`(draft.flowId)), Update.update("expiresAt", Instant.EPOCH), FinderDraft::class.java)
         assertFailsWith<ResponseStatusException> { chats.complete(draft.flowId, finder.second, finder.second.email) }
-        val own = chats.start(tag.publicId, owner.second.email, "Self", null, id(), id())
+        val own = chats.start(tag.publicId, owner.second.email, "Self", null, id())
         assertFailsWith<ResponseStatusException> { chats.complete(own.flowId, owner.second, owner.second.email) }
-        assertFailsWith<ResponseStatusException> { chats.start(tag.publicId, "bad", "Found", null, id(), id()) }
-        assertFailsWith<ResponseStatusException> { chats.start(id(), finder.second.email, "Found", null, id(), id()) }
-        assertFailsWith<ResponseStatusException> { chats.start(tag.publicId, finder.second.email, " ", null, id(), id()) }
-        assertFailsWith<ResponseStatusException> { chats.start(tag.publicId, finder.second.email, "a".repeat(2001), null, id(), id()) }
+        assertFailsWith<ResponseStatusException> { chats.start(tag.publicId, "bad", "Found", null, id()) }
+        assertFailsWith<ResponseStatusException> { chats.start(id(), finder.second.email, "Found", null, id()) }
+        assertFailsWith<ResponseStatusException> { chats.start(tag.publicId, finder.second.email, " ", null, id()) }
+        assertFailsWith<ResponseStatusException> { chats.start(tag.publicId, finder.second.email, "a".repeat(2001), null, id()) }
         val chat = report()
         assertFailsWith<ResponseStatusException> { chats.messages(chat, owner.second, 0) }
         assertFailsWith<ResponseStatusException> { chats.list(owner.second, 0, null) }
@@ -436,7 +436,7 @@ class ChatHttpTest {
 
     @Test fun `a fresh report by the same finder appends once to their existing chat`() {
         val chat = report()
-        val draft = chats.start(tag.publicId, finder.second.email, "Additional detail", byteArrayOf(1, 2), id(), id())
+        val draft = chats.start(tag.publicId, finder.second.email, "Additional detail", byteArrayOf(1, 2), id())
         assertEquals(chat, chats.complete(draft.flowId, finder.second, finder.second.email).id)
         assertEquals(chat, chats.complete(draft.flowId, finder.second, finder.second.email).id)
         assertEquals(1, template.count(Query(), Chat::class.java))

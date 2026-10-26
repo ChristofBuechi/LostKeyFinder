@@ -81,6 +81,22 @@ class OpenApiExportTest {
             ),
             document["paths"].propertyNames().toSet(),
         )
+        for ((path, model) in listOf(
+            "/api/v1/public/tags/{publicId}/finder-drafts" to "FinderReportRequest",
+            "/api/v1/chats/{chatId}/messages" to "ChatMessageRequest",
+        )) {
+            val operation = document["paths"][path]["post"]
+            val parameterNames = operation["parameters"].values().map { it["name"].asString() }
+            assertFalse("email" in parameterNames)
+            assertFalse("text" in parameterNames)
+            assertTrue(operation["requestBody"]["content"].has("multipart/form-data"))
+            assertTrue(document["components"]["schemas"][model]["properties"].has("text"))
+        }
+        assertEquals(
+            "binary",
+            document["paths"]["/api/v1/chat-images/{imageId}"]["get"]["responses"]["200"]["content"]
+                ["image/jpeg"]["schema"]["format"].asString(),
+        )
         Files.writeString(Path.of("openapi.json"), mapper.writerWithDefaultPrettyPrinter().writeValueAsString(document))
     }
 }

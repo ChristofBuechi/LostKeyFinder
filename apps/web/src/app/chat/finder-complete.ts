@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { ChatService as ChatApi } from '@lost-key-finder/api-client';
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -10,14 +10,14 @@ export class FinderComplete implements OnInit {
   protected readonly copy = inject(ChatCopy).text;
   protected readonly error = signal(false);
   private readonly route = inject(ActivatedRoute);
-  private readonly http = inject(HttpClient);
+  private readonly chats = inject(ChatApi);
   private readonly router = inject(Router);
   private readonly destroy = inject(DestroyRef);
   ngOnInit(): void { void this.complete(); }
   protected async complete(): Promise<void> {
     this.error.set(false);
     try {
-      const result = await firstValueFrom(this.http.post<{ id: string }>(`/api/v1/finder-reports/${encodeURIComponent(this.route.snapshot.paramMap.get('flowId') ?? '')}/complete`, {}));
+      const result = await firstValueFrom(this.chats.chatControllerComplete({ flowId: this.route.snapshot.paramMap.get('flowId') ?? '' }));
       if (!this.destroy.destroyed) await this.router.navigateByUrl(`/chats/${result.id}`, { replaceUrl: true });
     } catch { if (!this.destroy.destroyed) this.error.set(true); }
   }

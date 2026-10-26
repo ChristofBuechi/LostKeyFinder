@@ -10,6 +10,8 @@
     @if (chat.isLoading() && !chat.hasValue()) { <p role="status">{{ copy().loading }}</p> }
     @if (chat.error()) { <p role="alert">{{ copy().error }}</p><button type="button" (click)="chat.reload()">{{ copy().retry }}</button> }
     @if (chat.hasValue()) {
+      @if (latest.isLoading() && !messages().length) { <p role="status">{{ copy().loading }}</p> }
+      @if (latest.error()) { <p role="alert">{{ copy().error }}</p><button type="button" (click)="latest.reload()">{{ copy().retry }}</button> }
       @if (messageId()) { <button type="button" (click)="newest()">{{ copy().newest }}</button> }
       @if (before()) { <button type="button" (click)="older()" [disabled]="loadingOlder()">{{ copy().older }}</button> }
       <ol class="messages" aria-live="polite" aria-relevant="additions">

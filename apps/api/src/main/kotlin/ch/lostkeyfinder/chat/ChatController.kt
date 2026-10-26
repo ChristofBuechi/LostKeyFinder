@@ -13,19 +13,31 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 
 @io.swagger.v3.oas.annotations.media.Schema(requiredProperties = ["through"])
 data class ChatReadRequest(
     val through: Long,
+)
+
+@io.swagger.v3.oas.annotations.media.Schema(requiredProperties = ["email", "text"])
+data class FinderReportRequest(
+    val email: String,
+    val text: String,
+    val image: MultipartFile? = null,
+)
+
+data class ChatMessageRequest(
+    val text: String = "",
+    val image: MultipartFile? = null,
 )
 
 @RestController
@@ -42,14 +54,12 @@ class ChatController(
     @Operation(operationId = "ChatController_start", security = [])
     fun start(
         @PathVariable publicId: String,
-        @RequestParam email: String,
-        @RequestParam text: String,
-        @RequestPart(required = false) image: MultipartFile?,
+        @ModelAttribute body: FinderReportRequest,
         @RequestHeader("Idempotency-Key") key: String,
         request: HttpServletRequest,
     ): FinderStarted {
         limits.reserve("finder-upload-peer", request.remoteAddr, 20)
-        return chats.start(publicId, email, text, images.sanitize(image), key, request.remoteAddr)
+        return chats.start(publicId, body.email, body.text, images.sanitize(body.image), key)
     }
 
     @PostMapping("/finder-reports/{flowId}/complete")
@@ -92,14 +102,13 @@ class ChatController(
     @Operation(operationId = "ChatController_send")
     fun send(
         @PathVariable chatId: String,
-        @RequestParam(defaultValue = "") text: String,
-        @RequestPart(required = false) image: MultipartFile?,
+        @ModelAttribute body: ChatMessageRequest,
         @RequestHeader("Idempotency-Key") key: String,
         @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
     ): ChatMessage {
         val user = users.currentUser(jwt)
         chats.detail(chatId.lowercase(), user)
-        return chats.send(chatId.lowercase(), user, text, images.sanitize(image), key)
+        return chats.send(chatId.lowercase(), user, body.text, images.sanitize(body.image), key)
     }
 
     @PostMapping("/chats/{chatId}/read")
@@ -121,7 +130,22 @@ class ChatController(
 
     @GetMapping("/chat-images/{imageId}", produces = [MediaType.IMAGE_JPEG_VALUE])
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(operationId = "ChatController_image")
+    @Operation(
+        operationId = "ChatController_image",
+        responses = [
+            io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                content = [
+                    io.swagger.v3.oas.annotations.media.Content(
+                        mediaType = MediaType.IMAGE_JPEG_VALUE,
+                        schema =
+                            io.swagger.v3.oas.annotations.media
+                                .Schema(type = "string", format = "binary"),
+                    ),
+                ],
+            ),
+        ],
+    )
     fun image(
         @PathVariable imageId: String,
         @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,

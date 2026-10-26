@@ -112,8 +112,7 @@ data class MessagePage(
 
 fun chatAudit(
     ops: MongoOperations,
-    tagId: String,
-    chatId: String,
+    chat: Chat,
     actorId: String,
     action: String,
     now: Instant,
@@ -124,11 +123,11 @@ fun chatAudit(
             UUID.randomUUID().toString(),
             actorId,
             action,
-            tagId,
+            chat.tagId,
             now,
-            chatId = chatId,
+            chatId = chat.id,
             messageId = messageId,
-            chatParticipantIds = ops.findById(chatId, Chat::class.java)?.participantIds.orEmpty(),
+            chatParticipantIds = chat.participantIds,
         ),
     )
 }
@@ -141,7 +140,7 @@ fun closeTagChats(
 ) {
     val open = query(where("tagId").`is`(tagId).and("closedAt").`is`(null))
     ops.find(open, Chat::class.java).forEach {
-        chatAudit(ops, tagId, it.id, actorId, "CHAT_CLOSED", now)
+        chatAudit(ops, it, actorId, "CHAT_CLOSED", now)
     }
     ops.updateMulti(open, Update.update("closedAt", now), Chat::class.java)
     ops.updateMulti(open, Update.update("closedAt", now).unset("activeKey"), LossCase::class.java)

@@ -49,7 +49,7 @@ export class ChatService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  chatControllerImage$Response(params: ChatControllerImage$Params, context?: HttpContext): Observable<StrictHttpResponse<string>> {
+  chatControllerImage$Response(params: ChatControllerImage$Params, context?: HttpContext): Observable<StrictHttpResponse<Blob>> {
     const obs = chatControllerImage(this.http, this.rootUrl, params, context);
     return obs;
   }
@@ -60,10 +60,10 @@ export class ChatService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  chatControllerImage(params: ChatControllerImage$Params, context?: HttpContext): Observable<string> {
+  chatControllerImage(params: ChatControllerImage$Params, context?: HttpContext): Observable<Blob> {
     const resp = this.chatControllerImage$Response(params, context);
     return resp.pipe(
-      map((r: StrictHttpResponse<string>): string => r.body)
+      map((r: StrictHttpResponse<Blob>): Blob => r.body)
     );
   }
 

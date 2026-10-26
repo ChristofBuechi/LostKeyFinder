@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { ChatService as ChatApi } from '@lost-key-finder/api-client';
 import { Component, DestroyRef, inject, input, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ChatCopy } from './chat-copy';
@@ -13,14 +13,14 @@ export class ChatImage {
   protected readonly url = signal<string | null>(null);
   protected readonly busy = signal(false);
   protected readonly error = signal(false);
-  private readonly http = inject(HttpClient);
+  private readonly chats = inject(ChatApi);
   private readonly destroy = inject(DestroyRef);
   constructor() { this.destroy.onDestroy(() => { const url = this.url(); if (url) URL.revokeObjectURL(url); }); }
   protected async load(): Promise<void> {
     if (this.busy()) return;
     this.busy.set(true); this.error.set(false);
     try {
-      const blob = await firstValueFrom(this.http.get(`/api/v1/chat-images/${encodeURIComponent(this.imageId())}`, { responseType: 'blob' }));
+      const blob = await firstValueFrom(this.chats.chatControllerImage({ imageId: this.imageId() }));
       if (!this.destroy.destroyed) this.url.set(URL.createObjectURL(blob));
     } catch { if (!this.destroy.destroyed) this.error.set(true); }
     finally { if (!this.destroy.destroyed) this.busy.set(false); }

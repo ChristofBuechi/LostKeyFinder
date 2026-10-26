@@ -37,9 +37,15 @@ describe('Finder reports and private chat', () => {
     const text = fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement;
     text.value = 'Found your keys'; text.dispatchEvent(new Event('input'));
     await fixture.whenStable();
+    const imageInput = fixture.nativeElement.querySelector('input[type=file]') as HTMLInputElement;
+    Object.defineProperty(imageInput, 'files', { value: [new File(['image'], 'found.png', { type: 'image/png' })] });
+    imageInput.dispatchEvent(new Event('change'));
     sendLink.mockRejectedValueOnce(new Error('offline'));
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true }));
-    const start = await respond(`/api/v1/public/tags/${id}/finder-drafts`, { flowId: id });
+    const start = await respond(`/api/v1/public/tags/${id}/finder-drafts`, { flowId: id, expiresAt: new Date(Date.now() + 3600000).toISOString() });
+    expect(start.request.params.has('email')).toBe(false);
+    expect(start.request.params.has('text')).toBe(false);
+    expect((start.request.body as FormData).get('image')).toBeInstanceOf(Blob);
     expect((start.request.body as FormData).get('text')).toBe('Found your keys');
     expect(start.request.headers.get('Idempotency-Key')).toMatch(/^[0-9a-f-]{36}$/);
     await vi.waitFor(async () => { await fixture.whenStable(); expect(fixture.nativeElement.querySelector('[role=alert]')).not.toBeNull(); });
@@ -66,6 +72,8 @@ describe('Finder reports and private chat', () => {
     const http = TestBed.inject(HttpTestingController);
     const first = await vi.waitFor(() => http.expectOne(`/api/v1/chats/${id}/messages`));
     const key = first.request.headers.get('Idempotency-Key');
+    expect(first.request.params.has('text')).toBe(false);
+    expect((first.request.body as FormData).get('text')).toBe('Thanks!');
     first.flush({}, { status: 503, statusText: 'offline' });
     await vi.waitFor(async () => { await fixture.whenStable(); expect(fixture.nativeElement.querySelector('[role=alert]')).not.toBeNull(); });
     expect(input.value).toBe('Thanks!');
@@ -92,4 +100,50 @@ describe('Finder reports and private chat', () => {
     await vi.waitFor(() => expect(sendLink).toHaveBeenCalledWith('owner@example.com', undefined, { chatId: id }));
     fixture.destroy();
   });
+  it('starts a fresh report with a new key when a cached draft expires', async () => {
+    const fixture = TestBed.createComponent(ReportFound);
+    fixture.componentRef.setInput('publicId', id);
+    vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    await fixture.whenStable();
+    const email = fixture.nativeElement.querySelector('input[type=email]') as HTMLInputElement;
+    email.value = 'finder@example.com'; email.dispatchEvent(new Event('input'));
+    const text = fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement;
+    text.value = 'Found your keys'; text.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    sendLink.mockRejectedValueOnce(new Error('offline'));
+    const expiresAt = Date.now() + 3600000;
+    fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true }));
+    const first = await respond(`/api/v1/public/tags/${id}/finder-drafts`, { flowId: id, expiresAt: new Date(expiresAt).toISOString() });
+    await vi.waitFor(async () => { await fixture.whenStable(); expect(fixture.nativeElement.querySelector('[role=alert]')).not.toBeNull(); });
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(expiresAt + 1);
+    fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true }));
+    clock.mockRestore();
+    const nextId = '650e8400-e29b-41d4-a716-446655440001';
+    const next = await respond(`/api/v1/public/tags/${id}/finder-drafts`, { flowId: nextId, expiresAt: new Date(Date.now() + 3600000).toISOString() });
+    expect(next.request.headers.get('Idempotency-Key')).not.toBe(first.request.headers.get('Idempotency-Key'));
+    await vi.waitFor(() => expect(sendLink).toHaveBeenLastCalledWith('finder@example.com', undefined, { finderReportId: nextId }));
+    expect(text.value).toBe('Found your keys');
+    fixture.destroy();
+  });
+
+  it('shows message loading failures and allows retry without throwing or hiding the error', async () => {
+    signedIn.set(true);
+    const fixture = TestBed.createComponent(ChatDetail);
+    const view = { id, caseId: id, tagId: id, sequence: 1, unread: 1, writable: true, participant: true, canClose: true, closedAt: null };
+    await respond(`/api/v1/chats/${id}`, view);
+    await respond('/api/v1/me', { id: 'owner', isAdmin: false });
+    const failed = await vi.waitFor(() => TestBed.inject(HttpTestingController).expectOne(`/api/v1/chats/${id}/messages`));
+    failed.flush({}, { status: 503, statusText: 'offline' });
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('[role=alert]')).not.toBeNull();
+    const retry = [...fixture.nativeElement.querySelectorAll('button')].find(button => (button as HTMLButtonElement).textContent?.includes('Erneut versuchen')) as HTMLButtonElement;
+    expect(retry).toBeDefined(); retry.click();
+    await respond(`/api/v1/chats/${id}/messages`, { items: [message], before: null });
+    await respond(`/api/v1/chats/${id}/read`, {});
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('[role=alert]')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Found your keys');
+    fixture.destroy();
+  });
+
 });

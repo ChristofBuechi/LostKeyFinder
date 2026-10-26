@@ -1,9 +1,9 @@
-import { HttpClient, httpResource } from '@angular/common/http';
+import { httpResource } from '@angular/common/http';
 import { Component, DestroyRef, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { CurrentUserResponse } from '@lost-key-finder/api-client';
+import { ChatService as ChatApi, FinderStarted, CurrentUserResponse } from '@lost-key-finder/api-client';
 import { Auth } from '../auth/auth';
 import { ChatCopy } from './chat-copy';
 
@@ -27,7 +27,7 @@ export class ReportFound {
   readonly publicId = input.required<string>();
   protected readonly auth = inject(Auth);
   protected readonly copy = inject(ChatCopy).text;
-  private readonly http = inject(HttpClient);
+  private readonly chats = inject(ChatApi);
   private readonly router = inject(Router);
   private readonly destroy = inject(DestroyRef);
   protected readonly me = httpResource<CurrentUserResponse>(() => this.auth.signedIn() ? '/api/v1/me' : undefined);
@@ -36,7 +36,7 @@ export class ReportFound {
   protected email = '';
   protected text = '';
   private image: File | null = null;
-  private started: { signature: string; id: string } | null = null;
+  private started: (FinderStarted & { signature: string }) | null = null;
   private attempt: { signature: string; key: string } | null = null;
 
   protected selectImage(event: Event): void {
@@ -54,19 +54,19 @@ export class ReportFound {
     if (!address) { this.busy.set(false); this.error.set(true); return; }
     const signature = JSON.stringify([this.publicId(), address, this.text, this.image?.name, this.image?.size, this.image?.lastModified]);
     try {
-      if (!this.attempt || this.attempt.signature !== signature) this.attempt = { signature, key: crypto.randomUUID() };
+      if (!this.attempt || this.attempt.signature !== signature || (this.started && Date.parse(this.started.expiresAt) <= Date.now())) {
+        this.attempt = { signature, key: crypto.randomUUID() }; this.started = null;
+      }
       if (!this.started || this.started.signature !== signature) {
-        const body = new FormData(); body.set('email', address); body.set('text', this.text);
-        if (this.image) body.set('image', this.image);
-        const draft = await firstValueFrom(this.http.post<{ flowId: string }>(`/api/v1/public/tags/${this.publicId()}/finder-drafts`, body,
-          { headers: { 'Idempotency-Key': this.attempt.key } }));
-        this.started = { signature, id: draft.flowId };
+        const draft = await firstValueFrom(this.chats.chatControllerStart({ publicId: this.publicId(),
+          'Idempotency-Key': this.attempt.key, body: { email: address, text: this.text, image: this.image } }));
+        this.started = { ...draft, signature };
       }
       if (this.auth.signedIn()) {
-        const chat = await firstValueFrom(this.http.post<{ id: string }>(`/api/v1/finder-reports/${this.started.id}/complete`, {}));
+        const chat = await firstValueFrom(this.chats.chatControllerComplete({ flowId: this.started.flowId }));
         if (!this.destroy.destroyed) await this.router.navigateByUrl(`/chats/${chat.id}`);
       } else {
-        await this.auth.sendLink(address, undefined, { finderReportId: this.started.id });
+        await this.auth.sendLink(address, undefined, { finderReportId: this.started.flowId });
         if (!this.destroy.destroyed) await this.router.navigateByUrl('/login/link-sent', { replaceUrl: true });
       }
     } catch { if (!this.destroy.destroyed) this.error.set(true); }

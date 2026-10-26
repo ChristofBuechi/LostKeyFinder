@@ -12,7 +12,7 @@ export interface ChatControllerImage$Params {
   imageId: string;
 }
 
-export function chatControllerImage(http: HttpClient, rootUrl: string, params: ChatControllerImage$Params, context?: HttpContext): Observable<StrictHttpResponse<string>> {
+export function chatControllerImage(http: HttpClient, rootUrl: string, params: ChatControllerImage$Params, context?: HttpContext): Observable<StrictHttpResponse<Blob>> {
   const rb = new RequestBuilder(rootUrl, chatControllerImage.PATH, 'get');
   if (params) {
     rb.path('imageId', params.imageId, {});
@@ -23,7 +23,7 @@ export function chatControllerImage(http: HttpClient, rootUrl: string, params: C
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return r as StrictHttpResponse<string>;
+      return r as StrictHttpResponse<Blob>;
     })
   );
 }

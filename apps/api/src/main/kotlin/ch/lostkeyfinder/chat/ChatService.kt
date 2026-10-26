@@ -36,11 +36,9 @@ class ChatService(
         text: String,
         image: ByteArray?,
         key: String,
-        peer: String,
     ): FinderStarted {
         TagService.uuid(publicId)
         TagService.uuid(key)
-        limits.reserve("finder-peer", peer, 20)
         val address =
             try {
                 normalizeEmail(email)
@@ -154,8 +152,8 @@ class ChatService(
                         ChatImage::class.java,
                     )
                 }
-                if (previous == null) chatAudit(ops, tag.id, chat.id, finder.id, "CHAT_CREATED", now)
-                chatAudit(ops, tag.id, chat.id, finder.id, "CHAT_MESSAGE_SENT", now, message.id)
+                if (previous == null) chatAudit(ops, chat, finder.id, "CHAT_CREATED", now)
+                chatAudit(ops, chat, finder.id, "CHAT_MESSAGE_SENT", now, message.id)
                 notices.schedule(ops, chat, chat.ownerUserId, if (previous == null) now else now.plusSeconds(900))
                 ops.updateFirst(
                     query(where("_id").`is`(draft.id)),
@@ -275,7 +273,7 @@ class ChatService(
                     .set(readField, message.sequence),
                 Chat::class.java,
             )
-            chatAudit(ops, chat.tagId, chat.id, user.id, "CHAT_MESSAGE_SENT", now, message.id)
+            chatAudit(ops, chat, user.id, "CHAT_MESSAGE_SENT", now, message.id)
             val recipient = if (user.id == chat.ownerUserId) chat.finderUserId else chat.ownerUserId
             notices.schedule(ops, chat.copy(sequence = message.sequence), recipient, now.plusSeconds(900))
             message
@@ -310,7 +308,7 @@ class ChatService(
             ops.updateFirst(query(where("_id").`is`(tag.id)), Update().inc("chatVersion", 1), Tag::class.java)
             // One case contains all finder chats; completing the return closes this case together.
             val open = query(where("caseId").`is`(chat.caseId).and("closedAt").`is`(null))
-            ops.find(open, Chat::class.java).forEach { chatAudit(ops, it.tagId, it.id, owner.id, "CHAT_CLOSED", now) }
+            ops.find(open, Chat::class.java).forEach { chatAudit(ops, it, owner.id, "CHAT_CLOSED", now) }
             ops.updateMulti(open, Update.update("closedAt", now), Chat::class.java)
             ops.updateFirst(query(where("_id").`is`(chat.caseId)), Update.update("closedAt", now).unset("activeKey"), LossCase::class.java)
             true

@@ -8,21 +8,18 @@ import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
 import { ChatMessage } from '../../models/chat-message';
+import { ChatMessageRequest } from '../../models/chat-message-request';
 
 export interface ChatControllerSend$Params {
   chatId: string;
-  text?: string;
   'Idempotency-Key': string;
-      body?: {
-'image'?: Blob;
-}
+      body?: ChatMessageRequest
 }
 
 export function chatControllerSend(http: HttpClient, rootUrl: string, params: ChatControllerSend$Params, context?: HttpContext): Observable<StrictHttpResponse<ChatMessage>> {
   const rb = new RequestBuilder(rootUrl, chatControllerSend.PATH, 'post');
   if (params) {
     rb.path('chatId', params.chatId, {});
-    rb.query('text', params.text, {});
     rb.header('Idempotency-Key', params['Idempotency-Key'], {});
     rb.body(params.body, 'multipart/form-data');
   }

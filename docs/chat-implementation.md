@@ -17,6 +17,8 @@ Stand: 26. Oktober 2026. Verbindliche Regeln dieses Ausbaus ersetzen die ältere
 
 Ein Scan öffnet `/f/{publicId}`. Der Finder erfasst Nachricht, optionales Bild und E-Mail. Ein maximal vier Stunden gültiger `finderReportDrafts`-Datensatz entsteht; er vermittelt keinen Chat-Zugriff. Firebase bestätigt die E-Mail, auch auf einem anderen Gerät. Die API prüft die bestätigte Adresse und die unveränderte Besitzerzuordnung erneut. Erst dann entstehen Fall, privater Chat, Initialnachricht, Historie und Benachrichtigungsauftrag transaktional. Bereits angemeldete Finder benötigen keinen weiteren Anmeldelink.
 
+Der Browser erneuert abgelaufene Meldungsentwürfe mit einem neuen Idempotenzschlüssel; normale Wiederholungen verwenden weiterhin denselben Vorgang. Multipart-Eingaben (E-Mail, Text, Bild) bleiben im Request-Body des generierten API-Clients. Fehlgeschlagene Nachrichtenabrufe zeigen eine Wiederholen-Aktion und werfen keinen unbehandelten Resource-Fehler.
+
 Die Callback-URL erlaubt exakt einen validierten Zweck: Tag-Registrierung, Fundmeldung oder konkreter Chat. Auth-Codes werden vor Konfigurationsabruf und Routing aus der Browseradresse entfernt. Benachrichtigungslinks führen auf die Chatseite mit eigener Anmeldemöglichkeit und sicherer Fortsetzung.
 
 Ergänzte Collections:

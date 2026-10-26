@@ -7,24 +7,19 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
+import { FinderReportRequest } from '../../models/finder-report-request';
 import { FinderStarted } from '../../models/finder-started';
 
 export interface ChatControllerStart$Params {
   publicId: string;
-  email: string;
-  text: string;
   'Idempotency-Key': string;
-      body?: {
-'image'?: Blob;
-}
+      body?: FinderReportRequest
 }
 
 export function chatControllerStart(http: HttpClient, rootUrl: string, params: ChatControllerStart$Params, context?: HttpContext): Observable<StrictHttpResponse<FinderStarted>> {
   const rb = new RequestBuilder(rootUrl, chatControllerStart.PATH, 'post');
   if (params) {
     rb.path('publicId', params.publicId, {});
-    rb.query('email', params.email, {});
-    rb.query('text', params.text, {});
     rb.header('Idempotency-Key', params['Idempotency-Key'], {});
     rb.body(params.body, 'multipart/form-data');
   }
