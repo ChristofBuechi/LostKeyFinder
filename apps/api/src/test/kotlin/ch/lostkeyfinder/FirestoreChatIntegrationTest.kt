@@ -16,6 +16,7 @@ import ch.lostkeyfinder.tags.TagAudit
 import ch.lostkeyfinder.tags.TagCreationLimit
 import ch.lostkeyfinder.tags.TagProperties
 import ch.lostkeyfinder.tags.TagService
+import ch.lostkeyfinder.tags.TagStatus
 import ch.lostkeyfinder.tags.TagTransactions
 import ch.lostkeyfinder.users.User
 import ch.lostkeyfinder.users.UserStatus
@@ -26,6 +27,7 @@ import org.springframework.data.mongodb.core.MongoOperations
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria.where
 import org.springframework.data.mongodb.core.query.Query.query
+import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.Executors
@@ -143,6 +145,49 @@ class FirestoreChatIntegrationTest {
                 assertEquals(0, chats.detail(first, finder).unread)
                 assertTrue(chats.list(owner, 1, tag.id).items.size == 2)
                 assertTrue(tags.history(tag.id, owner = owner).items.any { it.chatId == first })
+                chats.close(first, owner)
+                results.forEach { assertFalse(chats.detail(it, owner).writable) }
+                val previousCaseIds = mutableSetOf(chats.detail(first, owner).caseId)
+                repeat(2) { round ->
+                    val report =
+                        chats.start(
+                            tag.publicId,
+                            finder.email,
+                            "Found again $round",
+                            null,
+                            UUID.randomUUID().toString(),
+                            UUID.randomUUID().toString(),
+                        )
+                    val conversation = chats.complete(report.flowId, finder, finder.email)
+                    assertTrue(previousCaseIds.add(conversation.caseId))
+                    assertTrue(conversation.id !in results)
+                    assertTrue(conversation.writable)
+                    chats.send(conversation.id, owner, "Thanks, where can we meet?", null, UUID.randomUUID().toString())
+                    chats.send(conversation.id, finder, "At the station", null, UUID.randomUUID().toString())
+                    val messages = chats.messages(conversation.id, owner, null).items
+                    assertEquals(listOf(finder.id, owner.id, finder.id), messages.map { it.senderUserId })
+                    assertEquals(listOf("Found again $round", "Thanks, where can we meet?", "At the station"), messages.map { it.text })
+                    assertEquals(messages, chats.messages(conversation.id, finder, null).items)
+                    assertFailsWith<ResponseStatusException> { chats.close(conversation.id, finder) }
+                    chats.close(conversation.id, owner)
+                    chats.close(conversation.id, owner)
+                    assertFalse(chats.detail(conversation.id, owner).writable)
+                    assertFalse(chats.detail(conversation.id, finder).writable)
+                    assertFailsWith<ResponseStatusException> {
+                        chats.send(conversation.id, finder, "Too late", null, UUID.randomUUID().toString())
+                    }
+                    assertEquals(0, template.count(query(where("activeKey").`is`(tag.id)), LossCase::class.java))
+                    assertEquals(TagStatus.ACTIVE, tags.owned(owner, tag.id).status)
+                    assertEquals(messages, chats.messages(conversation.id, finder, null).items)
+                    assertEquals(
+                        1,
+                        template.count(
+                            query(where("chatId").`is`(conversation.id).and("action").`is`("CHAT_CLOSED")),
+                            TagAudit::class.java,
+                        ),
+                    )
+                }
+                assertEquals(3, template.count(query(where("tagId").`is`(tag.id)), LossCase::class.java))
                 tags.delete(owner, tag.id)
                 results.forEach { assertFalse(chats.detail(it, owner).writable) }
                 assertTrue(chats.messages(first, finder, null).items.isNotEmpty())

@@ -56,7 +56,7 @@ Vor Deployment: Indizes über `npm run firestore:tag-indexes --workspace=@lost-k
 
 ## Prüfung und spätere Arbeit
 
-Offline-HTTP-Tests prüfen Identitäten, Teilnehmerrechte, Admin-Lesen, Bilder, Idempotenz, Nachrichtenpagination, Lesestände, Fallabschluss und Tag-Löschung. Ein lokaler SMTP-Test prüft echten Protokollversand und Antworten während des Versands ohne externe Empfänger. Firestore-Tests prüfen konkurrierende Meldungen, genau einen aktiven Fall, parallele Retry-Aufrufe, Rollback, Historienabfragen und Stilllegung.
+Offline-HTTP-Tests prüfen Identitäten, Teilnehmerrechte, Admin-Lesen, Bilder, Idempotenz, Nachrichtenpagination, Lesestände, Fallabschluss und Tag-Löschung. Ein lokaler SMTP-Test prüft echten Protokollversand und Antworten während des Versands ohne externe Empfänger. Firestore-Tests prüfen konkurrierende Meldungen, genau einen aktiven Fall, parallele Retry-Aufrufe, Rollback, Historienabfragen und Stilllegung. Zusätzlich durchläuft derselbe Tag zweimal den vollständigen Zyklus: Finder meldet, Besitzer antwortet, Finder antwortet, Besitzer schliesst den Fall. Beide behalten den lesbaren Verlauf; Schreiben ist danach gesperrt, der Tag bleibt aktiv und der nächste Durchlauf erhält einen neuen Fall und Chat.
 
 Aufbewahrung und rechtliche Löschfristen sind weiterhin vor dem Produktivstart festzulegen. Ohne diese Entscheidung keine automatische Löschung vorhandener Chats/Bilder. Moderation, Nutzerblockierung, Backup Owner und Zahlungen folgen separat.
 
