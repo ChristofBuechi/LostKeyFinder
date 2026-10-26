@@ -10,6 +10,8 @@ import { BaseService } from '../base-service';
 import { ApiConfiguration } from '../api-configuration';
 import { StrictHttpResponse } from '../strict-http-response';
 
+import { adminTagControllerChangeLabel } from '../fn/admin-tags/admin-tag-controller-change-label';
+import { AdminTagControllerChangeLabel$Params } from '../fn/admin-tags/admin-tag-controller-change-label';
 import { adminTagControllerDelete } from '../fn/admin-tags/admin-tag-controller-delete';
 import { AdminTagControllerDelete$Params } from '../fn/admin-tags/admin-tag-controller-delete';
 import { adminTagControllerDetail } from '../fn/admin-tags/admin-tag-controller-detail';
@@ -163,6 +165,33 @@ export class AdminTagsService extends BaseService {
     const resp = this.adminTagControllerHistory$Response(params, context);
     return resp.pipe(
       map((r: StrictHttpResponse<TagHistoryPage>): TagHistoryPage => r.body)
+    );
+  }
+
+  /** Path part for operation `adminTagControllerChangeLabel()` */
+  static readonly AdminTagControllerChangeLabelPath = '/api/v1/admin/tags/{tagId}/label';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `adminTagControllerChangeLabel()` instead.
+   *
+   * This method sends `application/json` and handles request body of type `application/json`.
+   */
+  adminTagControllerChangeLabel$Response(params: AdminTagControllerChangeLabel$Params, context?: HttpContext): Observable<StrictHttpResponse<TagResponse>> {
+    const obs = adminTagControllerChangeLabel(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `adminTagControllerChangeLabel$Response()` instead.
+   *
+   * This method sends `application/json` and handles request body of type `application/json`.
+   */
+  adminTagControllerChangeLabel(params: AdminTagControllerChangeLabel$Params, context?: HttpContext): Observable<TagResponse> {
+    const resp = this.adminTagControllerChangeLabel$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<TagResponse>): TagResponse => r.body)
     );
   }
 

@@ -74,7 +74,65 @@ describe('Private tag detail', () => {
     expect(navigate).not.toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('Gelöscht');
     expect(fixture.nativeElement.querySelector('app-tag-removal button')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.label-value')).toBeNull();
     confirm.mockRestore(); navigate.mockRestore(); http.verify();
+  });
+
+  it.each([false, true])('edits labels inline with cancel, validation and retry (admin=%s)', async admin => {
+    const id = '550e8400-e29b-41d4-a716-446655440000';
+    const path = `/api/v1/${admin ? 'admin/' : ''}tags/${id}`;
+    const paramMap = convertToParamMap({ tagId: id });
+    localStorage.clear();
+    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), provideRouter([]),
+      { provide: Auth, useValue: { signedIn: signal(true) } },
+      { provide: ActivatedRoute, useValue: { paramMap: of(paramMap), snapshot: { paramMap, data: { admin } } } }] });
+    const fixture = TestBed.createComponent(TagDetail);
+    const http = TestBed.inject(HttpTestingController);
+    const tag = { id, publicId: id, label: 'Keys', origin: 'SELF_CREATED', status: 'ACTIVE', createdAt: '2026-01-01T00:00:00Z', registeredAt: null };
+    (await vi.waitFor(() => http.expectOne(path))).flush(tag);
+    (await vi.waitFor(() => http.expectOne(`${path}/history?page=1`))).flush({ items: [], page: 1, totalPages: 1 });
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    const edit = async () => { element.querySelector<HTMLButtonElement>('.label-value')!.click(); await fixture.whenStable(); };
+    const type = (text: string) => {
+      const input = element.querySelector<HTMLInputElement>('#tag-label-edit')!;
+      input.value = text; input.dispatchEvent(new Event('input')); return input;
+    };
+    await edit();
+    expect(element.querySelector<HTMLInputElement>('input')!.value).toBe('Keys');
+    expect(element.querySelector<HTMLInputElement>('input')!.maxLength).toBe(80);
+    type('Discard').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await fixture.whenStable();
+    expect(element.querySelector('input')).toBeNull();
+    expect(element.querySelector('.label-value')!.textContent).toContain('Keys');
+    http.expectNone(`${path}/label`);
+    await edit(); type('  Travel keys  ');
+    element.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    const failed = await vi.waitFor(() => http.expectOne(`${path}/label`));
+    expect(failed.request.method).toBe('PATCH');
+    expect(failed.request.body).toEqual({ label: 'Travel keys' });
+    await fixture.whenStable();
+    expect(element.querySelector<HTMLInputElement>('input')!.disabled).toBe(true);
+    failed.flush({}, { status: 500, statusText: 'Server Error' });
+    await vi.waitFor(async () => {
+      await fixture.whenStable();
+      expect(element.querySelector('[role="alert"]')).not.toBeNull();
+    });
+    expect(element.querySelector<HTMLInputElement>('input')!.value).toBe('  Travel keys  ');
+    element.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    (await vi.waitFor(() => http.expectOne(`${path}/label`))).flush({ ...tag, label: 'Travel keys' });
+    (await vi.waitFor(() => http.expectOne(`${path}/history?page=1`))).flush({ items: [], page: 1, totalPages: 1 });
+    await fixture.whenStable();
+    expect(element.querySelector('form')).toBeNull();
+    expect(element.querySelector('.label-value')!.textContent).toContain('Travel keys');
+    await edit(); type('');
+    element.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    const clear = await vi.waitFor(() => http.expectOne(`${path}/label`));
+    expect(clear.request.body).toEqual({ label: '' }); clear.flush({ ...tag, label: '' });
+    (await vi.waitFor(() => http.expectOne(`${path}/history?page=1`))).flush({ items: [], page: 1, totalPages: 1 });
+    await fixture.whenStable();
+    expect(element.querySelector('.label-value')!.textContent).toContain('Bezeichnung hinzufügen');
+    http.verify();
   });
 
 });

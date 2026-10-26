@@ -93,6 +93,32 @@ class TagService(
             )?.let(TagResponse::from) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
     }
 
+    fun changeLabel(
+        actor: User,
+        id: String,
+        label: String,
+        asAdmin: Boolean = false,
+    ): TagResponse {
+        uuid(id)
+        val selection = query(where("_id").`is`(id.lowercase()).and("deletedAt").`is`(null))
+        if (!asAdmin) selection.addCriteria(where("primaryOwnerUserId").`is`(actor.id))
+        return transactions.run { ops ->
+            val before =
+                ops.findOne(selection, Tag::class.java)
+                    ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
+            val value = label.trim()
+            if (before.label == value) {
+                TagResponse.from(before)
+            } else {
+                val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
+                val after = before.copy(label = value, updatedAt = now)
+                ops.updateFirst(selection, Update.update("label", value).set("updatedAt", now), Tag::class.java)
+                ops.insert(TagAudit(UUID.randomUUID().toString(), actor.id, "TAG_LABEL_CHANGED", before.id, now, tagChanges(before, after)))
+                TagResponse.from(after)
+            }
+        }
+    }
+
     fun changeStatus(
         owner: User,
         id: String,

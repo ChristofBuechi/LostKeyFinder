@@ -30,6 +30,10 @@ data class CreateTagRequest(
     @field:Size(max = 80) val label: String = "",
 )
 
+data class ChangeTagLabelRequest(
+    @field:Size(max = 80) val label: String,
+)
+
 data class ChangeTagStatusRequest(
     @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED) val status: TagStatus,
 )
@@ -95,6 +99,14 @@ class TagController(
         @PathVariable tagId: String,
     ) = tags.release(users.currentUser(jwt), tagId)
 
+    @PatchMapping("/{tagId}/label")
+    @Operation(operationId = "TagController_changeLabel")
+    fun changeLabel(
+        @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
+        @PathVariable tagId: String,
+        @Valid @RequestBody request: ChangeTagLabelRequest,
+    ) = tags.changeLabel(users.currentUser(jwt), tagId, request.label)
+
     @PatchMapping("/{tagId}/status")
     @Operation(operationId = "TagController_changeStatus")
     fun changeStatus(
@@ -130,6 +142,14 @@ class AdminTagController(
         users.requireAdmin(jwt)
         return tags.list(page = page, filter = filter)
     }
+
+    @PatchMapping("/{tagId}/label")
+    @Operation(operationId = "AdminTagController_changeLabel")
+    fun changeLabel(
+        @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
+        @PathVariable tagId: String,
+        @Valid @RequestBody request: ChangeTagLabelRequest,
+    ) = tags.changeLabel(users.requireAdmin(jwt), tagId, request.label, asAdmin = true)
 
     @GetMapping("/summary")
     @Operation(operationId = "AdminTagController_summary")

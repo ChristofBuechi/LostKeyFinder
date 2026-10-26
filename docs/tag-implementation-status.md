@@ -45,6 +45,8 @@ Admins können über den Tag-Bestand und die Admin-Tag-Details jeden noch nicht 
 
 Der CSV-Export überspringt soft-gelöschte Tags und nummeriert die verbleibenden Zeilen lückenlos. Sind alle Tags gelöscht, enthält die Datei nur die Kopfzeile. Die Vollständigkeitsprüfung berücksichtigt weiterhin sämtliche erhaltenen Tag-Dokumente der Serie. Auch reduzierte und leere Exporte werden als erfolgreiche Exportereignisse protokolliert.
 
+Die Bezeichnung lässt sich in den Besitzer- und Admin-Tag-Details per Klick inline bearbeiten. Enter speichert das native Formular; Escape oder „Abbrechen“ verwirft den Entwurf. Leere Bezeichnungen sind erlaubt, maximal 80 Zeichen. Besitzer dürfen nur eigene, Admins alle nicht gelöschten Tags umbenennen. PATCH-Endpunkte für die Bezeichnung prüfen diese Rechte; Änderung und `TAG_LABEL_CHANGED` mit Vorher-/Nachher-Werten werden gemeinsam transaktional gespeichert. Unveränderte Werte erzeugen kein zusätzliches Ereignis. Nach erfolgreichem Speichern aktualisiert sich die Historie; bei Fehlern bleibt der Entwurf erhalten.
+
 Die Detailansicht gliedert Tag-Informationen, Aktionsleiste und Historie. „Zur Übersicht“ und Löschen/Freigeben verwenden gemeinsame Abmessungen und Button-Stile, Navigation neutral und Löschen rot umrandet; mobil stehen sie untereinander. Nach einer Besitzeraktion erfolgt die Rückkehr zur eigenen Liste. Nach Admin-Löschen bleiben die Admin-Details geöffnet und laden Daten/Historie neu; die Admin-Liste aktualisiert Bestand und Bestandszahlen.
 
 ## Vereinbarter Umfang abgeschlossen; spätere Funktionen

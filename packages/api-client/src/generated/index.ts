@@ -6,6 +6,7 @@ export { RequestBuilder } from './request-builder';
 export type { StrictHttpResponse } from './strict-http-response';
 export { Api } from './api';
 
+export type { ChangeTagLabelRequest } from './models/change-tag-label-request';
 export type { ChangeTagStatusRequest } from './models/change-tag-status-request';
 export type { CreateTagBatchRequest } from './models/create-tag-batch-request';
 export type { CreateTagRequest } from './models/create-tag-request';
@@ -53,6 +54,8 @@ export type { AdminTagControllerDelete$Params as AdminTagControllerDelete$Params
 export { adminTagControllerDelete as adminTagControllerDelete } from './fn/admin-tags/admin-tag-controller-delete';
 export type { AdminTagControllerHistory$Params as AdminTagControllerHistory$Params } from './fn/admin-tags/admin-tag-controller-history';
 export { adminTagControllerHistory as adminTagControllerHistory } from './fn/admin-tags/admin-tag-controller-history';
+export type { AdminTagControllerChangeLabel$Params as AdminTagControllerChangeLabel$Params } from './fn/admin-tags/admin-tag-controller-change-label';
+export { adminTagControllerChangeLabel as adminTagControllerChangeLabel } from './fn/admin-tags/admin-tag-controller-change-label';
 export type { HealthControllerLive$Params as HealthControllerLive$Params } from './fn/health/health-controller-live';
 export { healthControllerLive as healthControllerLive } from './fn/health/health-controller-live';
 export type { HealthControllerReady$Params as HealthControllerReady$Params } from './fn/health/health-controller-ready';
@@ -81,6 +84,8 @@ export type { TagControllerDelete$Params as TagControllerDelete$Params } from '.
 export { tagControllerDelete as tagControllerDelete } from './fn/tags/tag-controller-delete';
 export type { TagControllerHistory$Params as TagControllerHistory$Params } from './fn/tags/tag-controller-history';
 export { tagControllerHistory as tagControllerHistory } from './fn/tags/tag-controller-history';
+export type { TagControllerChangeLabel$Params as TagControllerChangeLabel$Params } from './fn/tags/tag-controller-change-label';
+export { tagControllerChangeLabel as tagControllerChangeLabel } from './fn/tags/tag-controller-change-label';
 export type { TagControllerRelease$Params as TagControllerRelease$Params } from './fn/tags/tag-controller-release';
 export { tagControllerRelease as tagControllerRelease } from './fn/tags/tag-controller-release';
 export type { TagControllerChangeStatus$Params as TagControllerChangeStatus$Params } from './fn/tags/tag-controller-change-status';

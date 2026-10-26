@@ -5,7 +5,25 @@
   @if (tag.hasValue()) {
     <dl class="tag-data">
       <dt>{{ copy().tag }}</dt><dd>{{ tag.value().publicId }}</dd>
-      <dt>{{ copy().label }}</dt><dd>{{ tag.value().label || '—' }}</dd>
+      <dt id="tag-label-heading">{{ copy().label }}</dt>
+      <dd>
+        @if (editingLabel() && !tag.value().deletedAt) {
+          <form class="label-editor" (submit)="saveLabel($event)">
+            <input #labelInput id="tag-label-edit" type="text" maxlength="80" aria-labelledby="tag-label-heading"
+              [value]="labelDraft()" (input)="labelDraft.set(labelInput.value)" [disabled]="savingLabel()"
+              (keydown.escape)="$event.preventDefault(); cancelLabel()">
+            <div class="label-actions">
+              <button class="tag-action" type="submit" [disabled]="savingLabel()">{{ savingLabel() ? copy().saving : copy().save }}</button>
+              <button class="tag-action" type="button" (click)="cancelLabel()" [disabled]="savingLabel()">{{ copy().cancel }}</button>
+            </div>
+            @if (labelError(); as error) { <p role="alert">{{ errorText(error) }}</p> }
+          </form>
+        } @else if (!tag.value().deletedAt) {
+          <button #labelButton class="label-value" type="button" (click)="editLabel()" [attr.aria-label]="copy().editLabel + ': ' + (tag.value().label || copy().notSet)">
+            {{ tag.value().label || copy().addLabel }} <span aria-hidden="true">✎</span>
+          </button>
+        } @else { {{ tag.value().label || '—' }} }
+      </dd>
       <dt>{{ copy().origin }}</dt><dd>{{ copy()[tag.value().origin] }}</dd>
       <dt>{{ copy().status }}</dt><dd>{{ tag.value().deletedAt ? copy().deleted : copy()[tag.value().status] }}</dd>
       <dt>{{ copy().created }}</dt><dd>{{ tag.value().createdAt | date:'yyyy-MM-dd HH:mm' }}</dd>
