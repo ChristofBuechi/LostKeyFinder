@@ -29,6 +29,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
 import org.springframework.web.server.ResponseStatusException
 import tools.jackson.databind.json.JsonMapper
@@ -212,6 +213,95 @@ class HardwareTagHttpTest {
             jsonPath("$.releasedAt") { exists() }
             jsonPath("$.creationKey") { doesNotExist() }
         }
+    }
+
+    @Test fun `label edits require ownership or admin rights and preserve an audit trail`() {
+        val adminToken = login(true)
+        val admin = template.findAll(User::class.java).single()
+        val batchId = batch(adminToken, 1)
+        val hardware = template.findOne(query(where("batchId").`is`(batchId)), Tag::class.java)!!
+        val ownerToken = login()
+        val json =
+            mvc
+                .post("/api/v1/tags") {
+                    header("Authorization", "Bearer $ownerToken")
+                    header("Idempotency-Key", UUID.randomUUID().toString())
+                    contentType = MediaType.APPLICATION_JSON
+                    content = "{\"label\":\"Keys\"}"
+                }.andExpect { status { isOk() } }
+                .andReturn()
+                .response.contentAsString
+        val id = mapper.readTree(json)["id"].asString()
+        mvc
+            .patch("/api/v1/tags/$id/label") {
+                contentType = MediaType.APPLICATION_JSON
+                content = "{\"label\":\"Other\"}"
+            }.andExpect { status { isUnauthorized() } }
+        mvc
+            .patch("/api/v1/tags/$id/label") {
+                header("Authorization", "Bearer $adminToken")
+                contentType = MediaType.APPLICATION_JSON
+                content = "{\"label\":\"Other\"}"
+            }.andExpect { status { isNotFound() } }
+        mvc
+            .patch("/api/v1/admin/tags/$id/label") {
+                header("Authorization", "Bearer $ownerToken")
+                contentType = MediaType.APPLICATION_JSON
+                content = "{\"label\":\"Other\"}"
+            }.andExpect { status { isForbidden() } }
+        for (value in listOf("  Travel keys  ", "Travel keys", "")) {
+            mvc
+                .patch("/api/v1/tags/$id/label") {
+                    header("Authorization", "Bearer $ownerToken")
+                    contentType = MediaType.APPLICATION_JSON
+                    content = mapper.writeValueAsString(mapOf("label" to value))
+                }.andExpect {
+                    status { isOk() }
+                    jsonPath("$.label") { value(value.trim()) }
+                }
+        }
+        val events = template.find(query(where("resourceId").`is`(id).and("action").`is`("TAG_LABEL_CHANGED")), TagAudit::class.java)
+        assertEquals(2, events.size)
+        assertEquals(setOf("Keys", "Travel keys"), events.map { it.changes.single { change -> change.field == "label" }.before }.toSet())
+        mvc
+            .patch("/api/v1/tags/$id/label") {
+                header("Authorization", "Bearer $ownerToken")
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(mapOf("label" to "x".repeat(81)))
+            }.andExpect { status { isBadRequest() } }
+        mvc
+            .patch("/api/v1/tags/${hardware.id}/label") {
+                header("Authorization", "Bearer $ownerToken")
+                contentType = MediaType.APPLICATION_JSON
+                content = "{\"label\":\"Hardware\"}"
+            }.andExpect { status { isNotFound() } }
+        mvc
+            .patch("/api/v1/admin/tags/${hardware.id}/label") {
+                header("Authorization", "Bearer $adminToken")
+                contentType = MediaType.APPLICATION_JSON
+                content = "{\"label\":\"Hardware\"}"
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.label") { value("Hardware") }
+            }
+        val audit =
+            template.findOne(
+                query(where("resourceId").`is`(hardware.id).and("action").`is`("TAG_LABEL_CHANGED")),
+                TagAudit::class.java,
+            )!!
+        assertEquals(admin.id, audit.actorUserId)
+        assertEquals(hardware.copy(label = "Hardware", updatedAt = audit.createdAt), template.findById(hardware.id, Tag::class.java))
+        mvc
+            .delete(
+                "/api/v1/admin/tags/${hardware.id}",
+            ) { header("Authorization", "Bearer $adminToken") }
+            .andExpect { status { isNoContent() } }
+        mvc
+            .patch("/api/v1/admin/tags/${hardware.id}/label") {
+                header("Authorization", "Bearer $adminToken")
+                contentType = MediaType.APPLICATION_JSON
+                content = "{\"label\":\"Deleted\"}"
+            }.andExpect { status { isNotFound() } }
     }
 
     @Test fun `admin soft deletes all tag types while owner rules remain and CSV skips deleted inventory`() {

@@ -10,6 +10,8 @@ import { BaseService } from '../base-service';
 import { ApiConfiguration } from '../api-configuration';
 import { StrictHttpResponse } from '../strict-http-response';
 
+import { tagControllerChangeLabel } from '../fn/tags/tag-controller-change-label';
+import { TagControllerChangeLabel$Params } from '../fn/tags/tag-controller-change-label';
 import { tagControllerChangeStatus } from '../fn/tags/tag-controller-change-status';
 import { TagControllerChangeStatus$Params } from '../fn/tags/tag-controller-change-status';
 import { tagControllerCreate } from '../fn/tags/tag-controller-create';
@@ -195,6 +197,33 @@ export class TagsService extends BaseService {
     const resp = this.tagControllerHistory$Response(params, context);
     return resp.pipe(
       map((r: StrictHttpResponse<TagHistoryPage>): TagHistoryPage => r.body)
+    );
+  }
+
+  /** Path part for operation `tagControllerChangeLabel()` */
+  static readonly TagControllerChangeLabelPath = '/api/v1/tags/{tagId}/label';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `tagControllerChangeLabel()` instead.
+   *
+   * This method sends `application/json` and handles request body of type `application/json`.
+   */
+  tagControllerChangeLabel$Response(params: TagControllerChangeLabel$Params, context?: HttpContext): Observable<StrictHttpResponse<TagResponse>> {
+    const obs = tagControllerChangeLabel(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `tagControllerChangeLabel$Response()` instead.
+   *
+   * This method sends `application/json` and handles request body of type `application/json`.
+   */
+  tagControllerChangeLabel(params: TagControllerChangeLabel$Params, context?: HttpContext): Observable<TagResponse> {
+    const resp = this.tagControllerChangeLabel$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<TagResponse>): TagResponse => r.body)
     );
   }
 

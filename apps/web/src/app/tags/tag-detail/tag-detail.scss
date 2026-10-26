@@ -18,3 +18,10 @@ summary { cursor: pointer; padding-block: .4rem; }
   .tag-data dd { margin-bottom: .75rem; }
   .detail-actions { flex-direction: column; align-items: stretch; }
 }
+
+.auth-panel .label-value { background: transparent; color: var(--ink); text-align: start; padding: .15rem .25rem;
+  border: 1px solid transparent; overflow-wrap: anywhere; max-width: 100%; }
+.label-value:hover { border-color: var(--line); }
+.label-value span { color: var(--muted); margin-inline-start: .4rem; }
+.label-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+.label-editor { margin: 0; }

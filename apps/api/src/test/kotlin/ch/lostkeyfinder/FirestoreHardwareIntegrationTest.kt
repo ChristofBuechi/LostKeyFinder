@@ -173,6 +173,20 @@ class FirestoreHardwareIntegrationTest {
                     assertFailsWith<ResponseStatusException> { tagService.release(owners[0], draftTag.id) }.statusCode.value(),
                 )
 
+                val labelTarget = template.findById(draftTag.id, Tag::class.java)!!
+                assertFailsWith<IllegalStateException> {
+                    TagService(template, TagCreationLimit(template), aborting).changeLabel(owners[1], labelTarget.id, "Updated keys")
+                }
+                assertEquals(labelTarget, template.findById(labelTarget.id, Tag::class.java))
+                assertEquals("Updated keys", tagService.changeLabel(owners[1], labelTarget.id, "  Updated keys  ").label)
+                val labelAudit =
+                    template.findOne(
+                        query(where("resourceId").`is`(labelTarget.id).and("action").`is`("TAG_LABEL_CHANGED")),
+                        TagAudit::class.java,
+                    )!!
+                assertEquals(owners[1].id, labelAudit.actorUserId)
+                assertEquals("Updated keys", labelAudit.changes.single { it.field == "label" }.after)
+
                 val deleteTarget = template.findById(tags[2].id, Tag::class.java)!!
                 assertFailsWith<IllegalStateException> {
                     TagService(template, TagCreationLimit(template), aborting).adminDelete(admin, deleteTarget.id)
