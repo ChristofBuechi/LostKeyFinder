@@ -1,0 +1,45 @@
+<section class="auth-panel chat-panel" aria-labelledby="chat-title">
+  <h1 id="chat-title">{{ copy().title }}</h1>
+  @if (!auth.signedIn()) {
+    <p>{{ copy().signIn }}</p>
+    <form (submit)="login($event)">
+      <label for="chat-email">E-Mail</label><input id="chat-email" type="email" name="email" autocomplete="email" required [(ngModel)]="email" [disabled]="busy()">
+      <button type="submit" [disabled]="busy() || !auth.configured">{{ busy() ? copy().sending : copy().send }}</button>
+    </form>
+  } @else {
+    @if (chat.isLoading() && !chat.hasValue()) { <p role="status">{{ copy().loading }}</p> }
+    @if (chat.error()) { <p role="alert">{{ copy().error }}</p><button type="button" (click)="chat.reload()">{{ copy().retry }}</button> }
+    @if (chat.hasValue()) {
+      @if (messageId()) { <button type="button" (click)="newest()">{{ copy().newest }}</button> }
+      @if (before()) { <button type="button" (click)="older()" [disabled]="loadingOlder()">{{ copy().older }}</button> }
+      <ol class="messages" aria-live="polite" aria-relevant="additions">
+        @for (message of messages(); track message.id) {
+          <li [id]="'message-' + message.id" [class.mine]="message.senderUserId === me.value()?.id">
+            <strong>{{ message.senderUserId === me.value()?.id ? copy().you : copy().other }}</strong> · <time [attr.datetime]="message.createdAt">{{ message.createdAt | date:'yyyy-MM-dd HH:mm' }}</time>
+            <p>{{ message.text }}</p>
+            @if (message.imageId) { <app-chat-image [imageId]="message.imageId" /> }
+          </li>
+        }
+      </ol>
+      @if (chat.value().writable) {
+        <form (submit)="send($event, attachment)">
+          <label for="chat-message">{{ copy().message }}</label>
+          <textarea id="chat-message" name="message" rows="4" maxlength="2000" [ngModel]="text()" (ngModelChange)="text.set($event)" [disabled]="busy()"></textarea>
+          <label for="chat-image">{{ copy().image }}</label>
+          <input #attachment id="chat-image" type="file" accept="image/jpeg,image/png" aria-describedby="chat-image-hint" (change)="chooseImage($event)" [disabled]="busy()">
+          <p id="chat-image-hint">{{ copy().imageHint }}</p>
+          <button type="submit" [disabled]="busy()">{{ busy() ? copy().sending : copy().send }}</button>
+        </form>
+      } @else { <p role="status">{{ copy().closed }}</p> }
+      @if (chat.value().canClose) {
+        @if (confirmingClose()) {
+          <p>{{ copy().closeHint }}</p>
+          <button type="button" (click)="close()" [disabled]="busy()">{{ copy().closeConfirm }}</button>
+          <button type="button" (click)="confirmingClose.set(false)" [disabled]="busy()">{{ copy().cancel }}</button>
+        } @else { <button class="close-case" type="button" (click)="confirmingClose.set(true)">{{ copy().close }}</button> }
+      }
+    }
+    <p><a routerLink="/chats">{{ copy().back }}</a></p>
+  }
+  @if (error()) { <p role="alert">{{ copy().error }}</p> }
+</section>

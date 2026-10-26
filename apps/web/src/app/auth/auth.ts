@@ -29,6 +29,8 @@ export class Auth {
   private readonly client = inject(AUTH_CLIENT);
   private readonly callback = inject(AUTH_CALLBACK);
   readonly registrationId = this.callback.registrationId;
+  readonly finderReportId = this.callback.finderReportId;
+  readonly chatId = this.callback.chatId;
   private readonly signedInState = signal(false);
   readonly signedIn = this.signedInState.asReadonly();
   private readonly configuration = inject(AUTH_CONFIGURATION);
@@ -50,7 +52,7 @@ export class Auth {
     this.signedInState.set(!!client.auth.currentUser);
   }
 
-  async sendLink(email: string, registrationId?: string): Promise<void> {
+  async sendLink(email: string, registrationId?: string, flow?: { finderReportId?: string; chatId?: string }): Promise<void> {
     const client = await this.client;
     if (!client) throw new Error('Auth unavailable');
     const continuation = new URL('/auth/callback', location.origin);
@@ -58,6 +60,11 @@ export class Auth {
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(registrationId)) throw new Error('Invalid registration');
       continuation.searchParams.set('registrationId', registrationId.toLowerCase());
     }
+    for (const [name, value] of Object.entries(flow ?? {})) {
+      if (!value || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) throw new Error('Invalid continuation');
+      continuation.searchParams.set(name, value.toLowerCase());
+    }
+    if (continuation.searchParams.size > 1) throw new Error('Invalid continuation');
     try {
       // Persist before sending so a successful link can always be completed here.
       localStorage.setItem(emailStorageKey, email.trim());

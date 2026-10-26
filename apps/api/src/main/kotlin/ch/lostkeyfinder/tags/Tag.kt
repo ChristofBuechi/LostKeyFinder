@@ -76,13 +76,15 @@ data class TagPage(
     val totalPages: Int,
 )
 
-@Schema(requiredProperties = ["id", "action", "createdAt", "actorUserId", "changes"])
+@Schema(requiredProperties = ["id", "action", "createdAt", "actorUserId", "changes", "chatId", "messageId"])
 data class TagHistoryEntry(
     val id: String,
     val action: String,
     val createdAt: Instant,
     val actorUserId: String?,
     val changes: List<TagChange>,
+    val chatId: String? = null,
+    val messageId: String? = null,
 )
 
 @Schema(requiredProperties = ["items", "page", "totalPages"])

@@ -3,6 +3,7 @@
 
 export { TagBatchesService } from './services/tag-batches.service';
 export { AdminTagsService } from './services/admin-tags.service';
+export { ChatService } from './services/chat.service';
 export { HealthService } from './services/health.service';
 export { UsersService } from './services/users.service';
 export { TagRegistrationService } from './services/tag-registration.service';

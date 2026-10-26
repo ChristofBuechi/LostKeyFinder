@@ -1,5 +1,6 @@
 # Architektur
 
+> Aktualisierung 26.10.2026: Für Fundmeldungen und Chats gilt [Chat-Umsetzung](chat-implementation.md). Kostenloses Schreiben mit Text/Bildern, feste Teilnehmerrechte, keine automatische 30-Tage-Schreibfrist; frühere widersprechende Zahlungs-/Fristenregeln sind für diesen Ausbau überholt. SMTP und Scheduler benötigen vor echtem Versand ihre Umgebungskonfiguration.
 ## Stack
 
 | Bereich | Entscheidung |

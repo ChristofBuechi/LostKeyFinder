@@ -5,6 +5,7 @@ import { CurrentUserResponse, UsersService } from '@lost-key-finder/api-client';
 import { firstValueFrom } from 'rxjs';
 import { Auth } from '../auth/auth';
 import { LanguageService } from '../core/language.service';
+import { ChatCopy } from '../chat/chat-copy';
 import { TagCopy } from '../tags/tag-copy';
 
 @Component({
@@ -19,6 +20,7 @@ export class Account implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly users = inject(UsersService);
   protected readonly language = inject(LanguageService);
+  protected readonly chatCopy = inject(ChatCopy).text;
   protected readonly tagCopy = inject(TagCopy).text;
   protected readonly user = signal<CurrentUserResponse | null>(null);
   protected readonly loading = signal(false);
