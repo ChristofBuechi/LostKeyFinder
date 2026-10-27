@@ -1,17 +1,18 @@
+import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { Component, DestroyRef, ElementRef, Renderer2, inject, signal, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import type QrScanner from 'qr-scanner';
-import { LanguageService } from '../../core/language.service';
 import { publicTagId } from '../public-tag-id';
 import { QR_READER } from '../qr-reader';
 
 @Component({
   selector: 'app-finder-entry',
+  imports: [TranslocoPipe],
   templateUrl: './finder-entry.html',
   styleUrl: './finder-entry.scss',
 })
 export class FinderEntry {
-  protected readonly language = inject(LanguageService);
+  private readonly translations = inject(TranslocoService);
   protected readonly tag = signal('');
   protected readonly scanning = signal(false);
   protected readonly readingImage = signal(false);
@@ -71,7 +72,7 @@ export class FinderEntry {
     const video = this.renderer.createElement('video') as HTMLVideoElement;
     this.renderer.setProperty(video, 'muted', true);
     this.renderer.setAttribute(video, 'playsinline', '');
-    this.renderer.setAttribute(video, 'aria-label', this.language.copy().scanPreview);
+    this.renderer.setAttribute(video, 'aria-label', this.translations.translate('common.scanPreview'));
     this.renderer.appendChild(container, video);
     this.renderer.appendChild(this.preview().nativeElement, container);
     this.previewContainer = container;

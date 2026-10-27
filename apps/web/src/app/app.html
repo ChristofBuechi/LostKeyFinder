@@ -1,22 +1,22 @@
-<a class="skip-link" href="#main-content" (click)="focusContent($event)">{{ language.copy().skip }}</a>
+<a class="skip-link" href="#main-content" (click)="focusContent($event)">{{ ('common.skip' | transloco) }}</a>
 
 <header class="site-header">
   <a class="brand" routerLink="/">
-    <span class="brand-mark" aria-hidden="true">{{ language.copy().brandMark }}</span>
-    <span>{{ language.copy().brand }}</span>
+    <span class="brand-mark" aria-hidden="true">{{ ('common.brandMark' | transloco) }}</span>
+    <span>{{ ('common.brand' | transloco) }}</span>
   </a>
-  <a class="account-link" [routerLink]="auth.signedIn() ? '/account' : '/'" [fragment]="auth.signedIn() ? undefined : 'owner'">{{ auth.signedIn() ? language.copy().account : language.copy().signIn }}</a>
-  <button class="language-toggle" type="button" (click)="toggleLanguage()" [disabled]="languagePreference.busy()" [attr.aria-label]="(language.copy().switchCode + ': ') + language.copy().switchLabel">
-    {{ language.copy().switchCode }}
+  <a class="account-link" [routerLink]="auth.signedIn() ? '/account' : '/'" [fragment]="auth.signedIn() ? undefined : 'owner'">{{ auth.signedIn() ? ('common.account' | transloco) : ('common.signIn' | transloco) }}</a>
+  <button class="language-toggle" type="button" (click)="toggleLanguage()" [disabled]="languagePreference.busy()" [attr.aria-label]="(('common.switchCode' | transloco) + ': ') + ('common.switchLabel' | transloco)">
+    {{ ('common.switchCode' | transloco) }}
   </button>
 </header>
-@if (languagePreference.failed()) { <p class="language-error" role="alert">{{ language.copy().languageFailed }}</p> }
+@if (languagePreference.failed()) { <p class="language-error" role="alert">{{ ('common.languageFailed' | transloco) }}</p> }
 
 <main id="main-content" tabindex="-1">
   @if (contentAllowed()) { <router-outlet /> }
 </main>
 
 <footer class="site-footer">
-  <span>{{ language.copy().footer }}</span>
-  <span>{{ language.copy().languageName }}</span>
+  <span>{{ ('common.footer' | transloco) }}</span>
+  <span>{{ ('common.languageName' | transloco) }}</span>
 </footer>

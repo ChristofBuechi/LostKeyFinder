@@ -52,6 +52,9 @@
               ],
               "outputHashing": "all"
             },
+            "testing": {
+              "polyfills": ["zone.js", "@angular/compiler"]
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,
@@ -83,7 +86,9 @@
           "options": {
             "tsConfig": "tsconfig.spec.json",
             "runner": "vitest",
-            "watch": false
+            "watch": false,
+            "providersFile": "src/test-providers.ts",
+            "buildTarget": "web:build:development,testing"
           }
         }
       }

@@ -1,16 +1,16 @@
-import { Component, inject } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { LanguageService } from '../core/language.service';
 
 @Component({
   selector: 'app-not-found',
   standalone: true,
-  imports: [RouterLink],
+  imports: [TranslocoPipe, RouterLink],
   template: `
     <section class="not-found" aria-labelledby="not-found-title">
       <p class="eyebrow">404</p>
-      <h1 id="not-found-title">{{ language.copy().notFoundTitle }}</h1>
-      <a routerLink="/">{{ language.copy().notFoundLink }}</a>
+      <h1 id="not-found-title">{{ ('common.notFoundTitle' | transloco) }}</h1>
+      <a routerLink="/">{{ ('common.notFoundLink' | transloco) }}</a>
     </section>
    `,
   styles: [`
@@ -20,6 +20,4 @@ import { LanguageService } from '../core/language.service';
     a { color: var(--ink); font-weight: 750; text-decoration-color: var(--signal); text-underline-offset: .3rem; }
    `],
 })
-export class NotFound {
-  protected readonly language = inject(LanguageService);
-}
+export class NotFound {}

@@ -17,10 +17,10 @@
             <label for="registration-email">{{ copy().email }}</label>
             <input id="registration-email" type="email" autocomplete="email" [formField]="emailForm.email"
               [attr.aria-invalid]="submitted() && emailForm.email().invalid()" aria-describedby="registration-email-hint">
-            <p id="registration-email-hint">{{ language.copy().emailHint }}</p>
-            @if (submitted() && emailForm.email().invalid()) { <p role="alert">{{ language.copy().emailInvalid }}</p> }
-            @if (!auth.configured) { <p>{{ language.copy().authUnavailable }}</p> }
-            <button type="submit" [disabled]="busy() || !auth.configured">{{ busy() ? language.copy().sendingLink : copy().registerEmail }}</button>
+            <p id="registration-email-hint">{{ ('common.emailHint' | transloco) }}</p>
+            @if (submitted() && emailForm.email().invalid()) { <p role="alert">{{ ('common.emailInvalid' | transloco) }}</p> }
+            @if (!auth.configured) { <p>{{ ('common.authUnavailable' | transloco) }}</p> }
+            <button type="submit" [disabled]="busy() || !auth.configured">{{ busy() ? ('common.sendingLink' | transloco) : copy().registerEmail }}</button>
           </form>
         }
       }
@@ -32,5 +32,5 @@
     }
   }
   @if (failure(); as error) { <p role="alert">{{ errorText(error) }}</p><button type="button" (click)="resolution.reload()" [disabled]="busy()">{{ copy().retry }}</button> }
-  <a routerLink="/" fragment="finder">{{ language.copy().anotherTag }}</a>
+  <a routerLink="/" fragment="finder">{{ ('common.anotherTag' | transloco) }}</a>
 </section>

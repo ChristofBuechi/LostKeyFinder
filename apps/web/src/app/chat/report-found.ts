@@ -1,3 +1,4 @@
+import { translateSection } from '../core/translations';
 import { httpResource } from '@angular/common/http';
 import { Component, DestroyRef, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -5,7 +6,6 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ChatService as ChatApi, FinderStarted, CurrentUserResponse } from '@lost-key-finder/api-client';
 import { Auth } from '../auth/auth';
-import { ChatCopy } from './chat-copy';
 
 @Component({
   selector: 'app-report-found', imports: [FormsModule],
@@ -26,7 +26,7 @@ import { ChatCopy } from './chat-copy';
 export class ReportFound {
   readonly publicId = input.required<string>();
   protected readonly auth = inject(Auth);
-  protected readonly copy = inject(ChatCopy).text;
+  protected readonly copy = translateSection('chat');
   private readonly chats = inject(ChatApi);
   private readonly router = inject(Router);
   private readonly destroy = inject(DestroyRef);

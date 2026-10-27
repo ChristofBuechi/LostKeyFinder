@@ -15,7 +15,11 @@ Neue Texte in beiden Dateien ergänzen. In E-Mails werden benannte Platzhalter w
 
 ## Frontend
 
-Der `LanguageService` importiert beide JSON-Dateien direkt. Die bestehenden `TagCopy`- und `ChatCopy`-Services greifen lediglich auf deren Abschnitte zu und enthalten keine eigenen Texte. Der Sprachwechsel aktualisiert die Ansicht, `document.title`, das HTML-Sprachattribut und den lokalen Speicher.
+Transloco (`@jsverse/transloco`, stabiles Kernpaket) übernimmt Übersetzungen und Sprachwechsel im Frontend. `provideTranslations()` bindet die beiden JSON-Dateien über einen synchronen Loader ein; zusätzliche HTTP-Anfragen sind nicht nötig. Standard- und Fallback-Sprache ist Deutsch. Die Interpolationsmarker sind auf `{` und `}` eingestellt und entsprechen damit dem Backend.
+
+Allgemeine Texte verwenden die `transloco`-Pipe, beispielsweise `{{ 'common.email' | transloco }}`. Tag- und Chat-Texte verwenden `translateSection('tags')` bzw. `translateSection('chat')`, eine typisierte Anbindung an Transloco `translateObjectSignal`. Die bisherigen `TagCopy`- und `ChatCopy`-Services entfallen. Die Typen stammen direkt aus dem JSON-Katalog; Schlüssel und Platzhalter beider Sprachen werden weiterhin im gemeinsamen Test geprüft.
+
+Der `LanguageService` verwendet die aktive Sprache von Transloco und synchronisiert `document.title`, das HTML-Sprachattribut und den lokalen Speicher. Sprachpräferenz und Benutzerprofil bleiben Anwendungslogik; dafür werden keine zusätzlichen Transloco-Plugins eingesetzt. Die Testumgebung verwendet dieselben Provider und echten Kataloge wie die Anwendung.
 
 Ohne Anmeldung wird die Sprache lokal gespeichert; Standard ist Deutsch. Nach Anmeldung lädt die Anwendung `users.language`. Der Sprachschalter speichert Änderungen über `PATCH /api/v1/me/language` (`{"language":"de"}` oder `{"language":"en"}`). Während Laden/Speichern sind weitere Änderungen gesperrt. Bei fehlgeschlagener Speicherung wird die vorherige Sprache wiederhergestellt und ein übersetzter Fehler angezeigt. Alte Antworten eines anderen Kontos verändern die aktuelle Ansicht nicht.
 

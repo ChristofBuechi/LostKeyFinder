@@ -1,34 +1,34 @@
 <section class="entry-section" aria-labelledby="entry-title">
   <header class="entry-heading">
-    <h1 id="entry-title">{{ language.copy().loginPageTitle }}</h1>
-    <p>{{ language.copy().loginPageIntro }}</p>
+    <h1 id="entry-title">{{ ('common.loginPageTitle' | transloco) }}</h1>
+    <p>{{ ('common.loginPageIntro' | transloco) }}</p>
   </header>
   <div class="entry-grid">
     <app-finder-entry id="finder" />
     <section id="owner" class="auth-panel owner-panel" aria-labelledby="login-title">
-      <p class="eyebrow">{{ language.copy().ownerEyebrow }}</p>
-      <h2 id="login-title">{{ language.copy().loginTitle }}</h2>
-      <p>{{ language.copy().loginIntro }}</p>
+      <p class="eyebrow">{{ ('common.ownerEyebrow' | transloco) }}</p>
+      <h2 id="login-title">{{ ('common.loginTitle' | transloco) }}</h2>
+      <p>{{ ('common.loginIntro' | transloco) }}</p>
       @if (!auth.configured) {
-        <p role="status">{{ language.copy().authUnavailable }}</p>
+        <p role="status">{{ ('common.authUnavailable' | transloco) }}</p>
       } @else {
         <form id="owner-login" (submit)="send($event)" novalidate>
-          <label for="email">{{ language.copy().email }}</label>
+          <label for="email">{{ ('common.email' | transloco) }}</label>
           <input id="email" type="email" autocomplete="email" inputmode="email" spellcheck="false"
             [formField]="loginForm.email"
             [attr.aria-invalid]="loginForm.email().touched() && loginForm.email().invalid() ? 'true' : null"
             aria-describedby="email-hint email-error">
-          <p id="email-hint">{{ language.copy().emailHint }}</p>
+          <p id="email-hint">{{ ('common.emailHint' | transloco) }}</p>
           <p id="email-error" class="field-error">
-            @if (loginForm.email().touched() && loginForm.email().invalid()) { {{ language.copy().emailInvalid }} }
+            @if (loginForm.email().touched() && loginForm.email().invalid()) { {{ ('common.emailInvalid' | transloco) }} }
           </p>
           <button type="submit" [disabled]="loginForm().submitting()">
-            {{ loginForm().submitting() ? language.copy().sendingLink : language.copy().sendLink }}
+            {{ loginForm().submitting() ? ('common.sendingLink' | transloco) : ('common.sendLink' | transloco) }}
           </button>
-          @if (status() === 'failed') { <p role="alert">{{ language.copy().linkFailed }}</p> }
+          @if (status() === 'failed') { <p role="alert">{{ ('common.linkFailed' | transloco) }}</p> }
         </form>
       }
-      @if (auth.signedIn()) { <a routerLink="/account">{{ language.copy().account }}</a> }
+      @if (auth.signedIn()) { <a routerLink="/account">{{ ('common.account' | transloco) }}</a> }
     </section>
   </div>
 </section>

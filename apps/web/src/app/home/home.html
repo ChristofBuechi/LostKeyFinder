@@ -1,17 +1,17 @@
 <app-home-entry />
 
 <p class="service-status" aria-live="polite">
-  {{ language.copy()[apiStatus()] }}
+  {{ ('common.' + apiStatus() | transloco) }}
 </p>
 
 <section class="steps" id="how-it-works" aria-labelledby="steps-title">
   <div class="section-heading">
-    <p class="eyebrow">{{ language.copy().stepsEyebrow }}</p>
-    <h2 id="steps-title">{{ language.copy().stepsTitle }}</h2>
+    <p class="eyebrow">{{ ('common.stepsEyebrow' | transloco) }}</p>
+    <h2 id="steps-title">{{ ('common.stepsTitle' | transloco) }}</h2>
   </div>
   <div class="step-grid">
-    <article class="step-card"><span>01</span><h3>{{ language.copy().scan }}</h3><p>{{ language.copy().scanText }}</p></article>
-    <article class="step-card step-card-accent"><span>02</span><h3>{{ language.copy().confirm }}</h3><p>{{ language.copy().confirmText }}</p></article>
-    <article class="step-card"><span>03</span><h3>{{ language.copy().connect }}</h3><p>{{ language.copy().connectText }}</p></article>
+    <article class="step-card"><span>01</span><h3>{{ ('common.scan' | transloco) }}</h3><p>{{ ('common.scanText' | transloco) }}</p></article>
+    <article class="step-card step-card-accent"><span>02</span><h3>{{ ('common.confirm' | transloco) }}</h3><p>{{ ('common.confirmText' | transloco) }}</p></article>
+    <article class="step-card"><span>03</span><h3>{{ ('common.connect' | transloco) }}</h3><p>{{ ('common.connectText' | transloco) }}</p></article>
   </div>
 </section>

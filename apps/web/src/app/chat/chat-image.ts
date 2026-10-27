@@ -1,7 +1,7 @@
+import { translateSection } from '../core/translations';
 import { ChatService as ChatApi } from '@lost-key-finder/api-client';
 import { Component, DestroyRef, inject, input, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { ChatCopy } from './chat-copy';
 @Component({ selector: 'app-chat-image', template: `
   @if (url(); as source) { <a [href]="source" target="_blank" rel="noopener"><img [src]="source" [alt]="copy().attachment" loading="lazy"></a> }
   @else { <button type="button" (click)="load()" [disabled]="busy()">{{ busy() ? copy().loading : copy().showImage }}</button> }
@@ -9,7 +9,7 @@ import { ChatCopy } from './chat-copy';
   styles: `img { display: block; max-width: 100%; max-height: 28rem; object-fit: contain; border-radius: .5rem; }` })
 export class ChatImage {
   readonly imageId = input.required<string>();
-  protected readonly copy = inject(ChatCopy).text;
+  protected readonly copy = translateSection('chat');
   protected readonly url = signal<string | null>(null);
   protected readonly busy = signal(false);
   protected readonly error = signal(false);

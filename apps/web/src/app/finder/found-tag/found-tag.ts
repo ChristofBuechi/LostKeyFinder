@@ -1,3 +1,5 @@
+import { TranslocoPipe } from '@jsverse/transloco';
+import { translateSection } from '../../core/translations';
 import { ReportFound } from '../../chat/report-found';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -7,20 +9,17 @@ import { FormField, disabled, email, form, maxLength, required } from '@angular/
 import { firstValueFrom } from 'rxjs';
 import { CurrentUserResponse, PublicTagResponse, TagResponse, TagRegistrationService } from '@lost-key-finder/api-client';
 import { Auth } from '../../auth/auth';
-import { TagCopy } from '../../tags/tag-copy';
 import { tagError } from '../../tags/tag-error';
-import { LanguageService } from '../../core/language.service';
 
 @Component({
   selector: 'app-found-tag',
-  imports: [RouterLink, FormField, ReportFound],
+  imports: [TranslocoPipe, RouterLink, FormField, ReportFound],
   templateUrl: './found-tag.html',
   styleUrl: './found-tag.scss',
 })
 export class FoundTag {
-  protected readonly language = inject(LanguageService);
   protected readonly auth = inject(Auth);
-  protected readonly copy = inject(TagCopy).text;
+  protected readonly copy = translateSection('tags');
   private readonly route = inject(ActivatedRoute);
   private readonly params = toSignal(this.route.paramMap, { initialValue: this.route.snapshot.paramMap });
   protected readonly publicId = computed(() => this.params().get('publicId') ?? '');

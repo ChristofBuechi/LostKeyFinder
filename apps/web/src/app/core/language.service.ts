@@ -1,33 +1,27 @@
 import { DOCUMENT } from '@angular/common';
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
-
-import de from '../../../../../packages/translations/de.json';
-import en from '../../../../../packages/translations/en.json';
+import { Injectable, computed, effect, inject } from '@angular/core';
+import { TranslocoService, translateSignal } from '@jsverse/transloco';
 
 export type Language = 'de' | 'en';
 
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
   private readonly document = inject(DOCUMENT);
-  readonly language = signal<Language>(this.readStoredLanguage());
-  readonly translations = computed(() => this.language() === 'de' ? de : en);
-  readonly copy = computed(() => this.translations().common);
+  private readonly translations = inject(TranslocoService);
+  readonly language = computed<Language>(() => this.translations.activeLang() === 'en' ? 'en' : 'de');
+  private readonly brand = translateSignal('common.brand');
 
   constructor() {
+    this.setLanguage(localStorage.getItem('language') === 'en' ? 'en' : 'de');
     effect(() => {
       const language = this.language();
       this.document.documentElement.lang = language;
-      this.document.title = this.copy().brand;
+      this.document.title = this.brand();
       localStorage.setItem('language', language);
     });
   }
 
-  private readStoredLanguage(): Language {
-    return localStorage.getItem('language') === 'en' ? 'en' : 'de';
-  }
+  setLanguage(language: Language): void { this.translations.setActiveLang(language); }
 
-  toggle(): void {
-    this.language.update((current) => current === 'de' ? 'en' : 'de');
-  }
-
+  toggle(): void { this.setLanguage(this.language() === 'de' ? 'en' : 'de'); }
 }

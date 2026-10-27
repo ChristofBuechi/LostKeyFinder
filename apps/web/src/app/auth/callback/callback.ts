@@ -1,12 +1,12 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '../auth';
-import { LanguageService } from '../../core/language.service';
 
 @Component({
   selector: 'app-callback',
-  imports: [RouterLink, FormsModule],
+  imports: [TranslocoPipe, RouterLink, FormsModule],
   templateUrl: './callback.html',
   styleUrl: './callback.scss',
 })
@@ -15,7 +15,6 @@ export class Callback implements OnInit {
   protected email = '';
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
-  protected readonly language = inject(LanguageService);
   protected readonly failed = signal(false);
 
   async ngOnInit(): Promise<void> {

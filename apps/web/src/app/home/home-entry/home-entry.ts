@@ -1,19 +1,18 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormField, disabled, email, form, required, submit } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FinderEntry } from '../../finder/finder-entry/finder-entry';
 import { Auth } from '../../auth/auth';
-import { LanguageService } from '../../core/language.service';
 
 @Component({
   selector: 'app-home-entry',
-  imports: [FormField, RouterLink, FinderEntry],
+  imports: [TranslocoPipe, FormField, RouterLink, FinderEntry],
   templateUrl: './home-entry.html',
   styleUrl: './home-entry.scss',
 })
 export class HomeEntry {
   protected readonly auth = inject(Auth);
-  protected readonly language = inject(LanguageService);
   protected readonly model = signal({ email: '' });
   protected readonly status = signal<'idle' | 'failed'>('idle');
   private readonly route = inject(ActivatedRoute);

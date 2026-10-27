@@ -1,16 +1,15 @@
+import { TranslocoPipe } from '@jsverse/transloco';
+import { translateSection } from '../core/translations';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CurrentUserResponse, UsersService } from '@lost-key-finder/api-client';
 import { firstValueFrom } from 'rxjs';
 import { Auth } from '../auth/auth';
-import { LanguageService } from '../core/language.service';
-import { ChatCopy } from '../chat/chat-copy';
-import { TagCopy } from '../tags/tag-copy';
 
 @Component({
   selector: 'app-account',
-  imports: [RouterLink],
+  imports: [TranslocoPipe, RouterLink],
   templateUrl: './account.html',
   styleUrl: './account.scss',
 })
@@ -19,9 +18,8 @@ export class Account implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly users = inject(UsersService);
-  protected readonly language = inject(LanguageService);
-  protected readonly chatCopy = inject(ChatCopy).text;
-  protected readonly tagCopy = inject(TagCopy).text;
+  protected readonly chatCopy = translateSection('chat');
+  protected readonly tagCopy = translateSection('tags');
   protected readonly user = signal<CurrentUserResponse | null>(null);
   protected readonly loading = signal(false);
   protected readonly error = signal<'accountBlocked' | 'accountFailed' | 'sessionExpired' | 'logoutFailed' | null>(null);

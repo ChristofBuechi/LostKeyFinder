@@ -24,7 +24,7 @@ export class LanguagePreference {
       const request = untracked(() => this.http.get<CurrentUserResponse>('/api/v1/me').subscribe({
         next: user => {
           if (!this.isCurrent(identity)) return;
-          this.language.language.set(user.language === 'en' ? 'en' : 'de');
+          this.language.setLanguage(user.language === 'en' ? 'en' : 'de');
           this.busy.set(false);
         },
         error: () => {
@@ -46,7 +46,7 @@ export class LanguagePreference {
     try {
       await firstValueFrom(this.http.patch<CurrentUserResponse>('/api/v1/me/language', { language: this.language.language() }));
     } catch {
-      if (this.isCurrent(identity)) { this.language.language.set(previous); this.failed.set(true); }
+      if (this.isCurrent(identity)) { this.language.setLanguage(previous); this.failed.set(true); }
     } finally {
       if (this.isCurrent(identity)) this.busy.set(false);
     }
