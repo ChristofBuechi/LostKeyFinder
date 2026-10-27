@@ -205,20 +205,11 @@ class ChatService(
         id: String,
         user: User,
         before: Long?,
-        messageId: String? = null,
     ): MessagePage {
         authorized(id, user)
         if (before != null && before <= 0) bad("Invalid cursor")
         val selection = where("chatId").`is`(id)
-        if (messageId != null) {
-            TagService.uuid(messageId)
-            if (before != null) bad("Invalid cursor")
-            val target = template.findById(messageId, ChatMessage::class.java) ?: unavailable()
-            if (target.chatId != id) unavailable()
-            selection.and("sequence").lte(target.sequence)
-        } else if (before != null) {
-            selection.and("sequence").lt(before)
-        }
+        if (before != null) selection.and("sequence").lt(before)
         val messages = template.find(query(selection).with(Sort.by(Sort.Direction.DESC, "sequence")).limit(51), ChatMessage::class.java)
         return MessagePage(messages.take(50).reversed(), if (messages.size > 50) messages[49].sequence else null)
     }

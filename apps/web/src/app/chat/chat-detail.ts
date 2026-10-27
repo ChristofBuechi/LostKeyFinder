@@ -2,7 +2,7 @@ import { DOCUMENT, DatePipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
 import { Component, DestroyRef, computed, effect, inject, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { ChatService as ChatApi, ChatView, ChatMessage, MessagePage, CurrentUserResponse } from '@lost-key-finder/api-client';
@@ -16,18 +16,15 @@ export class ChatDetail {
   protected readonly auth = inject(Auth);
   protected readonly copy = inject(ChatCopy).text;
   private readonly chats = inject(ChatApi);
-  private readonly router = inject(Router);
   private readonly destroy = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
   private readonly route = inject(ActivatedRoute);
   private readonly params = toSignal(this.route.paramMap, { initialValue: this.route.snapshot.paramMap });
-  private readonly query = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
-  protected readonly messageId = computed(() => this.query()?.get('messageId') ?? null);
   protected readonly id = computed(() => this.params().get('chatId') ?? '');
   protected readonly chat = httpResource<ChatView>(() => this.auth.signedIn() ? `/api/v1/chats/${encodeURIComponent(this.id())}` : undefined);
   protected readonly me = httpResource<CurrentUserResponse>(() => this.auth.signedIn() ? '/api/v1/me' : undefined);
-  protected readonly latest = httpResource<MessagePage>(() => this.auth.signedIn() ? `/api/v1/chats/${encodeURIComponent(this.id())}/messages${this.messageId() ? '?messageId=' + encodeURIComponent(this.messageId()!) : ''}` : undefined);
-  protected readonly messages = linkedSignal({ source: () => `${this.id()}:${this.messageId()}:${this.auth.signedIn()}`, computation: (): ChatMessage[] => [] });
+  protected readonly latest = httpResource<MessagePage>(() => this.auth.signedIn() ? `/api/v1/chats/${encodeURIComponent(this.id())}/messages` : undefined);
+  protected readonly messages = linkedSignal({ source: () => `${this.id()}:${this.auth.signedIn()}`, computation: (): ChatMessage[] => [] });
   protected readonly before = computed(() => {
     const items = this.messages();
     if (!items.length) return null;
@@ -75,7 +72,6 @@ export class ChatDetail {
       if (this.id() === id && !this.destroy.destroyed) this.readThrough = through;
     }).catch(() => { /* next poll retries the read acknowledgement */ });
   }
-  protected newest(): void { void this.router.navigate([], { relativeTo: this.route, queryParams: {} }); }
   protected async older(): Promise<void> {
     if (!this.before() || this.loadingOlder()) return;
     this.loadingOlder.set(true); this.error.set(false);

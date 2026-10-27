@@ -215,6 +215,13 @@ class ChatHttpTest {
         repeat(52) { chats.send(chat, finder.second, "Message $it", null, id()) }
         val latest = chats.messages(chat, owner.second, null)
         assertEquals(50, latest.items.size)
+        mvc
+            .get("/api/v1/chats/$chat/messages?messageId=${latest.items.first().id}") {
+                header("Authorization", "Bearer ${owner.first}")
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.items[49].sequence") { value(54) }
+            }
         assertNotNull(latest.before)
         assertEquals(4, chats.messages(chat, owner.second, latest.before).items.size)
         assertTrue(chats.detail(chat, owner.second).unread > 0)
@@ -414,18 +421,6 @@ class ChatHttpTest {
             ),
         )
         val oldChat = report()
-        val oldMessage = chats.messages(oldChat, finder.second, null).items.single()
-        assertEquals(
-            oldMessage.id,
-            chats
-                .messages(oldChat, owner.second, null, oldMessage.id)
-                .items
-                .single()
-                .id,
-        )
-        val otherChat = report(stranger.second)
-        assertFailsWith<ResponseStatusException> { chats.messages(otherChat, owner.second, null, oldMessage.id) }
-        assertFailsWith<ResponseStatusException> { chats.messages(oldChat, owner.second, 1, oldMessage.id) }
         tags.release(owner.second, tag.id)
         assertFalse(chats.detail(oldChat, owner.second).writable)
         val next = login()

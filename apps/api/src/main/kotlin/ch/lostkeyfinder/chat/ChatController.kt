@@ -93,9 +93,8 @@ class ChatController(
     fun messages(
         @PathVariable chatId: String,
         @RequestParam(required = false) before: Long?,
-        @RequestParam(required = false) messageId: String?,
         @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
-    ) = chats.messages(chatId.lowercase(), users.currentUser(jwt), before, messageId)
+    ) = chats.messages(chatId.lowercase(), users.currentUser(jwt), before)
 
     @PostMapping("/chats/{chatId}/messages", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @SecurityRequirement(name = "bearerAuth")

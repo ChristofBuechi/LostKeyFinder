@@ -13,6 +13,8 @@ Stand: 26. Oktober 2026. Verbindliche Regeln dieses Ausbaus ersetzen die ältere
 - Admins dürfen alle Chats eines Tags lesen, aber nicht unter fremder Identität schreiben, Lesestände ändern oder allein kraft Adminrecht einen Fall abschliessen.
 - Chat-Erstellung, Nachrichten und Abschluss erscheinen mit stabilen Chat-/Nachrichtenreferenzen in der Historie. Inhalte bleiben ausschliesslich in Nachrichten/Bildern. Normale Tag-Historien enthalten nur die Chats mit eigener Teilnehmerzuordnung, Admins alle.
 
+Historienlinks öffnen immer den aktuellen Chat, keine einzelne Nachricht. Ältere Nachrichten bleiben seitenweise nachladbar. Öffnen und Antworten aktualisieren den Lesestand.
+
 ## Ablauf und Daten
 
 Ein Scan öffnet `/f/{publicId}`. Der Finder erfasst Nachricht, optionales Bild und E-Mail. Ein maximal vier Stunden gültiger `finderReportDrafts`-Datensatz entsteht; er vermittelt keinen Chat-Zugriff. Firebase bestätigt die E-Mail, auch auf einem anderen Gerät. Die API prüft die bestätigte Adresse und die unveränderte Besitzerzuordnung erneut. Erst dann entstehen Fall, privater Chat, Initialnachricht, Historie und Benachrichtigungsauftrag transaktional. Bereits angemeldete Finder benötigen keinen weiteren Anmeldelink.

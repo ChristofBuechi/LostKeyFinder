@@ -56,6 +56,21 @@ describe('Finder reports and private chat', () => {
     fixture.destroy();
   });
 
+  it('opens the current conversation even when an old link contains a message reference', async () => {
+    signedIn.set(true);
+    Object.defineProperty(TestBed.inject(ActivatedRoute), 'queryParamMap', { value: of(convertToParamMap({ messageId: id })) });
+    const fixture = TestBed.createComponent(ChatDetail);
+    await respond(`/api/v1/chats/${id}`, { id, sequence: 2, participant: true, writable: true });
+    await respond('/api/v1/me', { id: 'owner', isAdmin: false });
+    await respond(`/api/v1/chats/${id}/messages`, { items: [message, { ...message, id: 'reply', sequence: 2, text: 'Latest reply' }], before: null });
+    const read = await respond(`/api/v1/chats/${id}/read`, {});
+    expect(read.request.body).toEqual({ through: 2 });
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelectorAll('.messages li')).toHaveLength(2);
+    expect(fixture.nativeElement.textContent).toContain('Latest reply');
+    fixture.destroy();
+  });
+
   it('sends text with a stable idempotency key after failure and preserves the draft', async () => {
     signedIn.set(true);
     const fixture = TestBed.createComponent(ChatDetail);

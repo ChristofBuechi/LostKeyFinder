@@ -12,7 +12,6 @@ import { MessagePage } from '../../models/message-page';
 export interface ChatControllerMessages$Params {
   chatId: string;
   before?: number;
-  messageId?: string;
 }
 
 export function chatControllerMessages(http: HttpClient, rootUrl: string, params: ChatControllerMessages$Params, context?: HttpContext): Observable<StrictHttpResponse<MessagePage>> {
@@ -20,7 +19,6 @@ export function chatControllerMessages(http: HttpClient, rootUrl: string, params
   if (params) {
     rb.path('chatId', params.chatId, {});
     rb.query('before', params.before, {});
-    rb.query('messageId', params.messageId, {});
   }
 
   return http.request(
