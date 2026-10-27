@@ -12,12 +12,18 @@ import javax.imageio.ImageIO
 
 @Component
 class ChatImages {
-    private val slots = Semaphore(2)
+    // ponytail: wait in the HTTP request; no separate worker or persistent queue.
+    private val slots = Semaphore(2, true)
 
     fun sanitize(file: MultipartFile?): ByteArray? {
         if (file == null || file.isEmpty) return null
         if (file.size > 5_000_000) throw ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Image too large")
-        if (!slots.tryAcquire()) throw ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Image processing busy")
+        try {
+            slots.acquire()
+        } catch (ex: InterruptedException) {
+            Thread.currentThread().interrupt()
+            throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Image processing interrupted")
+        }
         try {
             ImageIO.createImageInputStream(ByteArrayInputStream(file.bytes)).use { input ->
                 val readers = ImageIO.getImageReaders(input)

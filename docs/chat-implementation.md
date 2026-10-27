@@ -34,7 +34,7 @@ Ergänzte Collections:
 
 Kein Einbetten wachsender Verläufe in `tags` oder `users`. Bestehende Collections und Daten bleiben erhalten; kein Datenbankreset. Ein technischer `tags.chatVersion`-Zähler serialisiert Meldung/Versand gegen parallele Besitzerfreigabe und Löschung. Wiederholungen verwenden stabile UUID-Idempotenzschlüssel. Eine neue Meldung desselben Finders im aktiven Fall ergänzt seinen bestehenden Chat; derselbe Meldungsabschluss bleibt ohne doppelte Nachricht wiederholbar. API-Zugriffe prüfen das aktive lokale Benutzerkonto bei jedem Request.
 
-Chatlisten haben 25 Einträge pro Seite, Nachrichten werden in Fenstern zu 50 geladen. Offene Chatseiten aktualisieren sich alle zehn Sekunden im sichtbaren Browserfenster. Keine WebSockets, Lesebestätigungen für den Gegenüber, Nachrichtenedits oder Nachrichtenlöschung.
+Chatlisten haben 25 Einträge pro Seite, Nachrichten werden in Fenstern zu 50 geladen. Offene Chatseiten aktualisieren sich alle zehn Sekunden im sichtbaren Browserfenster. Keine WebSockets, Lesebestätigungen für den Gegenüber, Nachrichtenedits oder Nachrichtenlöschung. Pro Backend-Instanz werden höchstens zwei Bilder gleichzeitig verarbeitet. Weitere Anfragen warten über eine faire Semaphore im laufenden HTTP-Request auf einen Platz; es gibt keine separate oder persistente Queue. Request-/Plattform-Timeouts gelten weiterhin.
 
 ## E-Mail und Betrieb
 
