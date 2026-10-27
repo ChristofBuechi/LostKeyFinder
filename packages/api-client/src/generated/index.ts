@@ -6,6 +6,7 @@ export { RequestBuilder } from './request-builder';
 export type { StrictHttpResponse } from './strict-http-response';
 export { Api } from './api';
 
+export type { ChangeLanguageRequest } from './models/change-language-request';
 export type { ChangeTagLabelRequest } from './models/change-tag-label-request';
 export type { ChangeTagStatusRequest } from './models/change-tag-status-request';
 export type { ChatMessage } from './models/chat-message';
@@ -89,6 +90,8 @@ export type { HealthControllerReady$Params as HealthControllerReady$Params } fro
 export { healthControllerReady as healthControllerReady } from './fn/health/health-controller-ready';
 export type { UserControllerMe$Params as UserControllerMe$Params } from './fn/users/user-controller-me';
 export { userControllerMe as userControllerMe } from './fn/users/user-controller-me';
+export type { UserControllerChangeLanguage$Params as UserControllerChangeLanguage$Params } from './fn/users/user-controller-change-language';
+export { userControllerChangeLanguage as userControllerChangeLanguage } from './fn/users/user-controller-change-language';
 export type { TagRegistrationControllerResolve$Params as TagRegistrationControllerResolve$Params } from './fn/tag-registration/tag-registration-controller-resolve';
 export { tagRegistrationControllerResolve as tagRegistrationControllerResolve } from './fn/tag-registration/tag-registration-controller-resolve';
 export type { TagRegistrationControllerStart$Params as TagRegistrationControllerStart$Params } from './fn/tag-registration/tag-registration-controller-start';

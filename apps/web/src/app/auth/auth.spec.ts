@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AUTH_CALLBACK, AUTH_CLIENT, Auth } from './auth';
+import { LanguageService } from '../core/language.service';
 
 describe('Firebase email-link session lifecycle', () => {
   const user = { uid: 'firebase-owner', getIdToken: vi.fn().mockResolvedValue('token') };
-  let client: { auth: { currentUser: typeof user | null; authStateReady: ReturnType<typeof vi.fn> };
+  let client: { auth: { languageCode?: string; currentUser: typeof user | null; authStateReady: ReturnType<typeof vi.fn> };
     sdk: Record<string, ReturnType<typeof vi.fn>> };
   beforeEach(() => {
     TestBed.resetTestingModule();
@@ -30,6 +31,10 @@ describe('Firebase email-link session lifecycle', () => {
       url: `${location.origin}/auth/callback`, handleCodeInApp: true,
     });
     expect(localStorage.getItem('firebaseEmailForSignIn')).toBe('owner@example.com');
+    expect(client.auth.languageCode).toBe('de');
+    TestBed.inject(LanguageService).toggle();
+    await auth.sendLink('owner@example.com');
+    expect(client.auth.languageCode).toBe('en');
   });
 
   it('completes once using the locally stored email and rejects replay', async () => {

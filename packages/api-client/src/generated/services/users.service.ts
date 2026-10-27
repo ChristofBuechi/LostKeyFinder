@@ -11,6 +11,8 @@ import { ApiConfiguration } from '../api-configuration';
 import { StrictHttpResponse } from '../strict-http-response';
 
 import { CurrentUserResponse } from '../models/current-user-response';
+import { userControllerChangeLanguage } from '../fn/users/user-controller-change-language';
+import { UserControllerChangeLanguage$Params } from '../fn/users/user-controller-change-language';
 import { userControllerMe } from '../fn/users/user-controller-me';
 import { UserControllerMe$Params } from '../fn/users/user-controller-me';
 
@@ -50,6 +52,41 @@ export class UsersService extends BaseService {
    */
   userControllerMe(params?: UserControllerMe$Params, context?: HttpContext): Observable<CurrentUserResponse> {
     const resp = this.userControllerMe$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<CurrentUserResponse>): CurrentUserResponse => r.body)
+    );
+  }
+
+  /** Path part for operation `userControllerChangeLanguage()` */
+  static readonly UserControllerChangeLanguagePath = '/api/v1/me/language';
+
+  /**
+   * Set the authenticated user's preferred language.
+   *
+   *
+   *
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `userControllerChangeLanguage()` instead.
+   *
+   * This method sends `application/json` and handles request body of type `application/json`.
+   */
+  userControllerChangeLanguage$Response(params: UserControllerChangeLanguage$Params, context?: HttpContext): Observable<StrictHttpResponse<CurrentUserResponse>> {
+    const obs = userControllerChangeLanguage(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * Set the authenticated user's preferred language.
+   *
+   *
+   *
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `userControllerChangeLanguage$Response()` instead.
+   *
+   * This method sends `application/json` and handles request body of type `application/json`.
+   */
+  userControllerChangeLanguage(params: UserControllerChangeLanguage$Params, context?: HttpContext): Observable<CurrentUserResponse> {
+    const resp = this.userControllerChangeLanguage$Response(params, context);
     return resp.pipe(
       map((r: StrictHttpResponse<CurrentUserResponse>): CurrentUserResponse => r.body)
     );

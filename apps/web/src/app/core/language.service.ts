@@ -1,190 +1,27 @@
 import { DOCUMENT } from '@angular/common';
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject } from '@angular/core';
+import { TranslocoService, translateSignal } from '@jsverse/transloco';
 
 export type Language = 'de' | 'en';
 
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
   private readonly document = inject(DOCUMENT);
-  readonly language = signal<Language>(this.readStoredLanguage());
-  readonly copy = computed(() => this.language() === 'de' ? {
-    skip: 'Zum Inhalt springen',
-    switchLabel: 'Auf Englisch wechseln',
-    languageName: 'Deutsch · English',
-    footer: 'Verloren ist nicht für immer.',
-    eyebrow: 'Sicher zurückgeben',
-    title: 'Ein verlorener Gegenstand. Ein sicherer Weg zurück.',
-    intro: 'Lost Key Finder verbindet Finder und Besitzer über einen QR-Tag, ohne private Kontaktdaten offenzulegen.',
-    how: 'So funktioniert es',
-    found: 'Ich habe etwas gefunden',
-    promise: 'Keine Namen. Kein Umweg. Nur der direkte Weg zurück.',
-    stepsEyebrow: 'In drei Schritten',
-    stepsTitle: 'Rückgabe, ohne mehr preiszugeben als nötig.',
-    scan: 'Scannen',
-    scanText: 'Finder scannen den QR-Code auf deinem Tag und hinterlassen eine Nachricht.',
-    confirm: 'Bestätigen',
-    confirmText: 'Eine sichere E-Mail-Bestätigung schützt beide Seiten vor Missbrauch.',
-    connect: 'Verbinden',
-    connectText: 'Ihr schreibt privat miteinander und vereinbart die Rückgabe selbst.',
-    finderEyebrow: 'Für neue und bestehende Tags',
-    finderTitle: 'Du hast etwas gefunden?',
-    finderText: 'Scanne den Tag. Wir kümmern uns um den sicheren ersten Kontakt.',
-    promiseLabel: 'Produktversprechen',
-    checking: 'Verbindung wird geprüft',
-    available: 'Dienst verfügbar',
-    unavailable: 'Dienst vorübergehend nicht verfügbar',
-    notFoundTitle: 'Diese Seite ist nicht zurückzufinden.',
-    notFoundLink: 'Zur Startseite',
-    signIn: 'Anmelden',
-    emailSignIn: 'Mit E-Mail anmelden',
-    loginPageTitle: 'Wie können wir dir helfen?',
-    loginPageIntro: 'Du hast etwas gefunden oder möchtest deine eigenen Tags verwalten?',
-    ownerEyebrow: 'Für Besitzer',
-    finderEntryTitle: 'Tag scannen oder eingeben',
-    finderEntryIntro: 'Registriere einen neuen Anhänger oder rufe einen vorhandenen Tag auf.',
-    tagId: 'Tag-ID oder Tag-Link',
-    tagHint: 'Die Tag-ID steht auf dem Anhänger. Du kannst auch den vollständigen Tag-Link einfügen.',
-    openTag: 'Tag aufrufen',
-    scanQr: 'QR-Code scannen',
-    chooseQrImage: 'QR-Bild auswählen',
-    scanStop: 'Kamera schliessen',
-    scanPreview: 'Kameravorschau zum Scannen des QR-Codes',
-    scanInstruction: 'Halte den QR-Code in den markierten Bereich. Die Kamera wird nach dem Scan geschlossen.',
-    scanPrivacy: 'Das Kamerabild und QR-Bilder werden nur auf deinem Gerät ausgewertet.',
-    invalidTag: 'Bitte gib eine gültige Tag-ID oder einen Tag-Link dieser Website ein.',
-    cameraFailed: 'Die Kamera konnte nicht gestartet werden. Prüfe die Kamerafreigabe, wähle ein QR-Bild oder gib die Tag-ID ein.',
-    imageFailed: 'In diesem Bild wurde kein gültiger Tag-QR-Code gefunden. Wähle ein anderes Bild oder gib die Tag-ID ein.',
-    imageBusy: 'QR-Bild wird geprüft …',
-    reportFound: 'Fund melden',
-    foundUnavailable: 'Für diesen Tag kann derzeit keine Fundmeldung gestartet werden. Bitte versuche es später noch einmal.',
-    anotherTag: 'Anderen Tag aufrufen',
-    linkSentTitle: 'Prüfe dein Postfach.',
-    linkSentIntro: 'Dein Anmeldelink wurde angefordert. Öffne ihn direkt aus der E-Mail, um dich anzumelden.',
-    linkSentClose: 'Du kannst diese Seite jetzt schliessen. Die Anmeldung geht im Browser weiter, den deine E-Mail öffnet.',
-    linkSentSpam: 'Keine E-Mail zu sehen? Prüfe auch den Spam- oder Junk-Ordner.',
-    linkSentDevice: 'Öffnet sich ein anderer Browser oder ein anderes Gerät, bestätige dort nochmals deine E-Mail-Adresse.',
-    requestAnotherLink: 'Andere Adresse oder neuen Link verwenden',
-    account: 'Mein Konto',
-    loginTitle: 'Dein sicherer Zugang.',
-    loginIntro: 'Melde dich mit einem einmaligen E-Mail-Link an. Du brauchst kein Passwort.',
-    email: 'E-Mail-Adresse',
-    emailHint: 'Öffne den Link aus deiner E-Mail. Ein anderer Browser oder ein anderes Gerät funktioniert ebenfalls.',
-    emailInvalid: 'Bitte gib eine gültige E-Mail-Adresse ein.',
-    sendLink: 'Anmeldelink senden',
-    sendingLink: 'Link wird gesendet …',
-    linkSent: 'Prüfe dein Postfach. Der Link kann nur einmal verwendet werden.',
-    linkFailed: 'Der Link konnte nicht gesendet werden. Bitte versuche es später erneut.',
-    authUnavailable: 'Die Anmeldung ist derzeit nicht verfügbar.',
-    callbackEmailNeeded: 'Bestätige deine E-Mail-Adresse, um den Anmeldelink auf diesem Gerät zu öffnen.',
-    callbackChecking: 'Dein Anmeldelink wird geprüft …',
-    callbackFailed: 'Dieser Link ist ungültig, abgelaufen oder gehört zu einem anderen Browser. Fordere einen neuen Link an.',
-    backToLogin: 'Zur Anmeldung',
-    accountLoading: 'Dein Konto wird geladen …',
-    accountIntro: 'Du bist angemeldet und kannst deine Tags verwalten.',
-    accountEmpty: 'Du hast noch keine Tags.',
-    accountBlocked: 'Für dieses Konto ist der Zugriff gesperrt.',
-    accountFailed: 'Dein Konto konnte nicht geladen werden. Bitte versuche es erneut.',
-    sessionExpired: 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.',
-    retry: 'Erneut versuchen',
-    logout: 'Abmelden',
-    logoutFailed: 'Die Abmeldung konnte nicht abgeschlossen werden. Bitte versuche es erneut.',
-  } : {
-    skip: 'Skip to content',
-    switchLabel: 'Switch to German',
-    languageName: 'English · Deutsch',
-    footer: 'Lost does not have to mean gone forever.',
-    eyebrow: 'Return with confidence',
-    title: 'A lost item. A safe way back.',
-    intro: 'Lost Key Finder connects finders and owners through a QR tag without exposing private contact details.',
-    how: 'How it works',
-    found: 'I found something',
-    promise: 'No names. No detours. Just a direct way back.',
-    stepsEyebrow: 'Three simple steps',
-    stepsTitle: 'Return what matters, without sharing more than necessary.',
-    scan: 'Scan',
-    scanText: 'Finders scan the QR code on your tag and leave a message.',
-    confirm: 'Confirm',
-    confirmText: 'A secure email confirmation protects both sides from misuse.',
-    connect: 'Connect',
-    connectText: 'You chat privately and arrange the return between you.',
-    finderEyebrow: 'For new and existing tags',
-    finderTitle: 'Found something?',
-    finderText: 'Scan the tag. We take care of the safe first contact.',
-    promiseLabel: 'Product promise',
-    checking: 'Checking connection',
-    available: 'Service available',
-    unavailable: 'Service temporarily unavailable',
-    notFoundTitle: 'This page could not be found.',
-    notFoundLink: 'Back to home',
-    signIn: 'Sign in',
-    emailSignIn: 'Sign in by email',
-    loginPageTitle: 'How can we help?',
-    loginPageIntro: 'Have you found something, or would you like to manage your own tags?',
-    ownerEyebrow: 'For owners',
-    finderEntryTitle: 'Scan or enter a tag',
-    finderEntryIntro: 'Register a new tag or open an existing one.',
-    tagId: 'Tag ID or tag link',
-    tagHint: 'The tag ID is printed on the tag. You can also paste the complete tag link.',
-    openTag: 'Open tag',
-    scanQr: 'Scan QR code',
-    chooseQrImage: 'Choose QR image',
-    scanStop: 'Close camera',
-    scanPreview: 'Camera preview for scanning the QR code',
-    scanInstruction: 'Hold the QR code inside the marked area. The camera closes after scanning.',
-    scanPrivacy: 'Camera frames and QR images are processed only on your device.',
-    invalidTag: 'Enter a valid tag ID or a tag link from this website.',
-    cameraFailed: 'The camera could not start. Check camera permissions, choose a QR image or enter the tag ID.',
-    imageFailed: 'No valid tag QR code was found in this image. Choose another image or enter the tag ID.',
-    imageBusy: 'Checking QR image …',
-    reportFound: 'Report a found item',
-    foundUnavailable: 'A report cannot currently be started for this tag. Please try again later.',
-    anotherTag: 'Open another tag',
-    linkSentTitle: 'Check your inbox.',
-    linkSentIntro: 'Your sign-in link has been requested. Open it directly from your email to sign in.',
-    linkSentClose: 'You can close this page now. Sign-in continues in the browser opened by your email.',
-    linkSentSpam: 'No email yet? Check your spam or junk folder as well.',
-    linkSentDevice: 'If the link opens in another browser or device, confirm your email address there again.',
-    requestAnotherLink: 'Use another address or request a new link',
-    account: 'My account',
-    loginTitle: 'Your secure way in.',
-    loginIntro: 'Sign in with a one-time email link. No password needed.',
-    email: 'Email address',
-    emailHint: 'Open the link from your email. Another browser or device works as well.',
-    emailInvalid: 'Please enter a valid email address.',
-    sendLink: 'Send sign-in link',
-    sendingLink: 'Sending link …',
-    linkSent: 'Check your inbox. The link can only be used once.',
-    linkFailed: 'The link could not be sent. Please try again later.',
-    authUnavailable: 'Sign-in is currently unavailable.',
-    callbackEmailNeeded: 'Confirm your email address to open the sign-in link on this device.',
-    callbackChecking: 'Checking your sign-in link …',
-    callbackFailed: 'This link is invalid, expired or belongs to another browser. Request a new link.',
-    backToLogin: 'Back to sign-in',
-    accountLoading: 'Loading your account …',
-    accountIntro: 'You are signed in and can manage your tags.',
-    accountEmpty: 'You have no tags yet.',
-    accountBlocked: 'Access to this account is blocked.',
-    accountFailed: 'Your account could not be loaded. Please try again.',
-    sessionExpired: 'Your session has expired. Please sign in again.',
-    retry: 'Try again',
-    logout: 'Sign out',
-    logoutFailed: 'Sign-out could not be completed. Please try again.',
-  });
+  private readonly translations = inject(TranslocoService);
+  readonly language = computed<Language>(() => this.translations.activeLang() === 'en' ? 'en' : 'de');
+  private readonly brand = translateSignal('common.brand');
 
   constructor() {
+    this.setLanguage(localStorage.getItem('language') === 'en' ? 'en' : 'de');
     effect(() => {
       const language = this.language();
       this.document.documentElement.lang = language;
+      this.document.title = this.brand();
       localStorage.setItem('language', language);
     });
   }
 
-  private readStoredLanguage(): Language {
-    return localStorage.getItem('language') === 'en' ? 'en' : 'de';
-  }
+  setLanguage(language: Language): void { this.translations.setActiveLang(language); }
 
-  toggle(): void {
-    this.language.update((current) => current === 'de' ? 'en' : 'de');
-  }
-
+  toggle(): void { this.setLanguage(this.language() === 'de' ? 'en' : 'de'); }
 }

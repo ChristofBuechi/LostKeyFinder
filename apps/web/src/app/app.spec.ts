@@ -7,6 +7,7 @@ import { UsersService } from '@lost-key-finder/api-client';
 import { authGuard } from './auth/auth-guard';
 import { Auth } from './auth/auth';
 import { App } from './app';
+import { LanguagePreference } from './core/language-preference';
 
 @Component({ template: '<p id="private-content">Private information</p>' })
 class ProtectedPage {}
@@ -18,7 +19,7 @@ describe('App', () => {
   const firebaseUserId = signal('firebase-owner');
   beforeEach(() => {
     TestBed.resetTestingModule(); localStorage.clear(); signedIn.set(false); firebaseUserId.set('firebase-owner');
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideRouter([]), { provide: Auth, useValue: { signedIn, firebaseUserId } }] });
+    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideRouter([]), { provide: LanguagePreference, useValue: { busy: signal(false), failed: signal(false) } }, { provide: Auth, useValue: { signedIn, firebaseUserId } }] });
   });
 
   it('creates an accessible shell with a visible login entry', async () => {

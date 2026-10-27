@@ -17,6 +17,7 @@ import ch.lostkeyfinder.tags.TagAudit
 import ch.lostkeyfinder.tags.TagProperties
 import ch.lostkeyfinder.tags.TagService
 import ch.lostkeyfinder.tags.TagStatus
+import ch.lostkeyfinder.translations.Translations
 import ch.lostkeyfinder.users.User
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -327,6 +328,7 @@ class ChatHttpTest {
                 template,
                 MailSender(MailProperties(host = "127.0.0.1", port = 1, from = "test@example.com")),
                 TagProperties("https://example.com"),
+                Translations(),
             )
         template.updateMulti(Query(), Update.update("dueAt", Instant.EPOCH), ChatNotice::class.java)
         configured.dispatch()
@@ -336,6 +338,7 @@ class ChatHttpTest {
     @Test fun `SMTP success acknowledges only the delivered batch and leaves concurrent replies pending`() {
         val chat = report()
         chats.send(chat, owner.second, "Private message must not enter mail", null, id())
+        template.updateFirst(query(where("_id").`is`(finder.second.id)), Update.update("language", "en"), User::class.java)
         val noticeId = "$chat:${finder.second.id}"
         template.updateFirst(query(where("_id").`is`(noticeId)), Update.update("dueAt", Instant.EPOCH), ChatNotice::class.java)
         java.net.ServerSocket(0, 1, java.net.InetAddress.getLoopbackAddress()).use { server ->
@@ -395,10 +398,13 @@ class ChatHttpTest {
                             ),
                         ),
                         TagProperties("https://example.test"),
+                        Translations(),
                     )
                 assertEquals(1, configured.dispatch())
                 val mail = received.get(10, java.util.concurrent.TimeUnit.SECONDS)
                 assertTrue(mail.contains("/chats/$chat"))
+                assertTrue(mail.contains("You have new messages."))
+                assertFalse(mail.contains("Melde dich"))
                 assertFalse(mail.contains("Private message"))
                 val notice = template.findById(noticeId, ChatNotice::class.java)!!
                 assertEquals("PENDING", notice.status)

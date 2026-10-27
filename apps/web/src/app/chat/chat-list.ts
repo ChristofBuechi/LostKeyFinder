@@ -1,9 +1,9 @@
+import { translateSection } from '../core/translations';
 import { DatePipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ChatCopy } from './chat-copy';
 import { ChatPage } from '@lost-key-finder/api-client';
 @Component({ selector: 'app-chat-list', imports: [RouterLink, DatePipe], template: `
 <section class="auth-panel"><h1>{{ copy().title }}</h1>
@@ -21,10 +21,10 @@ import { ChatPage } from '@lost-key-finder/api-client';
       <button type="button" [disabled]="chats.value().page === chats.value().totalPages" (click)="page.set(page() + 1)">{{ copy().next }}</button>
     </nav>
   }
-  <p><a routerLink="/account">Account</a></p>
+  <p><a routerLink="/account">{{ copy().account }}</a></p>
 </section>`, styles: `li { margin-block: 1rem; overflow-wrap: anywhere; } nav { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }` })
 export class ChatList {
-  protected readonly copy = inject(ChatCopy).text;
+  protected readonly copy = translateSection('chat');
   protected readonly page = signal(1);
   private readonly route = inject(ActivatedRoute);
   private readonly query = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });

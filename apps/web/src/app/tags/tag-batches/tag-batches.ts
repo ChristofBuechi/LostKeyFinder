@@ -1,3 +1,4 @@
+import { translateSection } from '../../core/translations';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DatePipe, DOCUMENT } from '@angular/common';
 import { httpResource } from '@angular/common/http';
@@ -5,7 +6,6 @@ import { RouterLink } from '@angular/router';
 import { FormField, disabled, form, max, maxLength, min } from '@angular/forms/signals';
 import { TagBatchPage, TagBatchResponse, TagBatchesService } from '@lost-key-finder/api-client';
 import { firstValueFrom } from 'rxjs';
-import { TagCopy } from '../tag-copy';
 import { tagError } from '../tag-error';
 import { Auth } from '../../auth/auth';
 
@@ -16,7 +16,7 @@ import { Auth } from '../../auth/auth';
   styleUrl: './tag-batches.scss',
 })
 export class TagBatches {
-  protected readonly copy = inject(TagCopy).text;
+  protected readonly copy = translateSection('tags');
   private readonly auth = inject(Auth);
   private readonly batches = inject(TagBatchesService);
   private readonly destroyRef = inject(DestroyRef);

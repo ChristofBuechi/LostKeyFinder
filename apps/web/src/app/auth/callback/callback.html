@@ -1,12 +1,12 @@
 <section class="auth-panel" aria-labelledby="callback-title">
-  <h1 id="callback-title">{{ language.copy().loginTitle }}</h1>
-  <p role="status">{{ failed() ? language.copy().callbackFailed : auth.needsEmail() ? language.copy().callbackEmailNeeded : language.copy().callbackChecking }}</p>
+  <h1 id="callback-title">{{ ('common.loginTitle' | transloco) }}</h1>
+  <p role="status">{{ failed() ? ('common.callbackFailed' | transloco) : auth.needsEmail() ? ('common.callbackEmailNeeded' | transloco) : ('common.callbackChecking' | transloco) }}</p>
   @if (auth.needsEmail() && !failed()) {
     <form (ngSubmit)="complete()">
-      <label for="callback-email">{{ language.copy().email }}</label>
+      <label for="callback-email">{{ ('common.email' | transloco) }}</label>
       <input id="callback-email" name="email" type="email" autocomplete="email" spellcheck="false" required [(ngModel)]="email">
-      <button type="submit">{{ language.copy().confirm }}</button>
+      <button type="submit">{{ ('common.confirm' | transloco) }}</button>
     </form>
   }
-  @if (failed()) { <a routerLink="/" fragment="owner">{{ language.copy().backToLogin }}</a> }
+  @if (failed()) { <a routerLink="/" fragment="owner">{{ ('common.backToLogin' | transloco) }}</a> }
 </section>

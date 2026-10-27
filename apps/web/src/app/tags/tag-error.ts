@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { TagCopy } from './tag-copy';
+import { TranslationCatalog } from '../core/translations';
 
-export function tagError(error: unknown, copy: ReturnType<TagCopy['text']>): string {
+export function tagError(error: unknown, copy: TranslationCatalog['tags']): string {
   if (!(error instanceof HttpErrorResponse)) return copy.failed;
   switch (error.status) {
     case 401: return copy.expired;

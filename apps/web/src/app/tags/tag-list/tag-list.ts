@@ -1,3 +1,4 @@
+import { translateSection } from '../../core/translations';
 import { DOCUMENT, DatePipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
 import { Component, DestroyRef, InjectionToken, computed, inject, signal } from '@angular/core';
@@ -6,7 +7,6 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TagPage, TagResponse, TagSummary, TagsService } from '@lost-key-finder/api-client';
 import { firstValueFrom } from 'rxjs';
 import { Auth } from '../../auth/auth';
-import { TagCopy } from '../tag-copy';
 import { tagError } from '../tag-error';
 import { TagRemoval } from '../tag-removal/tag-removal';
 
@@ -22,7 +22,7 @@ export const QR_ENCODER = new InjectionToken('QR encoder loader', {
 })
 export class TagList {
   protected readonly auth = inject(Auth);
-  protected readonly copy = inject(TagCopy).text;
+  protected readonly copy = translateSection('tags');
   private readonly route = inject(ActivatedRoute);
   protected readonly admin = this.route.snapshot.data['admin'] === true;
   private readonly tags = inject(TagsService);

@@ -1,3 +1,4 @@
+import { translateSection } from '../core/translations';
 import { httpResource } from '@angular/common/http';
 import { Component, DestroyRef, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -5,14 +6,13 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ChatService as ChatApi, FinderStarted, CurrentUserResponse } from '@lost-key-finder/api-client';
 import { Auth } from '../auth/auth';
-import { ChatCopy } from './chat-copy';
 
 @Component({
   selector: 'app-report-found', imports: [FormsModule],
   template: `<h2>{{ copy().report }}</h2><p>{{ copy().intro }}</p>
     <form (submit)="send($event)">
       @if (!auth.signedIn()) {
-        <label for="finder-email">E-Mail</label><input id="finder-email" name="email" type="email" autocomplete="email" required maxlength="254" [(ngModel)]="email" [disabled]="busy()">
+        <label for="finder-email">{{ copy().email }}</label><input id="finder-email" name="email" type="email" autocomplete="email" required maxlength="254" [(ngModel)]="email" [disabled]="busy()">
       }
       <label for="finder-message">{{ copy().message }}</label>
       <textarea id="finder-message" name="message" rows="5" maxlength="2000" required [(ngModel)]="text" [disabled]="busy()"></textarea>
@@ -26,7 +26,7 @@ import { ChatCopy } from './chat-copy';
 export class ReportFound {
   readonly publicId = input.required<string>();
   protected readonly auth = inject(Auth);
-  protected readonly copy = inject(ChatCopy).text;
+  protected readonly copy = translateSection('chat');
   private readonly chats = inject(ChatApi);
   private readonly router = inject(Router);
   private readonly destroy = inject(DestroyRef);

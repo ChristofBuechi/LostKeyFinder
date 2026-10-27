@@ -23,6 +23,7 @@ data class User(
     val createdAt: Instant,
     val updatedAt: Instant,
     val isAdmin: Boolean = false,
+    val language: String = "de",
     val tagCreationLimit: TagCreationWindow? = null,
 ) {
     init {

@@ -1,3 +1,4 @@
+import { translateSection } from '../core/translations';
 import { DOCUMENT, DatePipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
 import { Component, DestroyRef, computed, effect, inject, linkedSignal, signal } from '@angular/core';
@@ -7,14 +8,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { ChatService as ChatApi, ChatView, ChatMessage, MessagePage, CurrentUserResponse } from '@lost-key-finder/api-client';
 import { Auth } from '../auth/auth';
-import { ChatCopy } from './chat-copy';
 import { ChatImage } from './chat-image';
 
 @Component({ selector: 'app-chat-detail', imports: [DatePipe, FormsModule, RouterLink, ChatImage],
   templateUrl: './chat-detail.html', styleUrl: './chat-detail.scss' })
 export class ChatDetail {
   protected readonly auth = inject(Auth);
-  protected readonly copy = inject(ChatCopy).text;
+  protected readonly copy = translateSection('chat');
   private readonly chats = inject(ChatApi);
   private readonly destroy = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);

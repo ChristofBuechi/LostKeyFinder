@@ -1,3 +1,4 @@
+import { translateSection } from '../../core/translations';
 import { Component, DestroyRef, ElementRef, Injector, afterNextRender, afterRenderEffect, computed, inject, linkedSignal, signal, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
@@ -5,7 +6,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AdminTagsService, TagHistoryPage, TagResponse, TagsService } from '@lost-key-finder/api-client';
 import { firstValueFrom } from 'rxjs';
-import { TagCopy } from '../tag-copy';
 import { tagError } from '../tag-error';
 import { TagRemoval } from '../tag-removal/tag-removal';
 import { Auth } from '../../auth/auth';
@@ -17,7 +17,7 @@ import { Auth } from '../../auth/auth';
   styleUrl: './tag-detail.scss',
 })
 export class TagDetail {
-  protected readonly copy = inject(TagCopy).text;
+  protected readonly copy = translateSection('tags');
   private readonly auth = inject(Auth);
   protected readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);

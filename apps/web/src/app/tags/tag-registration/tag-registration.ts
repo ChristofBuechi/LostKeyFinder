@@ -1,10 +1,10 @@
+import { translateSection } from '../../core/translations';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { httpResource } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CurrentUserResponse, RegistrationView, TagRegistrationService } from '@lost-key-finder/api-client';
 import { firstValueFrom } from 'rxjs';
-import { TagCopy } from '../tag-copy';
 import { tagError } from '../tag-error';
 import { Auth } from '../../auth/auth';
 
@@ -15,7 +15,7 @@ import { Auth } from '../../auth/auth';
   styleUrl: './tag-registration.scss',
 })
 export class TagRegistration {
-  protected readonly copy = inject(TagCopy).text;
+  protected readonly copy = translateSection('tags');
   private readonly auth = inject(Auth);
   private readonly route = inject(ActivatedRoute);
   private readonly registrations = inject(TagRegistrationService);

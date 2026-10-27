@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Component, effect, inject, signal } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -5,16 +6,16 @@ import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router
 import { filter } from 'rxjs';
 import { authGuard } from './auth/auth-guard';
 import { Auth } from './auth/auth';
-import { LanguageService } from './core/language.service';
+import { LanguagePreference } from './core/language-preference';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterLink, RouterOutlet],
+  imports: [TranslocoPipe, RouterLink, RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App {
-  protected readonly language = inject(LanguageService);
+  protected readonly languagePreference = inject(LanguagePreference);
   protected readonly auth = inject(Auth);
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
@@ -47,6 +48,6 @@ export class App {
   }
 
   protected toggleLanguage(): void {
-    this.language.toggle();
+    void this.languagePreference.toggle();
   }
 }

@@ -1,7 +1,7 @@
+import { translateSection } from '../../core/translations';
 import { Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
 import { AdminTagsService, TagResponse, TagsService } from '@lost-key-finder/api-client';
 import { firstValueFrom } from 'rxjs';
-import { TagCopy } from '../tag-copy';
 import { tagError } from '../tag-error';
 
 @Component({
@@ -23,7 +23,7 @@ export class TagRemoval {
   readonly removed = output<void>();
   private readonly tags = inject(TagsService);
   private readonly adminTags = inject(AdminTagsService);
-  private readonly copy = inject(TagCopy).text;
+  private readonly copy = translateSection('tags');
   private readonly destroyRef = inject(DestroyRef);
   protected readonly busy = signal(false);
   protected readonly failure = signal<unknown>(null);

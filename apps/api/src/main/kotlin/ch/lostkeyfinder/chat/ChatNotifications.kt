@@ -2,6 +2,7 @@ package ch.lostkeyfinder.chat
 
 import ch.lostkeyfinder.mail.MailSender
 import ch.lostkeyfinder.tags.TagProperties
+import ch.lostkeyfinder.translations.Translations
 import ch.lostkeyfinder.users.User
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.FindAndModifyOptions
@@ -31,6 +32,7 @@ class ChatNotifications(
     private val template: MongoTemplate,
     private val mail: MailSender,
     private val tags: TagProperties,
+    private val translations: Translations,
 ) {
     fun schedule(
         ops: MongoOperations,
@@ -104,17 +106,12 @@ class ChatNotifications(
                 status = "SKIPPED"
             } else {
                 check(tags.publicBaseUrl.isNotBlank())
-                val subject =
-                    if (notice.deliveredSequence == 0L && notice.targetSequence == 1L) {
-                        "Lost Key Finder: Neue Fundmeldung / Item found"
-                    } else {
-                        "Lost Key Finder: Ungelesene Nachrichten / Unread messages"
-                    }
+                val kind = if (notice.deliveredSequence == 0L && notice.targetSequence == 1L) "found" else "unreadMessages"
                 val link = "${tags.publicBaseUrl.trimEnd('/')}/chats/${chat.id}"
                 mail.send(
                     user.email,
-                    subject,
-                    "Es gibt neue Nachrichten. / You have new messages.\n\n$link\n\nMelde dich mit deiner E-Mail-Adresse an. / Sign in with your email address.",
+                    translations.text(user.language, "emails.$kind.subject"),
+                    translations.text(user.language, "emails.$kind.body", mapOf("chatUrl" to link)),
                 )
             }
         } catch (ex: Exception) {
