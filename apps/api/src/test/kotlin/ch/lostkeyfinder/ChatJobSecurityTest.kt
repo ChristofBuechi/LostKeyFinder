@@ -1,6 +1,6 @@
 package ch.lostkeyfinder
 
-import ch.lostkeyfinder.chat.ChatMailProperties
+import ch.lostkeyfinder.chat.ChatNotificationJobProperties
 import ch.lostkeyfinder.chat.notificationJobValidator
 import org.junit.jupiter.api.Test
 import org.springframework.security.oauth2.jwt.Jwt
@@ -11,12 +11,12 @@ import kotlin.test.assertTrue
 class ChatJobSecurityTest {
     @Test fun `only a live Google token for the exact scheduler audience and verified service account passes`() {
         val properties =
-            ChatMailProperties(jobAudience = "https://example.test", jobServiceAccount = "scheduler@example.iam.gserviceaccount.com")
+            ChatNotificationJobProperties(audience = "https://example.test", serviceAccount = "scheduler@example.iam.gserviceaccount.com")
         val valid =
             mapOf<String, Any>(
                 "iss" to "https://accounts.google.com",
-                "aud" to listOf(properties.jobAudience),
-                "email" to properties.jobServiceAccount,
+                "aud" to listOf(properties.audience),
+                "email" to properties.serviceAccount,
                 "email_verified" to true,
                 "exp" to Instant.now().plusSeconds(600),
             )

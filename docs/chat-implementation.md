@@ -42,10 +42,12 @@ Neue bestätigte Fundmeldungen lösen unmittelbar einen Versandversuch aus. Weit
 
 SMTP-Aufrufe finden ausserhalb der fachlichen Transaktion statt. Ein Mailfehler macht die Fundmeldung nicht rückgängig. Der Auftrag bleibt `FAILED` und wird frühestens 15 Minuten später erneut versucht. Eine dreiminütige Lease verhindert konkurrierenden Versand; nach Timeout kann SMTP bereits angenommen haben, deshalb sind seltene Doppelzustellungen möglich. Während des Versands eingehende Antworten bleiben für das nächste Bündel vorgemerkt. `SENT` bedeutet SMTP-Annahme, keine garantierte Zustellung.
 
+Der allgemeine Mailversand liegt im Modul `mail`: `MailProperties` bindet `mail.*`, `MailSender` verwaltet den SMTP-Transport. Chat-Benachrichtigungen übergeben nur Empfänger, Betreff und Inhalt. Scheduler-Audience und Servicekonto sind separat unter `chat-notification-job.*` konfiguriert.
+
 Benötigte Umgebungsvariablen:
 
-- `CHAT_SMTP_HOST`, `CHAT_SMTP_PORT` (587), `CHAT_SMTP_USERNAME`, `CHAT_SMTP_PASSWORD`, `CHAT_MAIL_FROM`.
-- `CHAT_SMTP_START_TLS=true` im Betrieb; `false` ausschliesslich für den lokalen Testserver.
+- `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `MAIL_FROM`.
+- `SMTP_START_TLS=true` im Betrieb; `false` ausschliesslich für den lokalen Testserver.
 - `TAG_PUBLIC_BASE_URL`: kanonische HTTPS-Origin für die Chatlinks.
 - `CHAT_NOTIFICATION_JOB_AUDIENCE`: exakte konfigurierte Audience des Scheduler-Tokens.
 - `CHAT_NOTIFICATION_JOB_SERVICE_ACCOUNT`: ausschliesslich dafür verwendetes Servicekonto.
@@ -76,7 +78,7 @@ gcloud scheduler jobs create http lost-key-finder-chat-notifications \
   --oidc-token-audience="$CHAT_API_URL"
 ```
 
-Zuvor Cloud Scheduler aktivieren und das dedizierte Servicekonto anlegen. Die erstellende Identität benötigt `iam.serviceAccounts.actAs`, der Scheduler-Service-Agent muss Tokens dafür ausstellen dürfen. `CHAT_NOTIFICATION_JOB_AUDIENCE` auf dieselbe `CHAT_API_URL` und `CHAT_NOTIFICATION_JOB_SERVICE_ACCOUNT` auf dasselbe Konto setzen. Die Deployment-Pipeline übernimmt beide Variablen sowie SMTP-Einstellungen aus den GitHub-Environment-Variablen. `CHAT_SMTP_PASSWORD_SECRET` enthält eine Secret-Manager-Referenz inklusive Version, beispielsweise `chat-smtp-password:1`; der Runtime-Serviceaccount benötigt Lesezugriff darauf. Die Pipeline erstellt weder Anbieterzugänge noch den Scheduler-Job.
+Zuvor Cloud Scheduler aktivieren und das dedizierte Servicekonto anlegen. Die erstellende Identität benötigt `iam.serviceAccounts.actAs`, der Scheduler-Service-Agent muss Tokens dafür ausstellen dürfen. `CHAT_NOTIFICATION_JOB_AUDIENCE` auf dieselbe `CHAT_API_URL` und `CHAT_NOTIFICATION_JOB_SERVICE_ACCOUNT` auf dasselbe Konto setzen. Die Deployment-Pipeline übernimmt beide Variablen sowie SMTP-Einstellungen aus den GitHub-Environment-Variablen. `SMTP_PASSWORD_SECRET` enthält eine Secret-Manager-Referenz inklusive Version, beispielsweise `smtp-password:1`; der Runtime-Serviceaccount benötigt Lesezugriff darauf. Die Pipeline erstellt weder Anbieterzugänge noch den Scheduler-Job.
 
 ## Direktlinks und Sitzungsgrenzen
 

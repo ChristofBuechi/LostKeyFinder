@@ -3,13 +3,15 @@ package ch.lostkeyfinder
 import ch.lostkeyfinder.chat.Chat
 import ch.lostkeyfinder.chat.ChatImage
 import ch.lostkeyfinder.chat.ChatImages
-import ch.lostkeyfinder.chat.ChatMailProperties
 import ch.lostkeyfinder.chat.ChatMessage
 import ch.lostkeyfinder.chat.ChatNotice
+import ch.lostkeyfinder.chat.ChatNotificationJobProperties
 import ch.lostkeyfinder.chat.ChatNotifications
 import ch.lostkeyfinder.chat.ChatService
 import ch.lostkeyfinder.chat.FinderDraft
 import ch.lostkeyfinder.chat.LossCase
+import ch.lostkeyfinder.mail.MailProperties
+import ch.lostkeyfinder.mail.MailSender
 import ch.lostkeyfinder.tags.Tag
 import ch.lostkeyfinder.tags.TagAudit
 import ch.lostkeyfinder.tags.TagProperties
@@ -315,7 +317,7 @@ class ChatHttpTest {
         val configured =
             ChatNotifications(
                 template,
-                ChatMailProperties(host = "127.0.0.1", port = 1, from = "test@example.com"),
+                MailSender(MailProperties(host = "127.0.0.1", port = 1, from = "test@example.com")),
                 TagProperties("https://example.com"),
             )
         template.updateMulti(Query(), Update.update("dueAt", Instant.EPOCH), ChatNotice::class.java)
@@ -376,11 +378,13 @@ class ChatHttpTest {
                 val configured =
                     ChatNotifications(
                         template,
-                        ChatMailProperties(
-                            host = "127.0.0.1",
-                            port = server.localPort,
-                            from = "notify@example.com",
-                            startTls = false,
+                        MailSender(
+                            MailProperties(
+                                host = "127.0.0.1",
+                                port = server.localPort,
+                                from = "notify@example.com",
+                                startTls = false,
+                            ),
                         ),
                         TagProperties("https://example.test"),
                     )
@@ -450,7 +454,10 @@ class ChatHttpTest {
         val job =
             ch.lostkeyfinder.chat.ChatNotificationJob(
                 notifications,
-                ChatMailProperties(jobAudience = "https://example.test", jobServiceAccount = "scheduler@example.iam.gserviceaccount.com"),
+                ChatNotificationJobProperties(
+                    audience = "https://example.test",
+                    serviceAccount = "scheduler@example.iam.gserviceaccount.com",
+                ),
             )
         for (header in listOf(null, "Basic invalid", "Bearer invalid")) {
             assertEquals(401, assertFailsWith<ResponseStatusException> { job.dispatch(header) }.statusCode.value())

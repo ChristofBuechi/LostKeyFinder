@@ -1,10 +1,8 @@
 package ch.lostkeyfinder.chat
 
+import ch.lostkeyfinder.mail.MailSender
 import ch.lostkeyfinder.tags.TagProperties
 import ch.lostkeyfinder.users.User
-import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Configuration
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.FindAndModifyOptions
 import org.springframework.data.mongodb.core.MongoOperations
@@ -13,26 +11,8 @@ import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.data.mongodb.core.query.Criteria.where
 import org.springframework.data.mongodb.core.query.Query.query
 import org.springframework.data.mongodb.core.query.Update
-import org.springframework.mail.SimpleMailMessage
-import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.stereotype.Service
 import java.time.Instant
-
-@ConfigurationProperties("chat-mail")
-data class ChatMailProperties(
-    val host: String = "",
-    val port: Int = 587,
-    val username: String = "",
-    val password: String = "",
-    val from: String = "",
-    val startTls: Boolean = true,
-    val jobAudience: String = "",
-    val jobServiceAccount: String = "",
-)
-
-@Configuration
-@EnableConfigurationProperties(ChatMailProperties::class)
-class ChatMailConfiguration
 
 @Document("chatNotifications")
 data class ChatNotice(
@@ -49,23 +29,9 @@ data class ChatNotice(
 @Service
 class ChatNotifications(
     private val template: MongoTemplate,
-    private val properties: ChatMailProperties,
+    private val mail: MailSender,
     private val tags: TagProperties,
 ) {
-    private val sender =
-        JavaMailSenderImpl().apply {
-            host = properties.host
-            port = properties.port
-            username = properties.username
-            password = properties.password
-            javaMailProperties["mail.smtp.auth"] = properties.username.isNotBlank().toString()
-            javaMailProperties["mail.smtp.starttls.enable"] = properties.startTls.toString()
-            javaMailProperties["mail.smtp.starttls.required"] = properties.startTls.toString()
-            javaMailProperties["mail.smtp.connectiontimeout"] = "5000"
-            javaMailProperties["mail.smtp.timeout"] = "5000"
-            javaMailProperties["mail.smtp.writetimeout"] = "5000"
-        }
-
     fun schedule(
         ops: MongoOperations,
         chat: Chat,
@@ -137,25 +103,19 @@ class ChatNotifications(
             ) {
                 status = "SKIPPED"
             } else {
-                check(properties.host.isNotBlank() && properties.from.isNotBlank() && tags.publicBaseUrl.isNotBlank())
-                val message =
-                    SimpleMailMessage().apply {
-                        setFrom(properties.from)
-                        setTo(user.email)
-                        subject =
-                            if (notice.deliveredSequence == 0L &&
-                                notice.targetSequence == 1L
-                            ) {
-                                "Lost Key Finder: Neue Fundmeldung / Item found"
-                            } else {
-                                "Lost Key Finder: Ungelesene Nachrichten / Unread messages"
-                            }
-                        text =
-                            "Es gibt neue Nachrichten. / You have new messages.\n\n${tags.publicBaseUrl.trimEnd(
-                                '/',
-                            )}/chats/${chat.id}\n\nMelde dich mit deiner E-Mail-Adresse an. / Sign in with your email address."
+                check(tags.publicBaseUrl.isNotBlank())
+                val subject =
+                    if (notice.deliveredSequence == 0L && notice.targetSequence == 1L) {
+                        "Lost Key Finder: Neue Fundmeldung / Item found"
+                    } else {
+                        "Lost Key Finder: Ungelesene Nachrichten / Unread messages"
                     }
-                sender.send(message)
+                val link = "${tags.publicBaseUrl.trimEnd('/')}/chats/${chat.id}"
+                mail.send(
+                    user.email,
+                    subject,
+                    "Es gibt neue Nachrichten. / You have new messages.\n\n$link\n\nMelde dich mit deiner E-Mail-Adresse an. / Sign in with your email address.",
+                )
             }
         } catch (ex: Exception) {
             // SMTP can have accepted a message before a timeout; retry may rarely duplicate delivery.

@@ -45,12 +45,14 @@ tags:
 rate-limits:
   hmac-key: ${PUBLIC_RATE_LIMIT_HMAC_KEY:}
 
-chat-mail:
-  host: ${CHAT_SMTP_HOST:}
-  port: ${CHAT_SMTP_PORT:587}
-  username: ${CHAT_SMTP_USERNAME:}
-  password: ${CHAT_SMTP_PASSWORD:}
-  from: ${CHAT_MAIL_FROM:}
-  start-tls: ${CHAT_SMTP_START_TLS:true}
-  job-audience: ${CHAT_NOTIFICATION_JOB_AUDIENCE:}
-  job-service-account: ${CHAT_NOTIFICATION_JOB_SERVICE_ACCOUNT:}
+mail:
+  host: ${SMTP_HOST:}
+  port: ${SMTP_PORT:587}
+  username: ${SMTP_USERNAME:}
+  password: ${SMTP_PASSWORD:}
+  from: ${MAIL_FROM:}
+  start-tls: ${SMTP_START_TLS:true}
+
+chat-notification-job:
+  audience: ${CHAT_NOTIFICATION_JOB_AUDIENCE:}
+  service-account: ${CHAT_NOTIFICATION_JOB_SERVICE_ACCOUNT:}
