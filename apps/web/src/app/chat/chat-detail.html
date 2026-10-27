@@ -1,12 +1,6 @@
 <section class="auth-panel chat-panel" aria-labelledby="chat-title">
   <h1 id="chat-title">{{ copy().title }}</h1>
-  @if (!auth.signedIn()) {
-    <p>{{ copy().signIn }}</p>
-    <form (submit)="login($event)">
-      <label for="chat-email">E-Mail</label><input id="chat-email" type="email" name="email" autocomplete="email" required [(ngModel)]="email" [disabled]="busy()">
-      <button type="submit" [disabled]="busy() || !auth.configured">{{ busy() ? copy().sending : copy().send }}</button>
-    </form>
-  } @else {
+  @if (auth.signedIn()) {
     @if (chat.isLoading() && !chat.hasValue()) { <p role="status">{{ copy().loading }}</p> }
     @if (chat.error()) { <p role="alert">{{ copy().error }}</p><button type="button" (click)="chat.reload()">{{ copy().retry }}</button> }
     @if (chat.hasValue()) {

@@ -19,7 +19,7 @@ Ein Scan öffnet `/f/{publicId}`. Der Finder erfasst Nachricht, optionales Bild 
 
 Der Browser erneuert abgelaufene Meldungsentwürfe mit einem neuen Idempotenzschlüssel; normale Wiederholungen verwenden weiterhin denselben Vorgang. Multipart-Eingaben (E-Mail, Text, Bild) bleiben im Request-Body des generierten API-Clients. Fehlgeschlagene Nachrichtenabrufe zeigen eine Wiederholen-Aktion und werfen keinen unbehandelten Resource-Fehler.
 
-Die Callback-URL erlaubt exakt einen validierten Zweck: Tag-Registrierung, Fundmeldung oder konkreter Chat. Auth-Codes werden vor Konfigurationsabruf und Routing aus der Browseradresse entfernt. Benachrichtigungslinks führen auf die Chatseite mit eigener Anmeldemöglichkeit und sicherer Fortsetzung.
+Die Callback-URL erlaubt exakt einen validierten Zweck: Tag-Registrierung, Fundmeldung oder konkreter Chat. Auth-Codes werden vor Konfigurationsabruf und Routing aus der Browseradresse entfernt. Benachrichtigungslinks führen auf die geschützte Chatroute. Ohne Sitzung leitet sie zur gemeinsamen Anmeldung auf der Startseite weiter und behält nur die validierte Chat-ID als sichere Fortsetzung.
 
 Ergänzte Collections:
 
@@ -77,3 +77,11 @@ gcloud scheduler jobs create http lost-key-finder-chat-notifications \
 ```
 
 Zuvor Cloud Scheduler aktivieren und das dedizierte Servicekonto anlegen. Die erstellende Identität benötigt `iam.serviceAccounts.actAs`, der Scheduler-Service-Agent muss Tokens dafür ausstellen dürfen. `CHAT_NOTIFICATION_JOB_AUDIENCE` auf dieselbe `CHAT_API_URL` und `CHAT_NOTIFICATION_JOB_SERVICE_ACCOUNT` auf dasselbe Konto setzen. Die Deployment-Pipeline übernimmt beide Variablen sowie SMTP-Einstellungen aus den GitHub-Environment-Variablen. `CHAT_SMTP_PASSWORD_SECRET` enthält eine Secret-Manager-Referenz inklusive Version, beispielsweise `chat-smtp-password:1`; der Runtime-Serviceaccount benötigt Lesezugriff darauf. Die Pipeline erstellt weder Anbieterzugänge noch den Scheduler-Job.
+
+## Direktlinks und Sitzungsgrenzen
+
+Geschützte Konto-, Tag-, Admin-, Registrierungs-, Fundabschluss- und Chatrouten warten auf die Firebase-Initialisierung und prüfen anschliessend `/api/v1/me` vor ihrer Aktivierung. Ein lokal gespeicherter Firebase-Anmeldestatus allein genügt nicht. Alle Adminrouten verlangen zusätzlich das aktuelle serverseitige `isAdmin`. Fehlende, abgelaufene oder gesperrte Sitzungen aktivieren keine geschützte Ansicht. Ein Identitätswechsel während der Prüfung verwirft deren Ergebnis.
+
+Ein geschützter API-401, ein gesperrtes Konto laut `/me` oder fehlgeschlagener Token-Refresh verwirft die lokale Sitzung und entfernt private Ansichten. Logout und Wechsel des Firebase-Kontos in einem anderen Tab entfernen ebenfalls die bisherigen privaten Inhalte. Authentifizierung und Autorisierung bleiben bei jedem Backend-Aufruf verbindlich: eine passende URL, Queryparameter, Browserhistorie oder clientseitige Rollenwerte gewähren keine Tag-/Chat-/Adminrechte. Öffentliche Scan-, Anmelde-, Bestätigungs- und Link-versendet-Seiten bleiben absichtlich ohne Sitzung erreichbar.
+
+Tests decken Direktlinks auf alle geschützten Routen, verzögerte Firebase-Initialisierung, serverseitige Ablehnung, fehlende Adminrolle, Sitzungsende, Kontowechsel und sichere Chat-Fortsetzung ab. Ein Backend-Test ruft 17 geschützte API-Leseendpunkte jeweils ohne Token sowie mit ungültigem, abgelaufenem und projektfremdem Token auf und verlangt HTTP 401 vor jeder Kontoanlage. Die vorhandenen Besitzer-/Teilnehmer-/Admin-Tests prüfen daneben gültige Sitzungen mit unpassenden Zugriffsrechten.

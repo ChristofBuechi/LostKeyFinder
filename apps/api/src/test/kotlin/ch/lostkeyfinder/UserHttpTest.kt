@@ -214,4 +214,47 @@ class UserHttpTest {
         assertEquals(1, ids.toSet().size)
         assertEquals(1L, template.count(Query(), User::class.java))
     }
+
+    @Test fun `all private direct API links reject absent malformed expired or foreign project credentials`() {
+        val id = UUID.randomUUID().toString()
+        val paths =
+            listOf(
+                "/me",
+                "/tags",
+                "/tags/$id",
+                "/tags/$id/history",
+                "/tags/by-public/$id",
+                "/admin/tags",
+                "/admin/tags/summary",
+                "/admin/tags/$id",
+                "/admin/tags/$id/history",
+                "/admin/tag-batches",
+                "/admin/tag-batches/$id",
+                "/admin/tag-batches/$id/export",
+                "/tag-registrations/$id",
+                "/chats",
+                "/chats/$id",
+                "/chats/$id/messages",
+                "/chat-images/$id",
+            )
+        val credentials =
+            listOf(
+                null,
+                "not-a-token",
+                identity.token(expires = Instant.now().minusSeconds(120)),
+                identity.token(audience = "foreign-project"),
+            )
+        for (path in paths) {
+            for (token in credentials) {
+                mvc
+                    .get("/api/v1$path") { if (token != null) header("Authorization", "Bearer $token") }
+                    .andExpect {
+                        status { isUnauthorized() }
+                        header { string("WWW-Authenticate", "Bearer") }
+                    }
+            }
+        }
+        assertEquals(0, identity.userRequests.get())
+        assertEquals(0L, template.count(Query(), User::class.java))
+    }
 }

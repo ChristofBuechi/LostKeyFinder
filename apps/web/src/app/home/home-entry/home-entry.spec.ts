@@ -105,4 +105,23 @@ describe('Owner login form and sent page', () => {
     expect(fixture.nativeElement.querySelector('#finder .scan-button').textContent).toContain('QR-Code scannen');
     expect(fixture.nativeElement.querySelector('#email')).not.toBeNull();
   });
+  it('keeps only a validated chat continuation when the protected direct link redirects to login', async () => {
+    const id = '550e8400-e29b-41d4-a716-446655440000';
+    const harness = await RouterTestingHarness.create(`/?chatId=${id}#owner`);
+    const input = harness.routeNativeElement!.querySelector('#email') as HTMLInputElement;
+    input.value = 'owner@example.com'; input.dispatchEvent(new Event('input'));
+    harness.routeNativeElement!.querySelector('#owner-login')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    await harness.fixture.whenStable();
+    expect(sendLink).toHaveBeenCalledWith('owner@example.com', undefined, { chatId: id });
+  });
+
+  it('never uses an arbitrary URL as a post-login continuation', async () => {
+    const harness = await RouterTestingHarness.create('/?chatId=https%3A%2F%2Fforeign.example%2Fprivate#owner');
+    const input = harness.routeNativeElement!.querySelector('#email') as HTMLInputElement;
+    input.value = 'owner@example.com'; input.dispatchEvent(new Event('input'));
+    harness.routeNativeElement!.querySelector('#owner-login')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    await harness.fixture.whenStable();
+    expect(sendLink).toHaveBeenCalledExactlyOnceWith('owner@example.com');
+  });
+
 });

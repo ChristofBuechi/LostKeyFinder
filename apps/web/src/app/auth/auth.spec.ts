@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AUTH_CALLBACK, AUTH_CLIENT, Auth } from './auth';
 
 describe('Firebase email-link session lifecycle', () => {
-  const user = { getIdToken: vi.fn().mockResolvedValue('token') };
+  const user = { uid: 'firebase-owner', getIdToken: vi.fn().mockResolvedValue('token') };
   let client: { auth: { currentUser: typeof user | null; authStateReady: ReturnType<typeof vi.fn> };
     sdk: Record<string, ReturnType<typeof vi.fn>> };
   beforeEach(() => {
@@ -89,4 +89,25 @@ describe('Firebase email-link session lifecycle', () => {
     await expect(auth.completeCallback('owner@example.com')).rejects.toThrow('Invalid callback');
     expect(auth.signedIn()).toBe(false);
   });
+  it('hides an expired server session immediately even if SDK sign-out cleanup fails', async () => {
+    client.auth.currentUser = user;
+    const auth = TestBed.inject(Auth);
+    await auth.ready;
+    expect(auth.signedIn()).toBe(true);
+    client.sdk['signOut'].mockRejectedValueOnce(new Error('Storage unavailable'));
+    auth.expireSession();
+    expect(auth.signedIn()).toBe(false);
+    await Promise.resolve();
+    expect(client.sdk['signOut']).toHaveBeenCalled();
+  });
+
+  it('tracks identity changes independently of a still-signed-in SDK session', async () => {
+    client.auth.currentUser = user;
+    const auth = TestBed.inject(Auth); await auth.ready;
+    expect(auth.firebaseUserId()).toBe('firebase-owner');
+    client.sdk['onIdTokenChanged'].mock.calls[0][1]({ ...user, uid: 'firebase-finder' });
+    expect(auth.signedIn()).toBe(true);
+    expect(auth.firebaseUserId()).toBe('firebase-finder');
+  });
+
 });

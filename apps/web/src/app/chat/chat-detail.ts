@@ -35,7 +35,6 @@ export class ChatDetail {
     return items.find((item, i) => i > 0 && item.sequence! > items[i - 1].sequence! + 1)?.sequence ?? null;
   });
   protected readonly text = linkedSignal({ source: () => this.id(), computation: () => '' });
-  protected email = '';
   protected readonly busy = signal(false);
   protected readonly loadingOlder = signal(false);
   protected readonly error = signal(false);
@@ -117,15 +116,6 @@ export class ChatDetail {
     try {
       await firstValueFrom(this.chats.chatControllerClose({ chatId: id }));
       if (!this.destroy.destroyed && id === this.id()) { this.chat.reload(); this.confirmingClose.set(false); }
-    } catch { this.error.set(true); }
-    finally { if (!this.destroy.destroyed) this.busy.set(false); }
-  }
-  protected async login(event: Event): Promise<void> {
-    event.preventDefault(); if (this.busy()) return;
-    this.busy.set(true); this.error.set(false);
-    try {
-      await this.auth.sendLink(this.email, undefined, { chatId: this.id() });
-      if (!this.destroy.destroyed) await this.router.navigateByUrl('/login/link-sent');
     } catch { this.error.set(true); }
     finally { if (!this.destroy.destroyed) this.busy.set(false); }
   }

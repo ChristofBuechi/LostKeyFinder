@@ -90,16 +90,7 @@ describe('Finder reports and private chat', () => {
     fixture.destroy();
   });
 
-  it('offers email sign-in with a safe continuation for a chat opened from a notification', async () => {
-    const fixture = TestBed.createComponent(ChatDetail);
-    vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
-    await fixture.whenStable();
-    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
-    input.value = 'owner@example.com'; input.dispatchEvent(new Event('input')); await fixture.whenStable();
-    fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true }));
-    await vi.waitFor(() => expect(sendLink).toHaveBeenCalledWith('owner@example.com', undefined, { chatId: id }));
-    fixture.destroy();
-  });
+
   it('starts a fresh report with a new key when a cached draft expires', async () => {
     const fixture = TestBed.createComponent(ReportFound);
     fixture.componentRef.setInput('publicId', id);

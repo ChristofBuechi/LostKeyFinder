@@ -31,6 +31,7 @@ export class Auth {
   readonly registrationId = this.callback.registrationId;
   readonly finderReportId = this.callback.finderReportId;
   readonly chatId = this.callback.chatId;
+  readonly firebaseUserId = signal<string | null>(null);
   private readonly signedInState = signal(false);
   readonly signedIn = this.signedInState.asReadonly();
   private readonly configuration = inject(AUTH_CONFIGURATION);
@@ -46,9 +47,13 @@ export class Auth {
   private async initialize(destroyRef: DestroyRef): Promise<void> {
     const client = await this.client;
     if (!client || destroyRef.destroyed) return;
-    const unsubscribe = client.sdk.onIdTokenChanged(client.auth, user => this.signedInState.set(!!user));
+    const unsubscribe = client.sdk.onIdTokenChanged(client.auth, user => {
+      this.firebaseUserId.set(user?.uid ?? null);
+      this.signedInState.set(!!user);
+    });
     destroyRef.onDestroy(unsubscribe);
     await client.auth.authStateReady();
+    this.firebaseUserId.set(client.auth.currentUser?.uid ?? null);
     this.signedInState.set(!!client.auth.currentUser);
   }
 
@@ -87,7 +92,8 @@ export class Auth {
     this.callback.link = '';
     this.callback.failed = true;
     try {
-      await client.sdk.signInWithEmailLink(client.auth, address, link);
+      const result = await client.sdk.signInWithEmailLink(client.auth, address, link);
+      this.firebaseUserId.set(result.user.uid);
       localStorage.removeItem(emailStorageKey);
       this.needsEmail.set(false);
       this.signedInState.set(true);
@@ -100,11 +106,18 @@ export class Auth {
     return client?.auth.currentUser?.getIdToken() ?? null;
   }
 
+  expireSession(): void {
+    this.firebaseUserId.set(null);
+    this.signedInState.set(false);
+    void this.client.then(client => client?.sdk.signOut(client.auth)).catch(() => { /* local data stays hidden even if SDK cleanup fails */ });
+  }
+
   async signOut(): Promise<void> {
     const client = await this.client;
     if (!client) return;
     try { await client.sdk.signOut(client.auth); }
     catch { throw new Error('Logout failed'); }
+    this.firebaseUserId.set(null);
     this.signedInState.set(false);
   }
 }
