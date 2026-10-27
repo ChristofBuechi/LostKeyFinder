@@ -174,7 +174,8 @@ class ChatHttpTest {
                 header("Authorization", "Bearer ${stranger.first}")
             }.andExpect { status { isNotFound() } }
         assertEquals(2, template.count(query(where("chatId").`is`(chatId)), TagAudit::class.java))
-        assertEquals("FAILED", template.findOne(Query(), ChatNotice::class.java)!!.status)
+        assertEquals("SKIPPED", template.findOne(Query(), ChatNotice::class.java)!!.status)
+        assertEquals(0, notifications.dispatch())
     }
 
     @Test fun `private chats survive owner changes without granting new owners or admin writing rights`() {
@@ -316,7 +317,7 @@ class ChatHttpTest {
         assertEquals(3, after.targetSequence)
         chats.read(chat, finder.second, 3)
         template.updateMulti(Query(), Update.update("dueAt", Instant.EPOCH), ChatNotice::class.java)
-        assertEquals(2, notifications.dispatch())
+        assertEquals(1, notifications.dispatch())
         assertEquals("SKIPPED", template.findById(before.id, ChatNotice::class.java)!!.status)
         chats.send(chat, owner.second, "Unread", null, id())
         assertEquals("PENDING", template.findById(before.id, ChatNotice::class.java)!!.status)

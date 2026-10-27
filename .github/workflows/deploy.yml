@@ -78,11 +78,7 @@ jobs:
             TAG_PUBLIC_BASE_URL="https://${FIREBASE_PROJECT_ID}.web.app"
           fi
           API_SECRETS="PUBLIC_RATE_LIMIT_HMAC_KEY=public-rate-limit-hmac:1"
-          if [ -n "$SMTP_HOST" ]; then
-            if [ -z "$MAIL_FROM" ] || [ -z "$SMTP_PASSWORD_SECRET" ]; then
-              echo "SMTP requires MAIL_FROM and SMTP_PASSWORD_SECRET" >&2
-              exit 1
-            fi
+          if [ -n "$SMTP_PASSWORD_SECRET" ]; then
             API_SECRETS="$API_SECRETS,SMTP_PASSWORD=${SMTP_PASSWORD_SECRET}"
           fi
           gcloud auth configure-docker "${{ vars.GCP_REGION }}-docker.pkg.dev" --quiet

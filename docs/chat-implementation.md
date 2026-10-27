@@ -54,7 +54,7 @@ Benötigte Umgebungsvariablen:
 - `CHAT_NOTIFICATION_JOB_AUDIENCE`: exakte konfigurierte Audience des Scheduler-Tokens.
 - `CHAT_NOTIFICATION_JOB_SERVICE_ACCOUNT`: ausschliesslich dafür verwendetes Servicekonto.
 
-SMTP-Passwort über Secret Manager einbinden. Ohne SMTP-Konfiguration funktioniert der Chat; Versandaufträge bleiben fehlgeschlagen. Anbieter, Absender und Domain müssen für echten Versand eingerichtet werden.
+SMTP-Passwort über Secret Manager einbinden. Ohne vollständige SMTP-Konfiguration funktioniert die Anwendung ohne Mailversand; Versandaufträge werden als `SKIPPED` abgeschlossen und nicht erneut versucht. Host und Absender sind erforderlich; Benutzername und Passwort müssen entweder beide vorhanden oder beide leer sein (SMTP-Relay ohne Anmeldung). Später konfigurierte Zugangsdaten lösen keinen Nachversand übersprungener Nachrichten aus. Anbieter, Absender und Domain müssen für echten Versand eingerichtet werden.
 
 Ein Cloud-Scheduler-Job ruft alle fünf Minuten `POST /api/v1/internal/chat-notifications/dispatch` direkt auf Cloud Run auf, mit OIDC-Token des festgelegten Servicekontos. Das Backend prüft Google-Signatur, Issuer, Audience, Gültigkeit und bestätigte Servicekonto-E-Mail. Firebase-Nutzertokens gewähren keinen Zugang. Maximal zehn Aufträge pro Aufruf, weitere folgen beim nächsten Lauf. Die Fünf-Minuten-Taktung ersetzt für diesen Zweck die frühere Planung ausschliesslich täglicher Wartung; keine dauerhaft laufenden Worker. Siehe [Google Cloud Scheduler: HTTP-Authentifizierung](https://docs.cloud.google.com/scheduler/docs/http-target-auth).
 

@@ -10,6 +10,22 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 
 class MailConfigurationTest {
+    @Test fun `missing or incomplete mail configuration skips delivery without connecting`() {
+        val incomplete =
+            listOf(
+                MailProperties(),
+                MailProperties(host = "127.0.0.1", port = 1),
+                MailProperties(from = "notify@example.test"),
+                MailProperties(host = "127.0.0.1", port = 1, from = "notify@example.test", username = "user"),
+                MailProperties(host = "127.0.0.1", port = 1, from = "notify@example.test", password = "secret"),
+            )
+        incomplete.forEach { properties ->
+            val mail = MailSender(properties)
+            assertFalse(mail.configured)
+            mail.send("recipient@example.test", "Subject", "Body")
+        }
+    }
+
     @Test fun `general mail transport binds its own configuration without a chat module`() {
         ApplicationContextRunner()
             .withUserConfiguration(MailConfiguration::class.java, MailSender::class.java)

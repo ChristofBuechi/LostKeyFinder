@@ -25,6 +25,10 @@ class MailConfiguration
 class MailSender(
     private val properties: MailProperties,
 ) {
+    val configured =
+        properties.host.isNotBlank() && properties.from.isNotBlank() &&
+            (properties.username.isBlank() == properties.password.isBlank())
+
     private val sender =
         JavaMailSenderImpl().apply {
             host = properties.host
@@ -44,7 +48,7 @@ class MailSender(
         subject: String,
         text: String,
     ) {
-        check(properties.host.isNotBlank() && properties.from.isNotBlank()) { "Mail transport is not configured" }
+        if (!configured) return
         sender.send(
             SimpleMailMessage().apply {
                 setFrom(properties.from)

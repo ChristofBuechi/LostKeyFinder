@@ -98,7 +98,7 @@ class ChatNotifications(
             val chat = template.findById(notice.chatId, Chat::class.java)
             val user = template.findById(notice.userId, User::class.java)
             val readThrough = if (notice.userId == chat?.ownerUserId) chat.ownerReadThrough else chat?.finderReadThrough ?: 0
-            if (chat == null || user == null || !user.canAccess || notice.userId !in chat.participantIds ||
+            if (!mail.configured || chat == null || user == null || !user.canAccess || notice.userId !in chat.participantIds ||
                 readThrough >= notice.targetSequence
             ) {
                 status = "SKIPPED"
