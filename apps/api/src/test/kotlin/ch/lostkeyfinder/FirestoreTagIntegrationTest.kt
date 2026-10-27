@@ -36,6 +36,7 @@ import kotlin.test.assertFailsWith
 class FirestoreTagIndexProvisioningTest {
     @Test fun `provision tag indexes with operator credentials`() =
         withFirestore { template, _ ->
+            provisionChatIndexes(template)
             val indexes = template.indexOps(Tag::class.java)
             // Operator-only: the old sparse unique index rejects multiple tags without position.
             indexes.indexInfo

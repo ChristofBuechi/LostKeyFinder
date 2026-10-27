@@ -49,4 +49,20 @@ describe('Auth callback URL hygiene', () => {
       expect(result.registrationId).toBeUndefined();
     }
   });
+  it('accepts one finder or chat continuation and rejects mixed, duplicate or foreign flows', () => {
+    const id = '550e8400-e29b-41d4-a716-446655440000';
+    const base = { origin: 'https://example.com', pathname: '/auth/callback', hash: '' };
+    for (const name of ['finderReportId', 'chatId'] as const) {
+      for (const suffix of [`&${name}=${id}`, `&continueUrl=${encodeURIComponent(`https://example.com/auth/callback?${name}=${id}`)}`]) {
+        const data = consumeAuthCallback({ ...base, search: `?mode=signIn&apiKey=test&oobCode=code${suffix}` } as Location, { replaceState: vi.fn() } as unknown as History);
+        expect(data.failed).toBe(false); expect(data[name]).toBe(id); expect(data.link).not.toContain(name);
+      }
+    }
+    for (const suffix of [`&chatId=${id}&finderReportId=${id}`, `&chatId=${id}&chatId=${id}`, '&finderReportId=bad',
+      `&continueUrl=${encodeURIComponent(`https://example.com/auth/callback?chatId=${id}&chatId=${id}`)}`]) {
+      const data = consumeAuthCallback({ ...base, search: `?mode=signIn&apiKey=test&oobCode=code${suffix}` } as Location, { replaceState: vi.fn() } as unknown as History);
+      expect(data.failed).toBe(true); expect(data.link).toBe('');
+    }
+  });
+
 });

@@ -40,6 +40,7 @@
       <a class="tag-action" [routerLink]="admin ? '/admin/tags' : '/tags'">{{ copy().back }}</a>
       <app-tag-removal [tag]="tag.value()" [admin]="admin" (removed)="removed()" />
     </div>
+    <p><a routerLink="/chats" [queryParams]="{ tagId: tag.value().id }">{{ 'Chats' }}</a></p>
     <section aria-labelledby="tag-history-title">
       <h2 id="tag-history-title">{{ copy().history }}</h2>
       @if (history.isLoading()) { <p role="status">{{ copy().loading }}</p> }
@@ -49,6 +50,7 @@
           @for (entry of history.value().items; track entry.id) {
             <li><time [attr.datetime]="entry.createdAt">{{ entry.createdAt | date:'yyyy-MM-dd HH:mm:ss' }}</time>
               <span>{{ historyText(entry.action) }}</span>
+              @if (entry.chatId) { <a [routerLink]="['/chats', entry.chatId]">Chat</a> }
               @if (entry.changes.length) {
                 <details><summary>{{ copy().changes }} ({{ entry.changes.length }})</summary>
                   <dl class="changes">

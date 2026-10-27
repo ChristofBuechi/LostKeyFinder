@@ -1,5 +1,6 @@
 # Roadmap
 
+> Aktualisierung 26.10.2026: Für Fundmeldungen und Chats gilt [Chat-Umsetzung](chat-implementation.md). Kostenloses Schreiben mit Text/Bildern, feste Teilnehmerrechte, keine automatische 30-Tage-Schreibfrist; frühere widersprechende Zahlungs-/Fristenregeln sind für diesen Ausbau überholt. SMTP und Scheduler benötigen vor echtem Versand ihre Umgebungskonfiguration.
 ## Reihenfolge
 
 1. **Fundament:** Angular, Kotlin/Spring Boot, Firebase Authentication, Firestore-Anbindung, OpenAPI und getrennte `dev`/`prod`-Umgebungen.

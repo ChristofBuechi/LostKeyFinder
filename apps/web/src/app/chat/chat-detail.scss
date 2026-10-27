@@ -1,0 +1,8 @@
+.chat-panel { max-width: 48rem; }
+.messages { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 1rem; }
+.messages li { background: #eef4f3; padding: 1rem; border-radius: .75rem; margin-right: 2rem; overflow-wrap: anywhere; }
+.messages li.mine { background: #f4ecd9; margin-left: 2rem; margin-right: 0; }
+.messages p { white-space: pre-wrap; }
+time { font-size: .85rem; color: #475550; }
+textarea { width: 100%; box-sizing: border-box; resize: vertical; font: inherit; padding: .75rem; }
+.close-case { margin-top: 1.5rem; }

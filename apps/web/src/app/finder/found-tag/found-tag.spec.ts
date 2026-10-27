@@ -40,12 +40,12 @@ describe('One scan entry for registration and existing tags', () => {
     TestBed.inject(HttpTestingController).verify();
   });
 
-  it('keeps an existing tag honest about the deferred contact process', async () => {
+  it('offers a private found report for an existing tag', async () => {
     const fixture = TestBed.createComponent(FoundTag);
     await respond(`/api/v1/public/tags/${id}`, { action: 'REPORT_FOUND' });
     await fixture.whenStable();
-    expect(fixture.nativeElement.textContent).toContain('später ergänzt');
-    expect(fixture.nativeElement.querySelector('form')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Fund melden');
+    expect(fixture.nativeElement.querySelector('textarea')).not.toBeNull();
     expect(sendLink).not.toHaveBeenCalled(); TestBed.inject(HttpTestingController).verify();
   });
 

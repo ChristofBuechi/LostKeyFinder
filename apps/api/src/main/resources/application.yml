@@ -6,6 +6,10 @@ spring:
   data:
     mongodb:
       auto-index-creation: false
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
   jackson:
     deserialization:
       fail-on-unknown-properties: true
@@ -40,3 +44,15 @@ tags:
   public-base-url: ${TAG_PUBLIC_BASE_URL:}
 rate-limits:
   hmac-key: ${PUBLIC_RATE_LIMIT_HMAC_KEY:}
+
+mail:
+  host: ${SMTP_HOST:}
+  port: ${SMTP_PORT:587}
+  username: ${SMTP_USERNAME:}
+  password: ${SMTP_PASSWORD:}
+  from: ${MAIL_FROM:}
+  start-tls: ${SMTP_START_TLS:true}
+
+chat-notification-job:
+  audience: ${CHAT_NOTIFICATION_JOB_AUDIENCE:}
+  service-account: ${CHAT_NOTIFICATION_JOB_SERVICE_ACCOUNT:}

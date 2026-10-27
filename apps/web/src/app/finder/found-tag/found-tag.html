@@ -26,7 +26,7 @@
       }
       @case ('REPORT_FOUND') {
         @if (own.hasValue()) { <p><a [routerLink]="['/tags', own.value().id]">{{ copy().ownTag }}</a></p> }
-        @else { <p>{{ copy().contactLater }}</p> }
+        @else if (!own.isLoading()) { <app-report-found [publicId]="publicId()" /> }
       }
       @default { <p>{{ copy().unavailable }}</p> }
     }

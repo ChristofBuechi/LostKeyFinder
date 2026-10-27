@@ -1,5 +1,6 @@
 # Implementierungsplan Phase 1
 
+> Aktualisierung 26.10.2026: Für Fundmeldungen und Chats gilt [Chat-Umsetzung](chat-implementation.md). Kostenloses Schreiben mit Text/Bildern, feste Teilnehmerrechte, keine automatische 30-Tage-Schreibfrist; frühere widersprechende Zahlungs-/Fristenregeln sind für diesen Ausbau überholt. SMTP und Scheduler benötigen vor echtem Versand ihre Umgebungskonfiguration.
 Aktualisierung vom 25. Oktober 2026: Für Chat-Lesen gelten die bestätigten Regeln aus [Tag-Historie](tag-history.md): im Chat gespeicherter Owner/Teilnehmer oder Admin. Die älteren Grant-basierten Owner-Lesesperren in den nachfolgenden Phasen 6/7 sind vor der Chat-Umsetzung daran anzupassen. Besitzerzeiträume und aktuelle Tag-Zuordnung allein entscheiden nicht über das Leserecht.
 
 ## Ziel und Leitplanken

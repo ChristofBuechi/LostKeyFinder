@@ -26,7 +26,7 @@ export class Callback implements OnInit {
     try {
       await this.auth.completeCallback(this.email);
       if (this.destroyRef.destroyed || this.auth.needsEmail()) return;
-      await this.router.navigateByUrl(this.auth.registrationId ? `/tag-registrations/${this.auth.registrationId}` : '/account?entry=login', { replaceUrl: true });
+      await this.router.navigateByUrl(this.auth.registrationId ? `/tag-registrations/${this.auth.registrationId}` : this.auth.finderReportId ? `/finder-reports/${this.auth.finderReportId}` : this.auth.chatId ? `/chats/${this.auth.chatId}` : '/account?entry=login', { replaceUrl: true });
     } catch {
       this.failed.set(true);
     }

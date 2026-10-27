@@ -80,11 +80,25 @@ class SecurityConfiguration {
                     .permitAll()
                     .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/public/tags/*/registration-drafts")
                     .permitAll()
+                    .requestMatchers(
+                        org.springframework.http.HttpMethod.POST,
+                        "/api/v1/public/tags/*/finder-drafts",
+                        "/api/v1/internal/chat-notifications/dispatch",
+                    ).permitAll()
                     .requestMatchers("/api/v1/**")
                     .authenticated()
                     .anyRequest()
                     .permitAll()
             }.oauth2ResourceServer { resource ->
+                resource.bearerTokenResolver { request ->
+                    if (request.requestURI == "/api/v1/internal/chat-notifications/dispatch") {
+                        null
+                    } else {
+                        org.springframework.security.oauth2.server.resource.web
+                            .DefaultBearerTokenResolver()
+                            .resolve(request)
+                    }
+                }
                 resource.jwt { }
                 resource.authenticationEntryPoint { request, response, _ ->
                     response.setHeader("WWW-Authenticate", "Bearer")

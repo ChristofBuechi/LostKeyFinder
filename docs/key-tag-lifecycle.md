@@ -1,5 +1,6 @@
 # Fachliche Regeln
 
+> Aktualisierung 26.10.2026: Für Fundmeldungen und Chats gilt [Chat-Umsetzung](chat-implementation.md). Kostenloses Schreiben mit Text/Bildern, feste Teilnehmerrechte, keine automatische 30-Tage-Schreibfrist; frühere widersprechende Zahlungs-/Fristenregeln sind für diesen Ausbau überholt. SMTP und Scheduler benötigen vor echtem Versand ihre Umgebungskonfiguration.
 ## Invarianten
 
 - Ein selbst erzeugter Tag besitzt ab Erstellung genau einen Primary Owner. Ein vorproduzierter Tag besitzt bis zur Registrierung keinen, danach genau einen Primary Owner. Nur zugewiesene Tags können einen Verlustfall haben; höchstens einen aktiven pro Tag.

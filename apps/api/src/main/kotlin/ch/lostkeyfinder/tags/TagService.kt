@@ -1,5 +1,6 @@
 package ch.lostkeyfinder.tags
 
+import ch.lostkeyfinder.chat.closeTagChats
 import ch.lostkeyfinder.users.User
 import org.bson.Document
 import org.springframework.dao.DuplicateKeyException
@@ -171,6 +172,13 @@ class TagService(
         if (page < 1) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid page")
         val tag = if (owner == null) adminDetail(id) else owned(owner, id)
         val selection = query(where("resourceId").`in`(listOfNotNull(tag.id, tag.batchId)))
+        if (owner != null) {
+            selection.addCriteria(
+                org.springframework.data.mongodb.core.query
+                    .Criteria()
+                    .orOperator(where("chatId").`is`(null), where("chatParticipantIds").`is`(owner.id)),
+            )
+        }
         val hasCreation = template.exists(query(where("resourceId").`is`(tag.id).and("action").`is`("TAG_CREATED")), TagAudit::class.java)
         val count = template.count(selection, TagAudit::class.java) + if (hasCreation) 0 else 1
         val totalPages = maxOf(1, ((count + PAGE_SIZE - 1) / PAGE_SIZE).toInt())
@@ -202,7 +210,21 @@ class TagService(
                                     (change.field !in listOf("label", "batchLabel") || it.actorUserId == owner.id)
                             }
                         }
-                    TagHistoryEntry(it.id, it.action, it.createdAt, if (owner == null) it.actorUserId else null, visible)
+                    TagHistoryEntry(
+                        it.id,
+                        it.action,
+                        it.createdAt,
+                        if (owner ==
+                            null
+                        ) {
+                            it.actorUserId
+                        } else {
+                            null
+                        },
+                        visible,
+                        it.chatId,
+                        it.messageId,
+                    )
                 }.toMutableList()
         // ponytail: creation is already stored on every tag; derive it without backfilling audit records.
         if (!hasCreation && current == totalPages && entries.size < PAGE_SIZE) {
@@ -248,6 +270,7 @@ class TagService(
                     Tag::class.java,
                 )
                     ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
+            closeTagChats(ops, before.id, actor.id, now)
             ops.insert(
                 TagAudit(
                     UUID.randomUUID().toString(),
@@ -294,6 +317,7 @@ class TagService(
                     Tag::class.java,
                 )
             if (changed == null) throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
+            closeTagChats(ops, changed.id, owner.id, now)
             // ponytail: invalidate old flows in the same transaction; no ownership-epoch machinery.
             ops.updateMulti(
                 query(where("tagId").`is`(id.lowercase())),

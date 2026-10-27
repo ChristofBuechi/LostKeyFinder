@@ -3,10 +3,18 @@
 
 export type { ChangeTagLabelRequest } from './models/change-tag-label-request';
 export type { ChangeTagStatusRequest } from './models/change-tag-status-request';
+export type { ChatMessage } from './models/chat-message';
+export type { ChatMessageRequest } from './models/chat-message-request';
+export type { ChatPage } from './models/chat-page';
+export type { ChatReadRequest } from './models/chat-read-request';
+export type { ChatView } from './models/chat-view';
 export type { CreateTagBatchRequest } from './models/create-tag-batch-request';
 export type { CreateTagRequest } from './models/create-tag-request';
 export type { CurrentUserResponse } from './models/current-user-response';
+export type { FinderReportRequest } from './models/finder-report-request';
+export type { FinderStarted } from './models/finder-started';
 export type { HealthResponseDto } from './models/health-response-dto';
+export type { MessagePage } from './models/message-page';
 export type { PublicTagResponse } from './models/public-tag-response';
 export type { RegistrationStarted } from './models/registration-started';
 export type { RegistrationView } from './models/registration-view';

@@ -6,6 +6,8 @@ export interface TagHistoryEntry {
   action: string;
   actorUserId: string | null;
   changes: Array<TagChange>;
+  chatId: string | null;
   createdAt: string;
   id: string;
+  messageId: string | null;
 }

@@ -1,3 +1,4 @@
+import { ReportFound } from '../../chat/report-found';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { httpResource } from '@angular/common/http';
@@ -12,7 +13,7 @@ import { LanguageService } from '../../core/language.service';
 
 @Component({
   selector: 'app-found-tag',
-  imports: [RouterLink, FormField],
+  imports: [RouterLink, FormField, ReportFound],
   templateUrl: './found-tag.html',
   styleUrl: './found-tag.scss',
 })
