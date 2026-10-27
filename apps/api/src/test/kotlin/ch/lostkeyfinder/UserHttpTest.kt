@@ -20,9 +20,11 @@ import org.springframework.data.mongodb.core.query.Criteria.where
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Query.query
 import org.springframework.data.mongodb.core.query.Update
+import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.patch
 import tools.jackson.databind.json.JsonMapper
 import java.time.Instant
 import java.util.UUID
@@ -60,6 +62,51 @@ class UserHttpTest {
             jsonPath("$.instance") { value("/api/v1/me") }
             jsonPath("$.correlationId") { exists() }
         }
+    }
+
+    @Test fun `language defaults to German for new and existing users and only changes the authenticated profile`() {
+        val first = identity.token()
+        val second = identity.token()
+        for (token in listOf(first, second)) {
+            mvc.get("/api/v1/me") { header("Authorization", "Bearer $token") }.andExpect {
+                status { isOk() }
+                jsonPath("$.language") { value("de") }
+            }
+        }
+        template.updateMulti(Query(), Update().unset("language"), User::class.java)
+        mvc.get("/api/v1/me") { header("Authorization", "Bearer $first") }.andExpect { jsonPath("$.language") { value("de") } }
+        mvc
+            .patch("/api/v1/me/language") {
+                header("Authorization", "Bearer $first")
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"language":"en"}"""
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.language") { value("en") }
+                jsonPath("$.isAdmin") { value(false) }
+            }
+        mvc.get("/api/v1/me") { header("Authorization", "Bearer $first") }.andExpect { jsonPath("$.language") { value("en") } }
+        mvc.get("/api/v1/me") { header("Authorization", "Bearer $second") }.andExpect { jsonPath("$.language") { value("de") } }
+        for (body in listOf("""{"language":"fr"}""", """{"language":""}""", "{}", """{"language":null}""")) {
+            mvc
+                .patch("/api/v1/me/language") {
+                    header("Authorization", "Bearer $first")
+                    contentType = MediaType.APPLICATION_JSON
+                    content = body
+                }.andExpect { status { isBadRequest() } }
+        }
+        mvc
+            .patch("/api/v1/me/language") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"language":"en"}"""
+            }.andExpect { status { isUnauthorized() } }
+        template.updateMulti(Query(), Update.update("status", UserStatus.DISABLED), User::class.java)
+        mvc
+            .patch("/api/v1/me/language") {
+                header("Authorization", "Bearer $first")
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"language":"de"}"""
+            }.andExpect { status { isForbidden() } }
     }
 
     @Test fun `signature issuer audience time and subject are all enforced`() {

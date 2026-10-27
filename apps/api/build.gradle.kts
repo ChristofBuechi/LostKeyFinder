@@ -113,3 +113,11 @@ tasks.jacocoTestCoverageVerification {
     }
 }
 tasks.bootJar { archiveFileName = "api.jar" }
+
+// Package the same source files used by the frontend; no runtime filesystem mount is needed.
+tasks.processResources {
+    from(layout.projectDirectory.dir("../../packages/translations")) {
+        include("de.json", "en.json")
+        into("translations")
+    }
+}

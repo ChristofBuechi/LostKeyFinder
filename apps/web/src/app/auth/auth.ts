@@ -1,6 +1,7 @@
 import { DestroyRef, Injectable, InjectionToken, inject, signal } from '@angular/core';
 import type { FirebaseOptions } from 'firebase/app';
 import { AuthCallbackData } from './auth-callback';
+import { LanguageService } from '../core/language.service';
 
 export type AuthConfiguration = Pick<FirebaseOptions, 'apiKey' | 'authDomain' | 'projectId' | 'appId'>;
 
@@ -27,6 +28,7 @@ const emailStorageKey = 'firebaseEmailForSignIn';
 @Injectable({ providedIn: 'root' })
 export class Auth {
   private readonly client = inject(AUTH_CLIENT);
+  private readonly language = inject(LanguageService);
   private readonly callback = inject(AUTH_CALLBACK);
   readonly registrationId = this.callback.registrationId;
   readonly finderReportId = this.callback.finderReportId;
@@ -73,6 +75,7 @@ export class Auth {
     try {
       // Persist before sending so a successful link can always be completed here.
       localStorage.setItem(emailStorageKey, email.trim());
+      client.auth.languageCode = this.language.language();
       await client.sdk.sendSignInLinkToEmail(client.auth, email.trim(), {
         url: continuation.href, handleCodeInApp: true,
       });

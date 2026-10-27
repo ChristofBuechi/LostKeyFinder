@@ -12,7 +12,7 @@ import { ChatCopy } from './chat-copy';
   template: `<h2>{{ copy().report }}</h2><p>{{ copy().intro }}</p>
     <form (submit)="send($event)">
       @if (!auth.signedIn()) {
-        <label for="finder-email">E-Mail</label><input id="finder-email" name="email" type="email" autocomplete="email" required maxlength="254" [(ngModel)]="email" [disabled]="busy()">
+        <label for="finder-email">{{ copy().email }}</label><input id="finder-email" name="email" type="email" autocomplete="email" required maxlength="254" [(ngModel)]="email" [disabled]="busy()">
       }
       <label for="finder-message">{{ copy().message }}</label>
       <textarea id="finder-message" name="message" rows="5" maxlength="2000" required [(ngModel)]="text" [disabled]="busy()"></textarea>

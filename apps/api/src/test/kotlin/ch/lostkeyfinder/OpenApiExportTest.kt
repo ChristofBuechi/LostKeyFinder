@@ -40,7 +40,7 @@ class OpenApiExportTest {
         assertTrue(me["security"][0].has("bearerAuth"))
         assertFalse(me.has("parameters"))
         assertEquals<Set<String>>(
-            setOf("id", "email", "status", "createdAt", "updatedAt", "isAdmin"),
+            setOf("id", "email", "status", "createdAt", "updatedAt", "isAdmin", "language"),
             document["components"]["schemas"]["CurrentUserResponse"]["required"].values().map { it.asString() }.toSet(),
         )
         assertEquals(
@@ -49,6 +49,7 @@ class OpenApiExportTest {
                 "/api/v1/health/ready",
                 "/api/v1/version",
                 "/api/v1/me",
+                "/api/v1/me/language",
                 "/api/v1/tags",
                 "/api/v1/tags/{tagId}",
                 "/api/v1/tags/{tagId}/status",

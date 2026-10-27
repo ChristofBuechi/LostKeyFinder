@@ -32,6 +32,22 @@ class UserService(
             if (!it.isAdmin) throw ResponseStatusException(HttpStatus.FORBIDDEN, "Administrator access required")
         }
 
+    fun changeLanguage(
+        jwt: Jwt,
+        language: String,
+    ): User {
+        if (language !in setOf("de", "en")) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported language")
+        val user = currentUser(jwt)
+        val changed =
+            template.updateFirst(
+                query(where("_id").`is`(user.id).and("status").`is`(UserStatus.ACTIVE)),
+                Update.update("language", language).set("updatedAt", Instant.now()),
+                User::class.java,
+            )
+        if (changed.matchedCount != 1L) throw ResponseStatusException(HttpStatus.FORBIDDEN, "Account unavailable")
+        return currentUser(jwt)
+    }
+
     private fun provision(
         query: Query,
         jwt: Jwt,
@@ -45,6 +61,7 @@ class UserService(
                 .setOnInsert("email", email)
                 .setOnInsert("status", UserStatus.ACTIVE)
                 .setOnInsert("isAdmin", false)
+                .setOnInsert("language", "de")
                 .setOnInsert("createdAt", now)
                 .setOnInsert("updatedAt", now)
         try {

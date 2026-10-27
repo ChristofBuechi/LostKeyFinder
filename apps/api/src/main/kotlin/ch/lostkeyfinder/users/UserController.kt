@@ -11,6 +11,8 @@ import org.springframework.http.MediaType
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import java.time.Instant
 
@@ -27,9 +29,23 @@ class UserController(
         @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
     ): CurrentUserResponse {
         val user = users.currentUser(jwt)
-        return CurrentUserResponse(user.id, user.email, user.status, user.createdAt, user.updatedAt, user.isAdmin)
+        return response(user)
     }
+
+    @PatchMapping("/api/v1/me/language", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @Operation(operationId = "UserController_changeLanguage", summary = "Set the authenticated user's preferred language")
+    fun changeLanguage(
+        @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
+        @RequestBody request: ChangeLanguageRequest,
+    ): CurrentUserResponse = response(users.changeLanguage(jwt, request.language))
+
+    private fun response(user: User) =
+        CurrentUserResponse(user.id, user.email, user.status, user.createdAt, user.updatedAt, user.isAdmin, user.language)
 }
+
+data class ChangeLanguageRequest(
+    @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = ["de", "en"]) val language: String,
+)
 
 data class CurrentUserResponse(
     @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED, format = "uuid") val id: String,
@@ -39,4 +55,5 @@ data class CurrentUserResponse(
     @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED) val updatedAt: Instant,
     @get:com.fasterxml.jackson.annotation.JsonProperty("isAdmin")
     @get:Schema(requiredMode = Schema.RequiredMode.REQUIRED) val isAdmin: Boolean,
+    @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = ["de", "en"]) val language: String,
 )

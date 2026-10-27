@@ -2,14 +2,15 @@
 
 <header class="site-header">
   <a class="brand" routerLink="/">
-    <span class="brand-mark" aria-hidden="true">LK</span>
-    <span>Lost Key Finder</span>
+    <span class="brand-mark" aria-hidden="true">{{ language.copy().brandMark }}</span>
+    <span>{{ language.copy().brand }}</span>
   </a>
   <a class="account-link" [routerLink]="auth.signedIn() ? '/account' : '/'" [fragment]="auth.signedIn() ? undefined : 'owner'">{{ auth.signedIn() ? language.copy().account : language.copy().signIn }}</a>
-  <button class="language-toggle" type="button" (click)="toggleLanguage()" [attr.aria-label]="(language.language() === 'de' ? 'EN: ' : 'DE: ') + language.copy().switchLabel">
-    {{ language.language() === 'de' ? 'EN' : 'DE' }}
+  <button class="language-toggle" type="button" (click)="toggleLanguage()" [disabled]="languagePreference.busy()" [attr.aria-label]="(language.copy().switchCode + ': ') + language.copy().switchLabel">
+    {{ language.copy().switchCode }}
   </button>
 </header>
+@if (languagePreference.failed()) { <p class="language-error" role="alert">{{ language.copy().languageFailed }}</p> }
 
 <main id="main-content" tabindex="-1">
   @if (contentAllowed()) { <router-outlet /> }

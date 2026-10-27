@@ -21,7 +21,7 @@ import { ChatPage } from '@lost-key-finder/api-client';
       <button type="button" [disabled]="chats.value().page === chats.value().totalPages" (click)="page.set(page() + 1)">{{ copy().next }}</button>
     </nav>
   }
-  <p><a routerLink="/account">Account</a></p>
+  <p><a routerLink="/account">{{ copy().account }}</a></p>
 </section>`, styles: `li { margin-block: 1rem; overflow-wrap: anywhere; } nav { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }` })
 export class ChatList {
   protected readonly copy = inject(ChatCopy).text;

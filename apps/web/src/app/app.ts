@@ -6,6 +6,7 @@ import { filter } from 'rxjs';
 import { authGuard } from './auth/auth-guard';
 import { Auth } from './auth/auth';
 import { LanguageService } from './core/language.service';
+import { LanguagePreference } from './core/language-preference';
 
 @Component({
   selector: 'app-root',
@@ -15,6 +16,7 @@ import { LanguageService } from './core/language.service';
 })
 export class App {
   protected readonly language = inject(LanguageService);
+  protected readonly languagePreference = inject(LanguagePreference);
   protected readonly auth = inject(Auth);
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
@@ -47,6 +49,6 @@ export class App {
   }
 
   protected toggleLanguage(): void {
-    this.language.toggle();
+    void this.languagePreference.toggle();
   }
 }

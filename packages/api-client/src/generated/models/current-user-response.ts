@@ -6,6 +6,7 @@ export interface CurrentUserResponse {
   email: string;
   id: string;
   isAdmin: boolean;
+  language: 'de' | 'en';
   status: 'ACTIVE' | 'DISABLED' | 'DELETING';
   updatedAt: string;
 }
