@@ -1,10 +1,11 @@
 <section class="auth-panel" aria-labelledby="account-title">
   <h1 id="account-title">{{ ('common.account' | transloco) }}</h1>
   <p role="status">
-    @if (loading()) { {{ ('common.accountLoading' | transloco) }} }
+    @if (user.isLoading()) { {{ ('common.accountLoading' | transloco) }} }
     @if (error(); as errorKey) { {{ ('common.' + errorKey | transloco) }} }
   </p>
-  @if (user(); as currentUser) {
+  @if (user.hasValue()) {
+    @let currentUser = user.value();
     <p>{{ ('common.accountIntro' | transloco) }}</p>
     <dl><dt>{{ ('common.email' | transloco) }}</dt><dd>{{ currentUser.email }}</dd></dl>
     <p><a routerLink="/chats">{{ chatCopy().title }}</a></p>
@@ -12,7 +13,7 @@
     @if (currentUser.isAdmin) { <p><a routerLink="/admin/tags">{{ tagCopy().adminLink }}</a></p> }
   }
   @if (error() === 'accountFailed') {
-    <button type="button" (click)="load()" [disabled]="loading()">{{ ('common.retry' | transloco) }}</button>
+    <button type="button" (click)="user.reload()" [disabled]="user.isLoading()">{{ ('common.retry' | transloco) }}</button>
   }
   @if (error() === 'sessionExpired') { <a routerLink="/" fragment="owner">{{ ('common.backToLogin' | transloco) }}</a> }
   <button type="button" (click)="logout()" [disabled]="signingOut()">{{ ('common.logout' | transloco) }}</button>
