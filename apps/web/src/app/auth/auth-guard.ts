@@ -1,3 +1,4 @@
+import { isUuidV4 } from '../core/uuid';
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -10,7 +11,7 @@ export const authGuard: CanActivateFn = async route => {
   const users = inject(UsersService);
   const chatId = route.paramMap.get('chatId');
   const login = router.createUrlTree(['/'], { fragment: 'owner', queryParams:
-    chatId && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(chatId)
+    chatId && isUuidV4(chatId)
       ? { chatId: chatId.toLowerCase() } : undefined });
   await auth.ready;
   if (!auth.signedIn()) return login;

@@ -1,3 +1,4 @@
+import { isUuidV4 } from '../../core/uuid';
 import { translateSection } from '../../core/translations';
 import { DOCUMENT, DatePipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
@@ -67,8 +68,7 @@ export class TagList {
     const model = this.model();
     const id = model.publicId.trim();
     const batchId = model.batchId.trim();
-    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    this.validationError.set((!!id && !uuid.test(id)) || (!!batchId && !uuid.test(batchId)));
+    this.validationError.set((!!id && !isUuidV4(id)) || (!!batchId && !isUuidV4(batchId)));
     if (this.validationError()) return;
     if (this.admin) {
       for (const [name, value] of Object.entries({ publicId: id, origin: model.origin, status: model.status, assigned: model.assigned, batchId, inventoryStatus: model.inventoryStatus })) {
