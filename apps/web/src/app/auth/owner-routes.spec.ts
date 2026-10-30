@@ -96,14 +96,26 @@ describe('Owner route access and callback', () => {
     const harness = await RouterTestingHarness.create();
     await navigate(harness, '/account');
     const http = TestBed.inject(HttpTestingController);
-    http.expectOne('/api/v1/me').flush({ id: 'local-id', email: 'owner@example.com', status: 'ACTIVE',
+    signOut.mockRejectedValueOnce(new Error('Logout failed'));
+    harness.routeNativeElement?.querySelector('button')?.click();
+    await vi.waitFor(() => expect(harness.routeNativeElement?.textContent).toContain('Die Abmeldung konnte nicht abgeschlossen werden'));
+    http.expectOne('/api/v1/me').flush({}, { status: 503, statusText: 'Unavailable' });
+    await harness.fixture.whenStable();
+    expect(harness.routeNativeElement?.textContent).toContain('Dein Konto konnte nicht geladen werden');
+    harness.routeNativeElement?.querySelector('button')?.click();
+    (await vi.waitFor(() => http.expectOne('/api/v1/me'))).flush({ id: 'local-id', email: 'owner@example.com', status: 'ACTIVE',
       createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' });
     await Promise.resolve();
     await harness.fixture.whenStable();
     expect(harness.routeNativeElement?.textContent).toContain('owner@example.com');
+    signOut.mockRejectedValueOnce(new Error('Logout failed'));
     harness.routeNativeElement?.querySelector('button')?.click();
     await harness.fixture.whenStable();
-    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(harness.routeNativeElement?.textContent).toContain('Die Abmeldung konnte nicht abgeschlossen werden');
+    expect(harness.routeNativeElement?.textContent).toContain('owner@example.com');
+    harness.routeNativeElement?.querySelector('button')?.click();
+    await harness.fixture.whenStable();
+    expect(signOut).toHaveBeenCalledTimes(3);
     expect(TestBed.inject(Router).url).toBe('/#owner');
     expect(harness.routeNativeElement?.textContent).not.toContain('owner@example.com');
     http.verify();
@@ -133,15 +145,14 @@ describe('Owner route access and callback', () => {
     http.verify();
   });
 
-  it('does not redirect from a destroyed account after a late admin response', async () => {
+  it('cancels the profile request when the account is destroyed without redirecting', async () => {
     signedIn.set(true);
     const harness = await RouterTestingHarness.create();
     await navigate(harness, '/account?entry=login');
     const http = TestBed.inject(HttpTestingController);
     const me = http.expectOne('/api/v1/me');
     await harness.navigateByUrl('/missing-page');
-    me.flush({ id: 'local-id', email: 'admin@example.com', status: 'ACTIVE', isAdmin: true,
-      createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' });
+    expect(me.cancelled).toBe(true);
     await harness.fixture.whenStable();
     expect(TestBed.inject(Router).url).toBe('/missing-page');
     http.verify();

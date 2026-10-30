@@ -1,0 +1,5 @@
+@mixin form-controls($padding: .7rem 1rem, $disabled-cursor: wait) {
+  label { display: block; font-weight: 600; }
+  button { padding: $padding; border: 0; border-radius: .25rem; background: var(--ink); color: var(--paper); font: inherit; cursor: pointer; }
+  button:disabled { opacity: .6; cursor: $disabled-cursor; }
+}

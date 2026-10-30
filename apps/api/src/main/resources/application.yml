@@ -3,6 +3,17 @@ spring:
     default: dev
   application:
     name: lost-key-finder-api
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      "[mail.smtp.starttls.enable]": ${SMTP_START_TLS:true}
+      "[mail.smtp.starttls.required]": ${SMTP_START_TLS:true}
+      "[mail.smtp.connectiontimeout]": 5000
+      "[mail.smtp.timeout]": 5000
+      "[mail.smtp.writetimeout]": 5000
   data:
     mongodb:
       auto-index-creation: false
@@ -46,12 +57,7 @@ rate-limits:
   hmac-key: ${PUBLIC_RATE_LIMIT_HMAC_KEY:}
 
 mail:
-  host: ${SMTP_HOST:}
-  port: ${SMTP_PORT:587}
-  username: ${SMTP_USERNAME:}
-  password: ${SMTP_PASSWORD:}
   from: ${MAIL_FROM:}
-  start-tls: ${SMTP_START_TLS:true}
 
 chat-notification-job:
   audience: ${CHAT_NOTIFICATION_JOB_AUDIENCE:}

@@ -1,3 +1,4 @@
+import { isUuidV4 } from '../core/uuid';
 export interface AuthCallbackData {
   link: string;
   failed: boolean;
@@ -40,7 +41,7 @@ export function consumeAuthCallback(location: Location, history: History): AuthC
   for (const name of flowNames) {
     const value = flows.get(name);
     if (value !== null) {
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) data.failed = true;
+      if (!isUuidV4(value)) data.failed = true;
       else if (!data.failed) data[name] = value.toLowerCase();
     }
   }

@@ -10,7 +10,6 @@ import ch.lostkeyfinder.chat.ChatNotifications
 import ch.lostkeyfinder.chat.ChatService
 import ch.lostkeyfinder.chat.FinderDraft
 import ch.lostkeyfinder.chat.LossCase
-import ch.lostkeyfinder.mail.MailProperties
 import ch.lostkeyfinder.mail.MailSender
 import ch.lostkeyfinder.tags.Tag
 import ch.lostkeyfinder.tags.TagAudit
@@ -31,6 +30,7 @@ import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Query.query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.http.MediaType
+import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
@@ -326,7 +326,13 @@ class ChatHttpTest {
         val configured =
             ChatNotifications(
                 template,
-                MailSender(MailProperties(host = "127.0.0.1", port = 1, from = "test@example.com")),
+                MailSender(
+                    JavaMailSenderImpl().apply {
+                        host = "127.0.0.1"
+                        port = 1
+                    },
+                    "test@example.com",
+                ),
                 TagProperties("https://example.com"),
                 Translations(),
             )
@@ -390,12 +396,11 @@ class ChatHttpTest {
                     ChatNotifications(
                         template,
                         MailSender(
-                            MailProperties(
-                                host = "127.0.0.1",
-                                port = server.localPort,
-                                from = "notify@example.com",
-                                startTls = false,
-                            ),
+                            JavaMailSenderImpl().apply {
+                                host = "127.0.0.1"
+                                port = server.localPort
+                            },
+                            "notify@example.com",
                         ),
                         TagProperties("https://example.test"),
                         Translations(),

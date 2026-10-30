@@ -44,7 +44,7 @@ Neue bestätigte Fundmeldungen lösen unmittelbar einen Versandversuch aus. Weit
 
 SMTP-Aufrufe finden ausserhalb der fachlichen Transaktion statt. Ein Mailfehler macht die Fundmeldung nicht rückgängig. Der Auftrag bleibt `FAILED` und wird frühestens 15 Minuten später erneut versucht. Eine dreiminütige Lease verhindert konkurrierenden Versand; nach Timeout kann SMTP bereits angenommen haben, deshalb sind seltene Doppelzustellungen möglich. Während des Versands eingehende Antworten bleiben für das nächste Bündel vorgemerkt. `SENT` bedeutet SMTP-Annahme, keine garantierte Zustellung.
 
-Der allgemeine Mailversand liegt im Modul `mail`: `MailProperties` bindet `mail.*`, `MailSender` verwaltet den SMTP-Transport. Chat-Benachrichtigungen übergeben nur Empfänger, Betreff und Inhalt. Scheduler-Audience und Servicekonto sind separat unter `chat-notification-job.*` konfiguriert.
+Der allgemeine Mailversand liegt im Modul `mail`: `spring.mail.*` nutzt Spring Boots Mail-Autokonfiguration; `mail.from` enthält die Absenderadresse. `MailSender` prüft die Vollständigkeit und übergibt Nachrichten an den automatisch konfigurierten SMTP-Transport. Chat-Benachrichtigungen übergeben nur Empfänger, Betreff und Inhalt. Scheduler-Audience und Servicekonto sind separat unter `chat-notification-job.*` konfiguriert.
 
 Benötigte Umgebungsvariablen:
 

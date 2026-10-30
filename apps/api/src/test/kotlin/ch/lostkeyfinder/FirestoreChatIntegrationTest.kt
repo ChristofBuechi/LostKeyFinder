@@ -8,7 +8,6 @@ import ch.lostkeyfinder.chat.ChatNotifications
 import ch.lostkeyfinder.chat.ChatService
 import ch.lostkeyfinder.chat.FinderDraft
 import ch.lostkeyfinder.chat.LossCase
-import ch.lostkeyfinder.mail.MailProperties
 import ch.lostkeyfinder.mail.MailSender
 import ch.lostkeyfinder.tags.MongoTagTransactions
 import ch.lostkeyfinder.tags.PublicRequestLimits
@@ -47,7 +46,7 @@ class FirestoreChatIntegrationTest {
             provisionChatIndexes(template)
             val transactions = MongoTagTransactions(client, template)
             val limits = PublicRequestLimits(template, requireNotNull(System.getenv("PUBLIC_RATE_LIMIT_HMAC_KEY")))
-            val notices = ChatNotifications(template, MailSender(MailProperties()), TagProperties("https://example.test"), Translations())
+            val notices = ChatNotifications(template, MailSender(null, ""), TagProperties("https://example.test"), Translations())
             val chats = ChatService(template, transactions, limits, notices)
 
             fun user(): User {

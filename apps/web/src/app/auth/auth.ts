@@ -1,3 +1,4 @@
+import { isUuidV4 } from '../core/uuid';
 import { DestroyRef, Injectable, InjectionToken, inject, signal } from '@angular/core';
 import type { FirebaseOptions } from 'firebase/app';
 import { AuthCallbackData } from './auth-callback';
@@ -64,11 +65,11 @@ export class Auth {
     if (!client) throw new Error('Auth unavailable');
     const continuation = new URL('/auth/callback', location.origin);
     if (registrationId) {
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(registrationId)) throw new Error('Invalid registration');
+      if (!isUuidV4(registrationId)) throw new Error('Invalid registration');
       continuation.searchParams.set('registrationId', registrationId.toLowerCase());
     }
     for (const [name, value] of Object.entries(flow ?? {})) {
-      if (!value || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) throw new Error('Invalid continuation');
+      if (!value || !isUuidV4(value)) throw new Error('Invalid continuation');
       continuation.searchParams.set(name, value.toLowerCase());
     }
     if (continuation.searchParams.size > 1) throw new Error('Invalid continuation');

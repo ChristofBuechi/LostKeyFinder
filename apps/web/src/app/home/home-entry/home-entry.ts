@@ -1,3 +1,4 @@
+import { isUuidV4 } from '../../core/uuid';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormField, disabled, email, form, required, submit } from '@angular/forms/signals';
@@ -33,7 +34,7 @@ export class HomeEntry {
       this.sending.set(true);
       try {
         const chatId = this.route.snapshot.queryParamMap.get('chatId');
-        if (chatId && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(chatId)) {
+        if (chatId && isUuidV4(chatId)) {
           await this.auth.sendLink(this.model().email, undefined, { chatId: chatId.toLowerCase() });
         } else await this.auth.sendLink(this.model().email);
         if (this.destroyRef.destroyed) return;
