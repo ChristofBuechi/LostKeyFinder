@@ -12,28 +12,35 @@ describe('Email-confirmed account deletion', () => {
   const signedIn = signal(true);
   const signOut = vi.fn();
   const firebaseUserId = signal('owner');
+  let visible = true;
+  const prerendering = Object.getOwnPropertyDescriptor(document, 'prerendering');
   beforeEach(() => {
+    visible = true;
+    vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visible ? 'visible' : 'hidden');
+    Object.defineProperty(document, 'prerendering', { configurable: true, value: false });
     localStorage.clear(); signedIn.set(true); firebaseUserId.set('owner'); signOut.mockReset().mockResolvedValue(undefined);
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), provideRouter([]),
       { provide: DELETION_CONFIRMATION_TOKEN, useValue: token },
       { provide: Auth, useValue: { signedIn, firebaseUserId, signOut, expireSession: vi.fn() } }] });
   });
-  afterEach(() => TestBed.inject(HttpTestingController).verify());
-  it('requires an explicit click and sends the secret only in the authenticated request body', async () => {
+  afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
+    vi.restoreAllMocks();
+    if (prerendering) Object.defineProperty(document, 'prerendering', prerendering);
+    else Reflect.deleteProperty(document, 'prerendering');
+  });
+  it('automatically confirms the email link and sends the secret only in the authenticated request body', async () => {
     const fixture = TestBed.createComponent(AccountDeletionConfirm);
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     const http = TestBed.inject(HttpTestingController);
-    (await vi.waitFor(() => http.expectOne('/api/v1/me'))).flush({ id: 'owner', email: 'owner@example.com' });
-    await fixture.whenStable();
     http.expectNone(request => request.method === 'DELETE');
-    expect(fixture.nativeElement.textContent).not.toContain(token);
-    expect(fixture.nativeElement.textContent).toContain('owner@example.com');
-    const confirm = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
-    confirm.click(); confirm.click();
+    (await vi.waitFor(() => http.expectOne('/api/v1/me'))).flush({ id: 'owner', email: 'owner@example.com' });
     const request = await vi.waitFor(() => http.expectOne('/api/v1/me'));
     expect(request.request.method).toBe('DELETE');
     expect(request.request.body).toEqual({ token });
     expect(request.request.urlWithParams).not.toContain(token);
+    expect(fixture.nativeElement.textContent).not.toContain(token);
+    expect(fixture.nativeElement.querySelector('button')).toBeNull();
     request.flush(null, { status: 202, statusText: 'Accepted' });
     await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/account/deletion-requested', { replaceUrl: true }));
     expect(signOut).toHaveBeenCalledOnce(); fixture.destroy();
@@ -47,28 +54,42 @@ describe('Email-confirmed account deletion', () => {
     expect(fixture.nativeElement.querySelector('a[target=_blank]').getAttribute('href')).not.toContain(token);
     fixture.destroy();
   });
-  it('reloads the profile and clears the previous email when the Firebase identity changes', async () => {
+  it.each(['hidden', 'prerendering'])('waits for activation of a %s page and submits only once', async state => {
+    visible = state !== 'hidden';
+    Object.defineProperty(document, 'prerendering', { configurable: true, value: state === 'prerendering' });
     const fixture = TestBed.createComponent(AccountDeletionConfirm);
     const http = TestBed.inject(HttpTestingController);
-    (await vi.waitFor(() => http.expectOne('/api/v1/me'))).flush({ id: 'owner', email: 'owner@example.com' });
+    (await vi.waitFor(() => http.expectOne('/api/v1/me'))).flush({ id: 'owner' });
+    await fixture.whenStable();
+    http.expectNone(request => request.method === 'DELETE');
+    visible = true;
+    Object.defineProperty(document, 'prerendering', { configurable: true, value: false });
+    document.dispatchEvent(new Event(state === 'hidden' ? 'visibilitychange' : 'prerenderingchange'));
+    document.dispatchEvent(new Event('visibilitychange'));
+    const request = await vi.waitFor(() => http.expectOne('/api/v1/me'));
+    expect(request.request.method).toBe('DELETE');
+    request.flush({}, { status: 404, statusText: 'Invalid confirmation' });
+    await fixture.whenStable();
+    document.dispatchEvent(new Event('visibilitychange'));
+    http.expectNone(() => true);
+    expect(signOut).not.toHaveBeenCalled(); fixture.destroy();
+  });
+  it('reloads the profile after an identity switch and preserves the session when its token is rejected', async () => {
+    visible = false;
+    const fixture = TestBed.createComponent(AccountDeletionConfirm);
+    const http = TestBed.inject(HttpTestingController);
+    (await vi.waitFor(() => http.expectOne('/api/v1/me'))).flush({ id: 'owner' });
     await fixture.whenStable();
     firebaseUserId.set('other');
-    const next = await vi.waitFor(() => http.expectOne('/api/v1/me'));
-    expect(fixture.nativeElement.textContent).not.toContain('owner@example.com');
-    next.flush({ id: 'other', email: 'other@example.com' }); await fixture.whenStable();
-    expect(fixture.nativeElement.textContent).toContain('other@example.com');
-    http.expectNone(request => request.method === 'DELETE');
-    fixture.destroy();
-  });
-  it('shows a failed confirmation and preserves the account session', async () => {
-    const fixture = TestBed.createComponent(AccountDeletionConfirm);
-    const http = TestBed.inject(HttpTestingController);
-    (await vi.waitFor(() => http.expectOne('/api/v1/me'))).flush({ id: 'other', email: 'other@example.com' });
+    (await vi.waitFor(() => http.expectOne('/api/v1/me'))).flush({ id: 'other' });
     await fixture.whenStable();
-    (fixture.nativeElement.querySelector('button') as HTMLButtonElement).click();
+    http.expectNone(request => request.method === 'DELETE');
+    visible = true; document.dispatchEvent(new Event('visibilitychange'));
     (await vi.waitFor(() => http.expectOne('/api/v1/me'))).flush({}, { status: 404, statusText: 'Invalid confirmation' });
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('[role=alert]')).not.toBeNull();
-    expect(signOut).not.toHaveBeenCalled(); fixture.destroy();
+    expect(signOut).not.toHaveBeenCalled();
+    http.expectNone(() => true);
+    fixture.destroy();
   });
 });

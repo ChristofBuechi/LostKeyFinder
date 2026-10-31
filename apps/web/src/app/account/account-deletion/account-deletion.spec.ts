@@ -22,9 +22,9 @@ describe('Account deletion', () => {
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     await fixture.whenStable();
     const remove = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
-    expect(remove.disabled).toBe(true);
-    (fixture.nativeElement.querySelector('input') as HTMLInputElement).click();
-    await fixture.whenStable(); remove.click();
+    expect(remove.disabled).toBe(false);
+    expect(fixture.nativeElement.querySelector('input[type=checkbox]')).toBeNull();
+    remove.click();
     const http = TestBed.inject(HttpTestingController);
     const first = await vi.waitFor(() => http.expectOne('/api/v1/me/deletion-confirmations'));
     expect(first.request.method).toBe('POST');
@@ -38,7 +38,6 @@ describe('Account deletion', () => {
     const fixture = TestBed.createComponent(AccountDeletion);
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     await fixture.whenStable();
-    (fixture.nativeElement.querySelector('input') as HTMLInputElement).click(); await fixture.whenStable();
     (fixture.nativeElement.querySelector('button') as HTMLButtonElement).click();
     (await vi.waitFor(() => TestBed.inject(HttpTestingController).expectOne('/api/v1/me/deletion-confirmations'))).flush({ confirmationRequired: false }, { status: 202, statusText: 'Accepted' });
     await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/account/deletion-requested', { replaceUrl: true }));
@@ -48,7 +47,6 @@ describe('Account deletion', () => {
   it('offers a fresh login after an expired authentication and allows retry after transport failure', async () => {
     const fixture = TestBed.createComponent(AccountDeletion);
     await fixture.whenStable();
-    (fixture.nativeElement.querySelector('input') as HTMLInputElement).click(); await fixture.whenStable();
     const remove = fixture.nativeElement.querySelector('button') as HTMLButtonElement; remove.click();
     const http = TestBed.inject(HttpTestingController);
     (await vi.waitFor(() => http.expectOne('/api/v1/me/deletion-confirmations'))).flush({}, { status: 409, statusText: 'Recent login required' });

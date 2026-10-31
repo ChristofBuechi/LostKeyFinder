@@ -97,7 +97,7 @@ describe('Owner route access and callback', () => {
     await navigate(harness, '/account');
     const http = TestBed.inject(HttpTestingController);
     signOut.mockRejectedValueOnce(new Error('Logout failed'));
-    harness.routeNativeElement?.querySelector('button')?.click();
+    harness.routeNativeElement?.querySelector<HTMLButtonElement>('button.logout')?.click();
     await vi.waitFor(() => expect(harness.routeNativeElement?.textContent).toContain('Die Abmeldung konnte nicht abgeschlossen werden'));
     http.expectOne('/api/v1/me').flush({}, { status: 503, statusText: 'Unavailable' });
     await harness.fixture.whenStable();
@@ -109,11 +109,11 @@ describe('Owner route access and callback', () => {
     await harness.fixture.whenStable();
     expect(harness.routeNativeElement?.textContent).toContain('owner@example.com');
     signOut.mockRejectedValueOnce(new Error('Logout failed'));
-    harness.routeNativeElement?.querySelector('button')?.click();
+    harness.routeNativeElement?.querySelector<HTMLButtonElement>('button.logout')?.click();
     await harness.fixture.whenStable();
     expect(harness.routeNativeElement?.textContent).toContain('Die Abmeldung konnte nicht abgeschlossen werden');
     expect(harness.routeNativeElement?.textContent).toContain('owner@example.com');
-    harness.routeNativeElement?.querySelector('button')?.click();
+    harness.routeNativeElement?.querySelector<HTMLButtonElement>('button.logout')?.click();
     await harness.fixture.whenStable();
     expect(signOut).toHaveBeenCalledTimes(3);
     expect(TestBed.inject(Router).url).toBe('/#owner');
@@ -186,7 +186,7 @@ describe('Owner route access and callback', () => {
     (await vi.waitFor(() => http.expectOne('/api/v1/me'))).flush({ ...owner, status: 'DELETING' });
     await navigation;
     expect(TestBed.inject(Router).url).toBe('/account/deletion');
-    expect(harness.routeNativeElement?.textContent).toContain('Bestätigungslink per E-Mail anfordern');
+    expect(harness.routeNativeElement?.textContent).toContain('Konto löschen');
     http.expectNone('/api/v1/tags'); http.verify();
   });
 

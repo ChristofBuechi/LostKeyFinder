@@ -266,7 +266,7 @@
     },
     "accountDeletion": {
       "subject": "Confirm deletion of your Lost Key Finder account",
-      "body": "You requested deletion of your Lost Key Finder account.\n\nOpen this one-time link within 15 minutes and confirm deletion while signed in to the same account:\n{confirmationUrl}\n\nOnly after confirmation will your self-created tags be retired and hardware tags released. Shared chats remain available to other authorized participants.\n\nIf you did not request this, ignore this email. Nothing will be deleted without confirmation."
+      "body": "You requested deletion of your Lost Key Finder account.\n\nDo you really want to permanently delete your account? Clicking this one-time link confirms deletion without another confirmation. The link is valid for 15 minutes; you must be signed in to the same account:\n{confirmationUrl}\n\nYour self-created tags will be retired and hardware tags released. Blocked hardware remains blocked. Your Firebase account and local contact details will be removed. Shared chat text, images and history remain available to other authorized participants; personal details you shared in that content are not automatically removed.\n\nIf you did not request this, ignore this email. Nothing will be deleted without confirmation."
     }
   },
   "print": {
@@ -292,18 +292,18 @@
     "recent": "Please sign in with a fresh email link and confirm deletion again.",
     "failed": "We could not confirm acceptance. Please try again. Requests already accepted continue in the background.",
     "signInAgain": "Sign in again",
-    "resume": "A one-time link is sent to your account’s verified email address. Only after confirmation will your account be blocked and background deletion start.",
+    "resume": "You will receive a confirmation email. Clicking its link authorizes permanent deletion without another confirmation.",
     "back": "Back to account",
     "done": "Account deletion requested",
     "doneText": "Your request was accepted. Your account is blocked; data cleanup and Firebase account deletion continue in the background. You can close this page.",
     "home": "Home",
     "sendConfirmation": "Request confirmation email",
-    "confirmTitle": "Confirm account deletion",
+    "confirmTitle": "Processing deletion confirmation",
     "emailSent": "Confirmation link requested",
     "emailSentText": "Check your email, including spam. The link is valid for 15 minutes; a new link replaces the previous one. Your account and tags remain unchanged until you confirm.",
     "openEmail": "Please reopen the complete link in the confirmation email. After a reload, the secret is no longer stored on this page for security reasons.",
     "signedInAs": "Signed in as",
-    "loginRequired": "Sign in with exactly the account for which you requested deletion. Then return here or reopen the link from your email.",
+    "loginRequired": "Sign in with exactly the account for which you requested deletion. Then return here or reopen the email link. Confirmation will be processed automatically.",
     "loginOtherTab": "Open sign-in in a new tab",
     "invalidConfirmation": "This link is invalid, expired or belongs to another account. Request a new confirmation link if needed."
   }

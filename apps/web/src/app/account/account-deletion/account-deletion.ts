@@ -1,36 +1,31 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { UsersService } from '@lost-key-finder/api-client';
 import { Auth } from '../../auth/auth';
 import { translateSection } from '../../core/translations';
 
 @Component({
-  selector: 'app-account-deletion', imports: [RouterLink],
-  template: `<section class="auth-panel" aria-labelledby="delete-title">
-    <h1 id="delete-title">{{ copy().title }}</h1><p>{{ copy().consequences }}</p><p>{{ copy().history }}</p>
-    <label><input type="checkbox" [checked]="confirmed()" (change)="confirmed.set(!confirmed())" [disabled]="busy()"> {{ copy().confirm }}</label>
-    <button type="button" (click)="requestConfirmation()" [disabled]="!confirmed() || busy()">{{ busy() ? copy().busy : copy().sendConfirmation }}</button>
+  selector: 'app-account-deletion', imports: [],
+  template: `<button class="tag-action tag-action--danger" type="button" (click)="requestConfirmation()" [disabled]="busy()" aria-describedby="account-delete-hint">{{ busy() ? copy().busy : copy().title }}</button>
+    <p id="account-delete-hint">{{ copy().resume }}</p>
     @if (failed()) { <p role="alert">{{ recentRequired() ? copy().recent : copy().failed }}</p> }
-    @if (failed()) { <button type="button" (click)="signInAgain()" [disabled]="busy()">{{ copy().signInAgain }}</button> }
-    <p>{{ copy().resume }}</p><a routerLink="/account">{{ copy().back }}</a>
-  </section>`,
-  styles: `.auth-panel input { width: auto; } label { margin-block: 1rem; }`,
+    @if (failed()) { <button type="button" (click)="signInAgain()" [disabled]="busy()">{{ copy().signInAgain }}</button> }`,
+  styles: `:host { display: block; margin-block: 1.5rem; }`,
 })
 export class AccountDeletion {
   protected readonly copy = translateSection('deletion');
   protected readonly busy = signal(false);
   protected readonly failed = signal(false);
   protected readonly recentRequired = signal(false);
-  protected readonly confirmed = signal(false);
   private readonly users = inject(UsersService);
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
   private readonly destroy = inject(DestroyRef);
 
   protected async requestConfirmation(): Promise<void> {
-    if (this.busy() || !this.confirmed()) return;
+    if (this.busy()) return;
     const identity = this.auth.firebaseUserId();
     this.busy.set(true); this.failed.set(false); this.recentRequired.set(false);
     try {
