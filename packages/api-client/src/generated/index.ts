@@ -6,7 +6,6 @@ export { RequestBuilder } from './request-builder';
 export type { StrictHttpResponse } from './strict-http-response';
 export { Api } from './api';
 
-export type { AccountDeletionResponse } from './models/account-deletion-response';
 export type { ChangeLanguageRequest } from './models/change-language-request';
 export type { ChangeTagLabelRequest } from './models/change-tag-label-request';
 export type { ChangeTagStatusRequest } from './models/change-tag-status-request';

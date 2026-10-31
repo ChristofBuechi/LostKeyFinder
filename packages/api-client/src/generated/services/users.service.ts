@@ -10,7 +10,6 @@ import { BaseService } from '../base-service';
 import { ApiConfiguration } from '../api-configuration';
 import { StrictHttpResponse } from '../strict-http-response';
 
-import { AccountDeletionResponse } from '../models/account-deletion-response';
 import { CurrentUserResponse } from '../models/current-user-response';
 import { userControllerChangeLanguage } from '../fn/users/user-controller-change-language';
 import { UserControllerChangeLanguage$Params } from '../fn/users/user-controller-change-language';
@@ -64,7 +63,7 @@ export class UsersService extends BaseService {
   static readonly UserControllerDeletePath = '/api/v1/me';
 
   /**
-   * Delete the authenticated account, resumable in bounded steps.
+   * Accept an authenticated account deletion for background processing.
    *
    *
    *
@@ -73,13 +72,13 @@ export class UsersService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  userControllerDelete$Response(params?: UserControllerDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<AccountDeletionResponse>> {
+  userControllerDelete$Response(params?: UserControllerDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
     const obs = userControllerDelete(this.http, this.rootUrl, params, context);
     return obs;
   }
 
   /**
-   * Delete the authenticated account, resumable in bounded steps.
+   * Accept an authenticated account deletion for background processing.
    *
    *
    *
@@ -88,10 +87,10 @@ export class UsersService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  userControllerDelete(params?: UserControllerDelete$Params, context?: HttpContext): Observable<AccountDeletionResponse> {
+  userControllerDelete(params?: UserControllerDelete$Params, context?: HttpContext): Observable<void> {
     const resp = this.userControllerDelete$Response(params, context);
     return resp.pipe(
-      map((r: StrictHttpResponse<AccountDeletionResponse>): AccountDeletionResponse => r.body)
+      map((r: StrictHttpResponse<void>): void => r.body)
     );
   }
 

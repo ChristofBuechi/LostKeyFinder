@@ -62,3 +62,7 @@ mail:
 chat-notification-job:
   audience: ${CHAT_NOTIFICATION_JOB_AUDIENCE:}
   service-account: ${CHAT_NOTIFICATION_JOB_SERVICE_ACCOUNT:}
+
+account-deletion-job:
+  audience: ${ACCOUNT_DELETION_JOB_AUDIENCE:}
+  service-account: ${ACCOUNT_DELETION_JOB_SERVICE_ACCOUNT:}

@@ -283,15 +283,15 @@
     "consequences": "Deine eigenen Tags werden dauerhaft stillgelegt. Hardware-Tags werden von deinem Konto gelöst und können erneut registriert werden. Gesperrte oder stillgelegte Hardware bleibt gesperrt.",
     "history": "Das Firebase-Konto und lokale Kontaktdaten werden entfernt. Gemeinsame Chattexte, Bilder und die Historie bleiben für andere berechtigte Teilnehmer erhalten; persönliche Angaben, die du darin selbst geteilt hast, werden nicht automatisch entfernt.",
     "confirm": "Ich habe die Folgen verstanden und möchte mein Konto unwiderruflich löschen.",
-    "busy": "Konto wird gelöscht …",
+    "busy": "Löschung wird beauftragt …",
     "remove": "Konto endgültig löschen",
-    "recent": "Bitte melde dich erneut über einen frischen E-Mail-Link an und starte die Löschung nochmals.",
-    "failed": "Die Löschung ist noch nicht abgeschlossen. Du kannst sie erneut versuchen; ein bereits gesperrtes Konto bleibt gesperrt.",
+    "recent": "Bitte melde dich über einen frischen E-Mail-Link an und bestätige die Löschung nochmals.",
+    "failed": "Die Annahme konnte nicht bestätigt werden. Bitte versuche es erneut. Bereits angenommene Aufträge laufen im Hintergrund weiter.",
     "signInAgain": "Erneut anmelden",
-    "resume": "Eine begonnene Löschung kannst du nach erneuter Anmeldung auf dieser Seite fortsetzen.",
+    "resume": "Nach Annahme arbeitet das Backend selbstständig weiter. Du musst diese Seite nicht geöffnet lassen und dich nicht erneut anmelden.",
     "back": "Zur Kontoseite",
-    "done": "Konto gelöscht",
-    "doneText": "Dein Konto wurde gelöscht. Frühere Tag- und Chatrechte werden durch eine erneute Anmeldung nicht wiederhergestellt.",
+    "done": "Kontolöschung beauftragt",
+    "doneText": "Deine Anfrage wurde angenommen. Dein Konto ist gesperrt; die Datenbereinigung und die Löschung des Firebase-Kontos laufen im Hintergrund weiter. Du kannst diese Seite schliessen.",
     "home": "Zur Startseite"
   }
 }

@@ -84,6 +84,7 @@ class SecurityConfiguration {
                         org.springframework.http.HttpMethod.POST,
                         "/api/v1/public/tags/*/finder-drafts",
                         "/api/v1/internal/chat-notifications/dispatch",
+                        "/api/v1/internal/account-deletions/dispatch",
                     ).permitAll()
                     .requestMatchers("/api/v1/**")
                     .authenticated()
@@ -91,7 +92,9 @@ class SecurityConfiguration {
                     .permitAll()
             }.oauth2ResourceServer { resource ->
                 resource.bearerTokenResolver { request ->
-                    if (request.requestURI == "/api/v1/internal/chat-notifications/dispatch") {
+                    if (request.requestURI in
+                        setOf("/api/v1/internal/chat-notifications/dispatch", "/api/v1/internal/account-deletions/dispatch")
+                    ) {
                         null
                     } else {
                         org.springframework.security.oauth2.server.resource.web

@@ -7,22 +7,21 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
-import { AccountDeletionResponse } from '../../models/account-deletion-response';
 
 export interface UserControllerDelete$Params {
 }
 
-export function userControllerDelete(http: HttpClient, rootUrl: string, params?: UserControllerDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<AccountDeletionResponse>> {
+export function userControllerDelete(http: HttpClient, rootUrl: string, params?: UserControllerDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
   const rb = new RequestBuilder(rootUrl, userControllerDelete.PATH, 'delete');
   if (params) {
   }
 
   return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
+    rb.build({ responseType: 'text', accept: '*/*', context })
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return r as StrictHttpResponse<AccountDeletionResponse>;
+      return (r as HttpResponse<any>).clone({ body: undefined }) as StrictHttpResponse<void>;
     })
   );
 }
