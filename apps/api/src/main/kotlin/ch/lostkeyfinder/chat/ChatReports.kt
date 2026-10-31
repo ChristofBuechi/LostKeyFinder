@@ -4,7 +4,7 @@ import ch.lostkeyfinder.tags.PublicRequestLimits
 import ch.lostkeyfinder.tags.TagService
 import ch.lostkeyfinder.tags.TagTransactions
 import ch.lostkeyfinder.users.User
-import ch.lostkeyfinder.users.requireActiveUser
+import ch.lostkeyfinder.users.lockActiveUser
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.mapping.Document
@@ -46,7 +46,7 @@ class ChatReports(
         val key = "${user.id}:${messageId.lowercase()}"
         if (!template.exists(query(where("_id").`is`(key)), ChatReport::class.java)) limits.reserve("chat-report", user.id, 20)
         transactions.run { ops ->
-            requireActiveUser(ops, user.id)
+            ops.lockActiveUser(user.id)
             val chat = ops.findById(chatId.lowercase(), Chat::class.java)
             val message = ops.findById(messageId.lowercase(), ChatMessage::class.java)
             if (chat == null || user.id !in chat.participantIds || message?.chatId != chat.id) {

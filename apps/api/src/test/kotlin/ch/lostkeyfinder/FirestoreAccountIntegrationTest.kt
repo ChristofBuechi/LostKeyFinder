@@ -19,7 +19,7 @@ import ch.lostkeyfinder.users.AccountDeletion
 import ch.lostkeyfinder.users.AccountDeletionService
 import ch.lostkeyfinder.users.User
 import ch.lostkeyfinder.users.UserService
-import ch.lostkeyfinder.users.requireActiveUser
+import ch.lostkeyfinder.users.lockActiveUser
 import com.mongodb.ConnectionString
 import com.mongodb.client.MongoClients
 import org.junit.jupiter.api.Test
@@ -129,7 +129,7 @@ class FirestoreAccountIntegrationTest {
                     assertFailsWith<ResponseStatusException> { users.currentUser(jwt) }
                     assertFailsWith<ResponseStatusException> {
                         transactions.run { ops ->
-                            requireActiveUser(ops, owner.id)
+                            ops.lockActiveUser(owner.id)
                             true
                         }
                     }

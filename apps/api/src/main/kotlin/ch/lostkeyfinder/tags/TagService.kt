@@ -2,6 +2,7 @@ package ch.lostkeyfinder.tags
 
 import ch.lostkeyfinder.chat.closeTagChats
 import ch.lostkeyfinder.users.User
+import ch.lostkeyfinder.users.lockActiveUser
 import org.bson.Document
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.Sort
@@ -37,7 +38,7 @@ class TagService(
         creationLimit.reserve(owner.id)
         return try {
             transactions.run { ops ->
-                ch.lostkeyfinder.users.requireActiveUser(ops, owner.id)
+                ops.lockActiveUser(owner.id)
                 val saved = ops.findOne(selection, Tag::class.java)
                 if (saved != null) {
                     createdResponse(saved, label)
@@ -105,7 +106,7 @@ class TagService(
         val selection = query(where("_id").`is`(id.lowercase()).and("deletedAt").`is`(null))
         if (!asAdmin) selection.addCriteria(where("primaryOwnerUserId").`is`(actor.id))
         return transactions.run { ops ->
-            ch.lostkeyfinder.users.requireActiveUser(ops, actor.id)
+            ops.lockActiveUser(actor.id)
             val before =
                 ops.findOne(selection, Tag::class.java)
                     ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
@@ -143,7 +144,7 @@ class TagService(
                     .`is`(null),
             )
         return transactions.run { ops ->
-            ch.lostkeyfinder.users.requireActiveUser(ops, owner.id)
+            ops.lockActiveUser(owner.id)
             val before =
                 ops.findOne(selection, Tag::class.java)
                     ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")
@@ -265,7 +266,7 @@ class TagService(
         }
         val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
         transactions.run { ops ->
-            ch.lostkeyfinder.users.requireActiveUser(ops, actor.id)
+            ops.lockActiveUser(actor.id)
             val before =
                 ops.findAndModify(
                     selection,
@@ -295,7 +296,7 @@ class TagService(
         uuid(id)
         val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
         transactions.run { ops ->
-            ch.lostkeyfinder.users.requireActiveUser(ops, owner.id)
+            ops.lockActiveUser(owner.id)
             val changed =
                 ops.findAndModify(
                     query(

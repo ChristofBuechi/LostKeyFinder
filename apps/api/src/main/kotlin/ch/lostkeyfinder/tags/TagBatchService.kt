@@ -1,6 +1,7 @@
 package ch.lostkeyfinder.tags
 
 import ch.lostkeyfinder.users.User
+import ch.lostkeyfinder.users.lockActiveUser
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
@@ -50,7 +51,7 @@ class TagBatchService(
         if (count !in 1..100 || label.length > 80) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid batch")
         val creationKey = "${admin.id}:${key.lowercase()}"
         return transactions.run { ops ->
-            ch.lostkeyfinder.users.requireActiveUser(ops, admin.id)
+            ops.lockActiveUser(admin.id)
             val existing = ops.findOne(query(where("creationKey").`is`(creationKey)), TagBatch::class.java)
             if (existing != null) {
                 if (existing.count != count ||
@@ -120,7 +121,7 @@ class TagBatchService(
     ): TagBatchResponse {
         TagService.uuid(id)
         return transactions.run { ops ->
-            ch.lostkeyfinder.users.requireActiveUser(ops, admin.id)
+            ops.lockActiveUser(admin.id)
             val batch =
                 ops.findById(id.lowercase(), TagBatch::class.java)
                     ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Batch unavailable")

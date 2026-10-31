@@ -15,7 +15,6 @@ import ch.lostkeyfinder.tags.TagStatus
 import ch.lostkeyfinder.tags.TagTransactions
 import ch.lostkeyfinder.tags.tagChanges
 import org.springframework.data.annotation.Id
-import org.springframework.data.mongodb.core.MongoOperations
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.data.mongodb.core.query.Criteria
@@ -44,20 +43,6 @@ fun deletionKey(subject: String): String =
         "%02x".format(it)
     }
 
-// A write on the user serializes mutations against the start of account deletion.
-fun requireActiveUser(
-    ops: MongoOperations,
-    id: String,
-) {
-    val result =
-        ops.updateFirst(
-            query(where("_id").`is`(id).and("status").`is`(UserStatus.ACTIVE)),
-            Update().inc("activityVersion", 1),
-            User::class.java,
-        )
-    if (result.matchedCount != 1L) throw ResponseStatusException(HttpStatus.FORBIDDEN, "Account unavailable")
-}
-
 @Service
 class AccountDeletionService(
     private val template: MongoTemplate,
@@ -81,7 +66,7 @@ class AccountDeletionService(
             job =
                 transactions.run { ops ->
                     ops.findById(key, AccountDeletion::class.java) ?: run {
-                        requireActiveUser(ops, user.id)
+                        ops.lockActiveUser(user.id)
                         ops.updateFirst(
                             query(where("_id").`is`(user.id)),
                             Update.update("status", UserStatus.DELETING).set("isAdmin", false),
