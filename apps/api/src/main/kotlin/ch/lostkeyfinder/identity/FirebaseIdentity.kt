@@ -25,33 +25,6 @@ class FirebaseIdentity(
                     .apply { setReadTimeout(Duration.ofSeconds(5)) },
             ).build()
 
-    fun deleteAccount(jwt: Jwt) {
-        if (properties.apiKey.isBlank()) throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE)
-        try {
-            client
-                .post()
-                .uri("/v1/accounts:delete?key={key}", properties.apiKey)
-                .body(mapOf("idToken" to jwt.tokenValue))
-                .retrieve()
-                .toBodilessEntity()
-        } catch (ex: RestClientResponseException) {
-            val code = runCatching { ex.getResponseBodyAs(FirebaseError::class.java)?.error?.message }.getOrNull()
-            if (ex.statusCode.value() == 400 && code == "USER_NOT_FOUND") return
-            throw ResponseStatusException(
-                if (code ==
-                    "CREDENTIAL_TOO_OLD_LOGIN_AGAIN"
-                ) {
-                    HttpStatus.CONFLICT
-                } else {
-                    HttpStatus.SERVICE_UNAVAILABLE
-                },
-                "Account deletion incomplete",
-            )
-        } catch (ex: RestClientException) {
-            throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Account deletion incomplete")
-        }
-    }
-
     fun verifiedEmail(jwt: Jwt): String {
         if (properties.apiKey.isBlank()) throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE)
         val user =
@@ -101,14 +74,4 @@ data class FirebaseUser(
     val localId: String,
     val email: String?,
     val emailVerified: Boolean = false,
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class FirebaseError(
-    val error: FirebaseErrorDetail? = null,
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class FirebaseErrorDetail(
-    val message: String? = null,
 )

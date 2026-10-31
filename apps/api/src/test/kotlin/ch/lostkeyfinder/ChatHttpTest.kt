@@ -70,6 +70,8 @@ class ChatHttpTest {
 
     @Autowired lateinit var registrations: ch.lostkeyfinder.tags.TagRegistrationService
 
+    @Autowired lateinit var deletionWorker: ch.lostkeyfinder.users.AccountDeletionWorker
+
     @Autowired lateinit var notifications: ChatNotifications
     private val mapper = JsonMapper.builder().build()
 
@@ -189,7 +191,10 @@ class ChatHttpTest {
         template.insert(blocked)
         identity.responseEmail = owner.second.email
         identity.deleteStatus = 503
-        mvc.delete("/api/v1/me") { header("Authorization", "Bearer ${owner.first}") }.andExpect { status { isServiceUnavailable() } }
+        mvc.delete("/api/v1/me") { header("Authorization", "Bearer ${owner.first}") }.andExpect { status { isAccepted() } }
+        assertEquals(0, identity.deleteRequests.get())
+        assertEquals(TagStatus.ACTIVE, template.findById(tag.id, Tag::class.java)!!.status)
+        assertEquals(1, deletionWorker.dispatch())
         assertEquals(ch.lostkeyfinder.users.UserStatus.DELETING, template.findById(owner.second.id, User::class.java)!!.status)
         mvc.get("/api/v1/tags") { header("Authorization", "Bearer ${owner.first}") }.andExpect { status { isForbidden() } }
         mvc.get("/api/v1/me") { header("Authorization", "Bearer ${owner.first}") }.andExpect {
@@ -214,11 +219,9 @@ class ChatHttpTest {
         )
         val auditCount = template.count(Query(), TagAudit::class.java)
         identity.deleteStatus = 200
-        mvc.delete("/api/v1/me") { header("Authorization", "Bearer ${owner.first}") }.andExpect {
-            status { isOk() }
-            jsonPath("$.completed") { value(true) }
-        }
-        mvc.delete("/api/v1/me") { header("Authorization", "Bearer ${owner.first}") }.andExpect { status { isOk() } }
+        template.updateMulti(Query(), Update.update("nextAttemptAt", Instant.EPOCH), ch.lostkeyfinder.users.AccountDeletion::class.java)
+        assertEquals(1, deletionWorker.dispatch())
+        mvc.delete("/api/v1/me") { header("Authorization", "Bearer ${owner.first}") }.andExpect { status { isAccepted() } }
         assertEquals(auditCount, template.count(Query(), TagAudit::class.java))
         assertEquals(null, template.findById(owner.second.id, User::class.java))
         mvc.get("/api/v1/me") { header("Authorization", "Bearer ${owner.first}") }.andExpect { status { isForbidden() } }
@@ -585,6 +588,7 @@ class ChatHttpTest {
                     audience = "https://example.test",
                     serviceAccount = "scheduler@example.iam.gserviceaccount.com",
                 ),
+                ch.lostkeyfinder.jobs.GoogleJobAuthentication(),
             )
         for (header in listOf(null, "Basic invalid", "Bearer invalid")) {
             assertEquals(401, assertFailsWith<ResponseStatusException> { job.dispatch(header) }.statusCode.value())

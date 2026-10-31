@@ -10,18 +10,11 @@ Der PDF-Download entsteht lokal über die bei Bedarf geladene Standardbibliothek
 
 ## Kontolöschung
 
-`DELETE /api/v1/me` verlangt einen gültigen Firebase-Token. Vor dem Start ist eine höchstens fünf Minuten alte Anmeldung sowie eine frische bestätigte Firebase-Identität erforderlich. Ein Checkbox-Dialog erklärt die unwiderruflichen Folgen. Bei zu alter Anmeldung gibt es HTTP 409 und einen Weg zur erneuten E-Mail-Anmeldung.
+Die Kontolöschung wird serverseitig ausgeführt; Details, Wiederholungen, technische Firebase-Berechtigung und Einrichtung stehen in [Backendgesteuerte Kontolöschung](account-deletion.md).
 
-1. Eine Transaktion setzt das lokale Konto auf `DELETING`, entzieht Adminrechte und speichert einen Löschauftrag. Normale fachliche APIs lehnen dieses Konto sofort ab. `/me` liefert noch das eigene Profil mit `DELETING`, damit die Anmeldung zur geschützten Fortsetzungsseite umleiten kann; andere geschützte Ansichten werden nicht aktiviert.
-2. In begrenzten, wiederholbaren Schritten werden eigene Tags stillgelegt und Hardware-Zuordnungen gelöst, jeweils mit atomarer Historie und Chatabschluss. Vorher gesperrte/stillgelegte Hardware wird nicht reaktiviert. Private aktuelle Bezeichnungen und Registrierungszeitpunkte werden entfernt. Alte Tag-Registrierungsentwürfe werden entwertet.
-3. Eigene Finder-Chats werden schreibgeschützt. Zugehörige temporäre Entwürfe, unzugeordnete Entwurfsbilder und Benachrichtigungen werden entfernt. Das lokale Profil wird bis zum externen Abschluss pseudonymisiert.
-4. Der bestehende Firebase-REST-Adapter löscht ausschliesslich die durch den ID-Token bezeichnete Identität. Kein Admin-Schlüssel und keine zusätzlichen Cloud-Berechtigungen. Nach Erfolg wird das lokale Benutzerkonto entfernt und der Löschauftrag abgeschlossen.
+`DELETE /api/v1/me` prüft eine frische bestätigte Anmeldung, sperrt das Konto und speichert den Auftrag transaktional. HTTP 202 bestätigt die Annahme. Das Frontend zeigt eine Bestätigungsseite und beendet die Sitzung; es verarbeitet keine Löschschritte. Cloud Scheduler führt die begrenzte Bereinigung und administrative Firebase-Löschung mit Dienstcredentials aus, auch nach Schliessen des Browsers und Ablauf des Benutzertokens.
 
-Antwort `{completed:false}` verlangt einen weiteren Aufruf desselben Endpunkts; die UI führt diese nacheinander aus. Ein Fehler hebt die Sperre nicht auf. Nach erneuter Anmeldung kann ein unvollständiger Auftrag fortgesetzt werden. Wiederholungen abgeschlossener Aufträge sind erfolgreich und erzeugen keine erneuten Historienereignisse. Es gibt keinen automatischen Hintergrundlauf für diese Löschaufträge; liegengebliebene Aufträge sind vor Betriebsfreigabe im Wartungs-/Supportprozess zu berücksichtigen.
-
-`accountDeletions` enthält als `_id` ausschliesslich den SHA-256-Prüfwert der zufälligen Firebase-UID, die pseudonyme lokale Benutzerreferenz und den Fortschritt/Zeitpunkte. Kein E-Mail- oder Tokeninhalt. Diese minimalen Tombstones bleiben zur Wiederholungssperre und als Löschledger erhalten. Ein Restore muss sie anwenden, bevor fachlicher Zugriff freigegeben wird. Eine Neuanmeldung derselben E-Mail mit neuer Firebase-UID erzeugt ein neues Konto ohne frühere Rechte.
-
-Schreibende Tag-/Chattransaktionen aktualisieren das aktive Benutzerkonto und serialisieren sich dadurch gegen den Löschbeginn. Die Registrierung neuer Hardware und neue Fundmeldungen können einem löschenden Konto keine neuen Rechte zuweisen. Bestehende pseudonyme Teilnehmer-/Sender-/Akteurreferenzen bleiben stabil; gemeinsame Chattexte und Bilder bleiben für andere berechtigte Teilnehmer lesbar. Auch selbst im Chat mitgeteilte persönliche Angaben werden nicht automatisch redigiert. Der Bestätigungsdialog benennt dies ausdrücklich. Das Feature ersetzt keine noch festzulegenden Aufbewahrungsfristen oder gezielte Inhaltsbereinigung.
+Eigene Tags werden stillgelegt; Hardware-Zuordnungen werden gelöst, ohne gesperrte Hardware zu reaktivieren. Gemeinsame Chattexte, Bilder und Historien bleiben für andere Berechtigte mit pseudonymen Referenzen erhalten. Im Inhalt selbst mitgeteilte persönliche Angaben werden nicht automatisch redigiert; der Dialog benennt dies ausdrücklich. Die endgültigen Aufbewahrungsfristen bleiben festzulegen.
 
 ## Inhaltsmeldungen
 

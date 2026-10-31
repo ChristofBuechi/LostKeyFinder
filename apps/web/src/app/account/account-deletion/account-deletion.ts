@@ -34,14 +34,13 @@ export class AccountDeletion {
     const identity = this.auth.firebaseUserId();
     this.busy.set(true); this.failed.set(false); this.recentRequired.set(false);
     try {
-      let completed = false;
-      while (!completed && !this.destroy.destroyed && this.auth.signedIn() && identity === this.auth.firebaseUserId()) {
-        const response = await firstValueFrom(this.users.userControllerDelete());
-        completed = response.completed;
+      await firstValueFrom(this.users.userControllerDelete());
+      if (this.destroy.destroyed || identity !== this.auth.firebaseUserId()) return;
+      // Leave the private route before clearing the session, preserving the acknowledgement page.
+      await this.router.navigateByUrl('/account/deletion-requested', { replaceUrl: true });
+      if (identity === this.auth.firebaseUserId()) {
+        try { await this.auth.signOut(); } catch { this.auth.expireSession(); }
       }
-      if (!completed || this.destroy.destroyed || identity !== this.auth.firebaseUserId()) return;
-      await this.auth.signOut();
-      await this.router.navigateByUrl('/account/deleted', { replaceUrl: true });
     } catch (error) {
       if (!this.destroy.destroyed) { this.failed.set(true); this.recentRequired.set(error instanceof HttpErrorResponse && error.status === 409); }
     } finally { if (!this.destroy.destroyed) this.busy.set(false); }

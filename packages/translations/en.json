@@ -283,15 +283,15 @@
     "consequences": "Your self-created tags will be permanently retired. Hardware tags will be released for registration by another owner. Blocked or retired hardware remains blocked.",
     "history": "Your Firebase account and local contact details will be removed. Shared chat text, images and history remain available to other authorized participants; personal details you shared in this content are not automatically removed.",
     "confirm": "I understand the consequences and want to permanently delete my account.",
-    "busy": "Deleting account …",
+    "busy": "Requesting deletion …",
     "remove": "Permanently delete account",
-    "recent": "Please sign in using a fresh email link, then start deletion again.",
-    "failed": "Deletion is not complete. You can retry; an account already blocked for deletion remains blocked.",
+    "recent": "Please sign in with a fresh email link and confirm deletion again.",
+    "failed": "We could not confirm acceptance. Please try again. Requests already accepted continue in the background.",
     "signInAgain": "Sign in again",
-    "resume": "You can resume a started deletion on this page after signing in again.",
+    "resume": "Once accepted, the backend continues independently. You do not need to keep this page open or sign in again.",
     "back": "Back to account",
-    "done": "Account deleted",
-    "doneText": "Your account has been deleted. Signing in again will not restore previous tag or chat rights.",
+    "done": "Account deletion requested",
+    "doneText": "Your request was accepted. Your account is blocked; data cleanup and Firebase account deletion continue in the background. You can close this page.",
     "home": "Home"
   }
 }

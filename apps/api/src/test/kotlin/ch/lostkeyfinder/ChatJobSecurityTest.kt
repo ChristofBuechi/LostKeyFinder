@@ -1,7 +1,7 @@
 package ch.lostkeyfinder
 
 import ch.lostkeyfinder.chat.ChatNotificationJobProperties
-import ch.lostkeyfinder.chat.notificationJobValidator
+import ch.lostkeyfinder.jobs.googleJobValidator
 import org.junit.jupiter.api.Test
 import org.springframework.security.oauth2.jwt.Jwt
 import java.time.Instant
@@ -30,7 +30,7 @@ class ChatJobSecurityTest {
                     .header("alg", "RS256")
                     .claims { it.putAll(claims) }
                     .build()
-            return notificationJobValidator(properties).validate(jwt).hasErrors()
+            return googleJobValidator(properties.audience, properties.serviceAccount).validate(jwt).hasErrors()
         }
         assertFalse(rejected(emptyMap()))
         for (changes in listOf(
