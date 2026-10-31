@@ -9,18 +9,22 @@ import ch.lostkeyfinder.identity.FirebaseAdmin
 import ch.lostkeyfinder.identity.FirebaseIdentity
 import ch.lostkeyfinder.identity.IdentityProperties
 import ch.lostkeyfinder.identity.SecurityConfiguration
+import ch.lostkeyfinder.mail.MailSender
 import ch.lostkeyfinder.tags.InventoryStatus
 import ch.lostkeyfinder.tags.MongoTagTransactions
 import ch.lostkeyfinder.tags.PublicRequestLimits
 import ch.lostkeyfinder.tags.Tag
 import ch.lostkeyfinder.tags.TagAudit
 import ch.lostkeyfinder.tags.TagOrigin
+import ch.lostkeyfinder.tags.TagProperties
 import ch.lostkeyfinder.tags.TagStatus
+import ch.lostkeyfinder.translations.Translations
 import ch.lostkeyfinder.users.AccountDeletion
 import ch.lostkeyfinder.users.AccountDeletionJobProperties
 import ch.lostkeyfinder.users.AccountDeletionProcessor
 import ch.lostkeyfinder.users.AccountDeletionService
 import ch.lostkeyfinder.users.AccountDeletionWorker
+import ch.lostkeyfinder.users.DeletionConfirmations
 import ch.lostkeyfinder.users.User
 import ch.lostkeyfinder.users.UserService
 import ch.lostkeyfinder.users.deletionKey
@@ -41,6 +45,8 @@ import java.net.URI
 import java.time.Instant
 import java.util.Date
 import java.util.UUID
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -64,6 +70,15 @@ class FirestoreAccountIntegrationTest {
                 val jwt = decoder.decode(provider.token())
                 val owner = users.currentUser(jwt)
                 val finder = users.currentUser(decoder.decode(provider.token()))
+                val recording = RecordingMail()
+                val confirmations =
+                    DeletionConfirmations(
+                        template,
+                        MailSender(recording, "noreply@example.test"),
+                        Translations(),
+                        TagProperties("https://example.test"),
+                        PublicRequestLimits(template, requireNotNull(System.getenv("PUBLIC_RATE_LIMIT_HMAC_KEY"))),
+                    )
                 val deletions =
                     AccountDeletionService(
                         template,
@@ -74,6 +89,7 @@ class FirestoreAccountIntegrationTest {
                             "https://example.test/account-deletions",
                             "deletions@example.iam.gserviceaccount.com",
                         ),
+                        confirmations,
                     )
                 val admin =
                     FirebaseAdmin(
@@ -164,7 +180,11 @@ class FirestoreAccountIntegrationTest {
                     reports.report(finder, chatId, messageId, ReportReason.SPAM)
                     reports.report(finder, chatId, messageId, ReportReason.OTHER)
                     assertEquals(1, template.count(query(where("chatId").`is`(chatId)), ChatReport::class.java))
-                    deletions.request(jwt)
+                    deletions.sendConfirmation(jwt)
+                    val confirmationToken = recording.token()
+                    Executors.newFixedThreadPool(2).use { pool ->
+                        (1..2).map { pool.submit { deletions.request(jwt, confirmationToken) } }.forEach { it.get(30, TimeUnit.SECONDS) }
+                    }
                     assertEquals(0, provider.deleteRequests.get())
                     // Exercise the real indexed selection without processing unrelated dev accounts.
                     assertTrue(worker.dueJobs().size <= 10)
@@ -189,7 +209,7 @@ class FirestoreAccountIntegrationTest {
                     due()
                     assertTrue(worker.processDueJob(deletionKey(requireNotNull(jwt.subject))))
                     assertFalse(worker.processDueJob(deletionKey(requireNotNull(jwt.subject))))
-                    deletions.request(jwt)
+                    assertFailsWith<ResponseStatusException> { deletions.request(jwt, confirmationToken) }
                     assertNull(template.findById(owner.id, User::class.java))
                     assertFailsWith<ResponseStatusException> { users.currentUser(jwt) }
                 } finally {

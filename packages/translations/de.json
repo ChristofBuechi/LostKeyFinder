@@ -263,6 +263,10 @@
     "unreadMessages": {
       "subject": "Lost Key Finder: Ungelesene Nachrichten",
       "body": "Du hast neue Nachrichten.\n\n{chatUrl}\n\nMelde dich mit deiner E-Mail-Adresse an."
+    },
+    "accountDeletion": {
+      "subject": "Bestätige die Löschung deines Lost Key Finder Kontos",
+      "body": "Du hast die Löschung deines Lost Key Finder Kontos angefordert.\n\nÖffne diesen Einmallink innerhalb von 15 Minuten und bestätige die Löschung mit demselben angemeldeten Konto:\n{confirmationUrl}\n\nErst nach der Bestätigung werden deine eigenen Tags stillgelegt und Hardware-Tags freigegeben. Gemeinsame Chatverläufe bleiben für andere Berechtigte erhalten.\n\nWenn du dies nicht angefordert hast, ignoriere diese E-Mail. Ohne Bestätigung wird nichts gelöscht."
     }
   },
   "print": {
@@ -283,15 +287,24 @@
     "consequences": "Deine eigenen Tags werden dauerhaft stillgelegt. Hardware-Tags werden von deinem Konto gelöst und können erneut registriert werden. Gesperrte oder stillgelegte Hardware bleibt gesperrt.",
     "history": "Das Firebase-Konto und lokale Kontaktdaten werden entfernt. Gemeinsame Chattexte, Bilder und die Historie bleiben für andere berechtigte Teilnehmer erhalten; persönliche Angaben, die du darin selbst geteilt hast, werden nicht automatisch entfernt.",
     "confirm": "Ich habe die Folgen verstanden und möchte mein Konto unwiderruflich löschen.",
-    "busy": "Löschung wird beauftragt …",
+    "busy": "Wird verarbeitet …",
     "remove": "Konto endgültig löschen",
     "recent": "Bitte melde dich über einen frischen E-Mail-Link an und bestätige die Löschung nochmals.",
     "failed": "Die Annahme konnte nicht bestätigt werden. Bitte versuche es erneut. Bereits angenommene Aufträge laufen im Hintergrund weiter.",
     "signInAgain": "Erneut anmelden",
-    "resume": "Nach Annahme arbeitet das Backend selbstständig weiter. Du musst diese Seite nicht geöffnet lassen und dich nicht erneut anmelden.",
+    "resume": "Du erhältst einen Einmallink an die bestätigte E-Mail-Adresse deines Kontos. Erst nach Bestätigung wird das Konto gesperrt und die Löschung im Hintergrund gestartet.",
     "back": "Zur Kontoseite",
     "done": "Kontolöschung beauftragt",
     "doneText": "Deine Anfrage wurde angenommen. Dein Konto ist gesperrt; die Datenbereinigung und die Löschung des Firebase-Kontos laufen im Hintergrund weiter. Du kannst diese Seite schliessen.",
-    "home": "Zur Startseite"
+    "home": "Zur Startseite",
+    "sendConfirmation": "Bestätigungslink per E-Mail anfordern",
+    "confirmTitle": "Kontolöschung bestätigen",
+    "emailSent": "Bestätigungslink angefordert",
+    "emailSentText": "Prüfe deine E-Mails, auch den Spam-Ordner. Der Link ist 15 Minuten gültig; ein neuer Link ersetzt den bisherigen. Bis zur Bestätigung bleiben dein Konto und deine Tags unverändert.",
+    "openEmail": "Bitte öffne den vollständigen Link aus der Bestätigungs-E-Mail erneut. Nach einem Neuladen ist der Link aus Sicherheitsgründen nicht mehr auf dieser Seite gespeichert.",
+    "signedInAs": "Angemeldet als",
+    "loginRequired": "Melde dich mit genau dem Konto an, für das du den Löschlink angefordert hast. Kehre danach hierher zurück oder öffne den Link aus der E-Mail erneut.",
+    "loginOtherTab": "Anmeldung in neuem Tab öffnen",
+    "invalidConfirmation": "Dieser Link ist ungültig, abgelaufen oder gehört zu einem anderen Konto. Fordere bei Bedarf einen neuen Bestätigungslink an."
   }
 }

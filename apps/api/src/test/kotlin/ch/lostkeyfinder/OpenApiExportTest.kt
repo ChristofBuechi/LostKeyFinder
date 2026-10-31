@@ -53,6 +53,7 @@ class OpenApiExportTest {
                 "/api/v1/version",
                 "/api/v1/me",
                 "/api/v1/me/language",
+                "/api/v1/me/deletion-confirmations",
                 "/api/v1/tags",
                 "/api/v1/tags/{tagId}",
                 "/api/v1/tags/{tagId}/status",

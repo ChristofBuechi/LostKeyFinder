@@ -186,7 +186,7 @@ describe('Owner route access and callback', () => {
     (await vi.waitFor(() => http.expectOne('/api/v1/me'))).flush({ ...owner, status: 'DELETING' });
     await navigation;
     expect(TestBed.inject(Router).url).toBe('/account/deletion');
-    expect(harness.routeNativeElement?.textContent).toContain('Konto endgültig löschen');
+    expect(harness.routeNativeElement?.textContent).toContain('Bestätigungslink per E-Mail anfordern');
     http.expectNone('/api/v1/tags'); http.verify();
   });
 

@@ -90,6 +90,7 @@ class AccountDeletionWorker(
     private fun due(now: Instant) =
         Criteria().andOperator(
             where("completedAt").`is`(null),
+            where("confirmedAt").ne(null),
             Criteria().orOperator(where("nextAttemptAt").lte(now), where("nextAttemptAt").exists(false)),
             Criteria().orOperator(where("leaseUntil").lte(now), where("leaseUntil").exists(false)),
         )

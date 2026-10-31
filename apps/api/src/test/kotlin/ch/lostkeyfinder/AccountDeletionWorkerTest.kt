@@ -59,6 +59,8 @@ class AccountDeletionWorkerTest {
 
     @Autowired lateinit var users: UserService
 
+    @Autowired lateinit var confirmations: ch.lostkeyfinder.users.DeletionConfirmations
+
     @Autowired lateinit var verifiedIdentity: FirebaseIdentity
 
     @BeforeEach fun setup() {
@@ -70,7 +72,7 @@ class AccountDeletionWorkerTest {
         val id = UUID.randomUUID().toString()
         val user = User(id, id, "$id@example.com", UserStatus.DELETING, Instant.now(), Instant.now())
         template.insert(user)
-        return template.insert(AccountDeletion(deletionKey(id), id, Instant.now()))
+        return template.insert(AccountDeletion(deletionKey(id), id, Instant.now(), confirmedAt = Instant.now()))
     }
 
     @Test fun `passes are bounded and old documents without scheduling fields remain processable`() {
@@ -167,6 +169,7 @@ class AccountDeletionWorkerTest {
                 verifiedIdentity,
                 users,
                 AccountDeletionJobProperties(),
+                confirmations,
             )
         val jwt =
             Jwt
@@ -175,7 +178,7 @@ class AccountDeletionWorkerTest {
                 .header("alg", "RS256")
                 .claim("auth_time", Instant.now().epochSecond)
                 .build()
-        assertEquals(503, assertFailsWith<ResponseStatusException> { requests.request(jwt) }.statusCode.value())
+        assertEquals(503, assertFailsWith<ResponseStatusException> { requests.sendConfirmation(jwt) }.statusCode.value())
         assertEquals(0, template.count(Query(), AccountDeletion::class.java))
         assertEquals(0, identity.userRequests.get())
     }

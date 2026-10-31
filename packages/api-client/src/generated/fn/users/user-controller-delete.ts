@@ -7,13 +7,16 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
+import { ConfirmDeletionRequest } from '../../models/confirm-deletion-request';
 
 export interface UserControllerDelete$Params {
+      body: ConfirmDeletionRequest
 }
 
-export function userControllerDelete(http: HttpClient, rootUrl: string, params?: UserControllerDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+export function userControllerDelete(http: HttpClient, rootUrl: string, params: UserControllerDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
   const rb = new RequestBuilder(rootUrl, userControllerDelete.PATH, 'delete');
   if (params) {
+    rb.body(params.body, 'application/json');
   }
 
   return http.request(

@@ -36,6 +36,7 @@ class AccountDeletionProcessor(
         job: AccountDeletion,
         token: String,
     ): Boolean {
+        check(job.confirmedAt != null) { "Deletion email not confirmed" }
         val key = job.id
         val userId = job.userId
         // Each worker pass is bounded; each tag and its history commit together.

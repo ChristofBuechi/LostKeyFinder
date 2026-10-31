@@ -20,6 +20,7 @@ import ch.lostkeyfinder.translations.Translations
 import ch.lostkeyfinder.users.User
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
@@ -33,6 +34,7 @@ import org.springframework.http.MediaType
 import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
@@ -65,6 +67,9 @@ class ChatHttpTest {
     @Autowired lateinit var chats: ChatService
 
     @Autowired lateinit var tags: TagService
+
+    @MockitoBean(name = "mailDelivery")
+    lateinit var mail: MailSender
 
     @Autowired lateinit var images: ChatImages
 
@@ -190,8 +195,32 @@ class ChatHttpTest {
         val blocked = hardware.copy(id = id(), publicId = id(), status = TagStatus.BLOCKED)
         template.insert(blocked)
         identity.responseEmail = owner.second.email
+        Mockito.`when`(mail.configured).thenReturn(true)
+        var confirmationToken = ""
+        Mockito
+            .doAnswer { call ->
+                confirmationToken =
+                    call
+                        .getArgument<String>(2)
+                        .substringAfter("/account/deletion-confirm#")
+                        .lineSequence()
+                        .first()
+                null
+            }.`when`(mail)
+            .send(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())
+        mvc
+            .post(
+                "/api/v1/me/deletion-confirmations",
+            ) { header("Authorization", "Bearer ${owner.first}") }
+            .andExpect { status { isAccepted() } }
         identity.deleteStatus = 503
-        mvc.delete("/api/v1/me") { header("Authorization", "Bearer ${owner.first}") }.andExpect { status { isAccepted() } }
+        mvc
+            .delete("/api/v1/me") {
+                header("Authorization", "Bearer ${owner.first}")
+                contentType = MediaType.APPLICATION_JSON
+                content =
+                    """{"token":"$confirmationToken"}"""
+            }.andExpect { status { isAccepted() } }
         assertEquals(0, identity.deleteRequests.get())
         assertEquals(TagStatus.ACTIVE, template.findById(tag.id, Tag::class.java)!!.status)
         assertEquals(1, deletionWorker.dispatch())
@@ -221,7 +250,13 @@ class ChatHttpTest {
         identity.deleteStatus = 200
         template.updateMulti(Query(), Update.update("nextAttemptAt", Instant.EPOCH), ch.lostkeyfinder.users.AccountDeletion::class.java)
         assertEquals(1, deletionWorker.dispatch())
-        mvc.delete("/api/v1/me") { header("Authorization", "Bearer ${owner.first}") }.andExpect { status { isAccepted() } }
+        mvc
+            .delete("/api/v1/me") {
+                header("Authorization", "Bearer ${owner.first}")
+                contentType = MediaType.APPLICATION_JSON
+                content =
+                    """{"token":"$confirmationToken"}"""
+            }.andExpect { status { isForbidden() } }
         assertEquals(auditCount, template.count(Query(), TagAudit::class.java))
         assertEquals(null, template.findById(owner.second.id, User::class.java))
         mvc.get("/api/v1/me") { header("Authorization", "Bearer ${owner.first}") }.andExpect { status { isForbidden() } }
@@ -241,7 +276,7 @@ class ChatHttpTest {
                 email = owner.second.email,
                 authTime = Instant.now().minusSeconds(600).epochSecond,
             )
-        mvc.delete("/api/v1/me") { header("Authorization", "Bearer $token") }.andExpect { status { isConflict() } }
+        mvc.post("/api/v1/me/deletion-confirmations") { header("Authorization", "Bearer $token") }.andExpect { status { isConflict() } }
         assertEquals(ch.lostkeyfinder.users.UserStatus.ACTIVE, template.findById(owner.second.id, User::class.java)!!.status)
         assertEquals(0, identity.deleteRequests.get())
         mvc.delete("/api/v1/me").andExpect { status { isUnauthorized() } }

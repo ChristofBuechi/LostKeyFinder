@@ -51,6 +51,8 @@ export type { UserControllerMe$Params as UserControllerMe$Params } from './fn/us
 export { userControllerMe as userControllerMe } from './fn/users/user-controller-me';
 export type { UserControllerDelete$Params as UserControllerDelete$Params } from './fn/users/user-controller-delete';
 export { userControllerDelete as userControllerDelete } from './fn/users/user-controller-delete';
+export type { UserControllerRequestDeletionEmail$Params as UserControllerRequestDeletionEmail$Params } from './fn/users/user-controller-request-deletion-email';
+export { userControllerRequestDeletionEmail as userControllerRequestDeletionEmail } from './fn/users/user-controller-request-deletion-email';
 export type { UserControllerChangeLanguage$Params as UserControllerChangeLanguage$Params } from './fn/users/user-controller-change-language';
 export { userControllerChangeLanguage as userControllerChangeLanguage } from './fn/users/user-controller-change-language';
 export type { TagRegistrationControllerResolve$Params as TagRegistrationControllerResolve$Params } from './fn/tag-registration/tag-registration-controller-resolve';

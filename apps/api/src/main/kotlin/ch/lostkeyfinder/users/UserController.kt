@@ -14,6 +14,7 @@ import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
@@ -36,12 +37,23 @@ class UserController(
         return response(user)
     }
 
+    @PostMapping("/api/v1/me/deletion-confirmations", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(
+        operationId = "UserController_requestDeletionEmail",
+        summary = "Send a one-time deletion confirmation to the current verified account email",
+    )
+    fun requestDeletionEmail(
+        @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
+    ): DeletionEmailResponse = DeletionEmailResponse(deletions.sendConfirmation(jwt))
+
     @DeleteMapping("/api/v1/me")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @Operation(operationId = "UserController_delete", summary = "Accept an authenticated account deletion for background processing")
     fun delete(
         @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
-    ) = deletions.request(jwt)
+        @RequestBody body: ConfirmDeletionRequest,
+    ) = deletions.request(jwt, body.token)
 
     @PatchMapping("/api/v1/me/language", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(operationId = "UserController_changeLanguage", summary = "Set the authenticated user's preferred language")
@@ -67,4 +79,14 @@ data class CurrentUserResponse(
     @get:com.fasterxml.jackson.annotation.JsonProperty("isAdmin")
     @get:Schema(requiredMode = Schema.RequiredMode.REQUIRED) val isAdmin: Boolean,
     @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = ["de", "en"]) val language: String,
+)
+
+@Schema(requiredProperties = ["token"])
+data class ConfirmDeletionRequest(
+    @field:Schema(minLength = 43, maxLength = 43) val token: String,
+)
+
+@Schema(requiredProperties = ["confirmationRequired"])
+data class DeletionEmailResponse(
+    val confirmationRequired: Boolean,
 )

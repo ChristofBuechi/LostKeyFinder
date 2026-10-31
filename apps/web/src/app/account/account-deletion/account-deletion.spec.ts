@@ -17,7 +17,7 @@ describe('Account deletion', () => {
       { provide: Auth, useValue: { signedIn: signal(true), firebaseUserId: signal('user'), signOut, expireSession } }] });
   });
   afterEach(() => TestBed.inject(HttpTestingController).verify());
-  it('submits only once and signs out as soon as the backend accepts the job', async () => {
+  it('requests a confirmation email without deleting or signing out', async () => {
     const fixture = TestBed.createComponent(AccountDeletion);
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     await fixture.whenStable();
@@ -26,21 +26,21 @@ describe('Account deletion', () => {
     (fixture.nativeElement.querySelector('input') as HTMLInputElement).click();
     await fixture.whenStable(); remove.click();
     const http = TestBed.inject(HttpTestingController);
-    const first = await vi.waitFor(() => http.expectOne('/api/v1/me'));
-    expect(first.request.method).toBe('DELETE');
-    first.flush(null, { status: 202, statusText: 'Accepted' });
-    await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/account/deletion-requested', { replaceUrl: true }));
-    http.expectNone('/api/v1/me');
-    expect(signOut).toHaveBeenCalledOnce(); fixture.destroy();
+    const first = await vi.waitFor(() => http.expectOne('/api/v1/me/deletion-confirmations'));
+    expect(first.request.method).toBe('POST');
+    first.flush({ confirmationRequired: true }, { status: 202, statusText: 'Accepted' });
+    await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/account/deletion-email-sent', { replaceUrl: true }));
+    http.expectNone(request => request.method === 'DELETE');
+    expect(signOut).not.toHaveBeenCalled(); fixture.destroy();
   });
-  it('shows acceptance even if Firebase SDK sign-out fails', async () => {
+  it('acknowledges an already confirmed job even if Firebase SDK sign-out fails', async () => {
     signOut.mockRejectedValueOnce(new Error('SDK offline'));
     const fixture = TestBed.createComponent(AccountDeletion);
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     await fixture.whenStable();
     (fixture.nativeElement.querySelector('input') as HTMLInputElement).click(); await fixture.whenStable();
     (fixture.nativeElement.querySelector('button') as HTMLButtonElement).click();
-    (await vi.waitFor(() => TestBed.inject(HttpTestingController).expectOne('/api/v1/me'))).flush(null, { status: 202, statusText: 'Accepted' });
+    (await vi.waitFor(() => TestBed.inject(HttpTestingController).expectOne('/api/v1/me/deletion-confirmations'))).flush({ confirmationRequired: false }, { status: 202, statusText: 'Accepted' });
     await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/account/deletion-requested', { replaceUrl: true }));
     expect(expireSession).toHaveBeenCalledOnce();
     fixture.destroy();
@@ -51,12 +51,12 @@ describe('Account deletion', () => {
     (fixture.nativeElement.querySelector('input') as HTMLInputElement).click(); await fixture.whenStable();
     const remove = fixture.nativeElement.querySelector('button') as HTMLButtonElement; remove.click();
     const http = TestBed.inject(HttpTestingController);
-    (await vi.waitFor(() => http.expectOne('/api/v1/me'))).flush({}, { status: 409, statusText: 'Recent login required' });
+    (await vi.waitFor(() => http.expectOne('/api/v1/me/deletion-confirmations'))).flush({}, { status: 409, statusText: 'Recent login required' });
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('[role=alert]').textContent).toContain('frischen E-Mail-Link');
     expect(signOut).not.toHaveBeenCalled();
     remove.click();
-    (await vi.waitFor(() => http.expectOne('/api/v1/me'))).flush({}, { status: 503, statusText: 'Offline' });
+    (await vi.waitFor(() => http.expectOne('/api/v1/me/deletion-confirmations'))).flush({}, { status: 503, statusText: 'Offline' });
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('[role=alert]').textContent).toContain('Annahme konnte nicht bestätigt werden');
     fixture.destroy();

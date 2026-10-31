@@ -11,7 +11,7 @@ import { translateSection } from '../../core/translations';
   template: `<section class="auth-panel" aria-labelledby="delete-title">
     <h1 id="delete-title">{{ copy().title }}</h1><p>{{ copy().consequences }}</p><p>{{ copy().history }}</p>
     <label><input type="checkbox" [checked]="confirmed()" (change)="confirmed.set(!confirmed())" [disabled]="busy()"> {{ copy().confirm }}</label>
-    <button type="button" (click)="remove()" [disabled]="!confirmed() || busy()">{{ busy() ? copy().busy : copy().remove }}</button>
+    <button type="button" (click)="requestConfirmation()" [disabled]="!confirmed() || busy()">{{ busy() ? copy().busy : copy().sendConfirmation }}</button>
     @if (failed()) { <p role="alert">{{ recentRequired() ? copy().recent : copy().failed }}</p> }
     @if (failed()) { <button type="button" (click)="signInAgain()" [disabled]="busy()">{{ copy().signInAgain }}</button> }
     <p>{{ copy().resume }}</p><a routerLink="/account">{{ copy().back }}</a>
@@ -29,16 +29,15 @@ export class AccountDeletion {
   private readonly router = inject(Router);
   private readonly destroy = inject(DestroyRef);
 
-  protected async remove(): Promise<void> {
+  protected async requestConfirmation(): Promise<void> {
     if (this.busy() || !this.confirmed()) return;
     const identity = this.auth.firebaseUserId();
     this.busy.set(true); this.failed.set(false); this.recentRequired.set(false);
     try {
-      await firstValueFrom(this.users.userControllerDelete());
+      const response = await firstValueFrom(this.users.userControllerRequestDeletionEmail());
       if (this.destroy.destroyed || identity !== this.auth.firebaseUserId()) return;
-      // Leave the private route before clearing the session, preserving the acknowledgement page.
-      await this.router.navigateByUrl('/account/deletion-requested', { replaceUrl: true });
-      if (identity === this.auth.firebaseUserId()) {
+      await this.router.navigateByUrl(response.confirmationRequired ? '/account/deletion-email-sent' : '/account/deletion-requested', { replaceUrl: true });
+      if (!response.confirmationRequired && identity === this.auth.firebaseUserId()) {
         try { await this.auth.signOut(); } catch { this.auth.expireSession(); }
       }
     } catch (error) {
