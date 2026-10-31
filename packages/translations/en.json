@@ -214,6 +214,8 @@
     "intro": "Leave a private message for the owner. Your email address stays private.",
     "message": "Message",
     "image": "Image (optional)",
+    "chooseImage": "Choose image",
+    "takePhoto": "Take photo",
     "imageHint": "JPEG or PNG, up to 5 MB and 2048 × 2048 pixels. Describe important image content in the text.",
     "send": "Send",
     "sending": "Sending …",

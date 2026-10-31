@@ -4,7 +4,7 @@
   @if (auth.needsEmail() && !failed()) {
     <form (ngSubmit)="complete()">
       <label for="callback-email">{{ ('common.email' | transloco) }}</label>
-      <input id="callback-email" name="email" type="email" autocomplete="email" spellcheck="false" required [(ngModel)]="email">
+      <input id="callback-email" name="email" type="email" autocomplete="email" inputmode="email" spellcheck="false" required [(ngModel)]="email">
       <button type="submit">{{ ('common.confirm' | transloco) }}</button>
     </form>
   }
