@@ -27,7 +27,7 @@ describe('Finder reports and private chat', () => {
     request.flush(body); return request;
   }
 
-  it('confirms email before creating a chat and preserves a retry key when link delivery fails', async () => {
+  it.each(['#finder-image', 'input[capture=environment]'])('uploads an image from %s and preserves a retry key when link delivery fails', async (selector) => {
     const fixture = TestBed.createComponent(ReportFound);
     fixture.componentRef.setInput('publicId', id);
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
@@ -37,15 +37,24 @@ describe('Finder reports and private chat', () => {
     const text = fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement;
     text.value = 'Found your keys'; text.dispatchEvent(new Event('input'));
     await fixture.whenStable();
-    const imageInput = fixture.nativeElement.querySelector('input[type=file]') as HTMLInputElement;
+    const imageInput = fixture.nativeElement.querySelector(selector) as HTMLInputElement;
+    const pick = vi.spyOn(imageInput, 'click');
+    const buttons = fixture.nativeElement.querySelectorAll('.image-actions button');
+    (buttons[selector === '#finder-image' ? 0 : 1] as HTMLButtonElement).click();
+    expect(pick).toHaveBeenCalledOnce();
     Object.defineProperty(imageInput, 'files', { value: [new File(['image'], 'found.png', { type: 'image/png' })] });
     imageInput.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('[role=status]').textContent).toContain('found.png');
+    const other = fixture.nativeElement.querySelector(selector === '#finder-image' ? 'input[capture]' : '#finder-image') as HTMLInputElement;
+    other.dispatchEvent(new Event('change')); // Cancelling a picker keeps the selected attachment.
     sendLink.mockRejectedValueOnce(new Error('offline'));
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true }));
     const start = await respond(`/api/v1/public/tags/${id}/finder-drafts`, { flowId: id, expiresAt: new Date(Date.now() + 3600000).toISOString() });
     expect(start.request.params.has('email')).toBe(false);
     expect(start.request.params.has('text')).toBe(false);
     expect((start.request.body as FormData).get('image')).toBeInstanceOf(Blob);
+    expect(((start.request.body as FormData).get('image') as File).name).toBe('found.png');
     expect((start.request.body as FormData).get('text')).toBe('Found your keys');
     expect(start.request.headers.get('Idempotency-Key')).toMatch(/^[0-9a-f-]{36}$/);
     await vi.waitFor(async () => { await fixture.whenStable(); expect(fixture.nativeElement.querySelector('[role=alert]')).not.toBeNull(); });
@@ -53,6 +62,32 @@ describe('Finder reports and private chat', () => {
     await vi.waitFor(() => expect(sendLink).toHaveBeenCalledTimes(2));
     expect(sendLink).toHaveBeenLastCalledWith('finder@example.com', undefined, { finderReportId: id });
     expect(navigate).toHaveBeenCalledWith('/login/link-sent', { replaceUrl: true });
+    fixture.destroy();
+  });
+
+  it('replaces or removes an attachment and rejects oversized camera photos', async () => {
+    const fixture = TestBed.createComponent(ReportFound);
+    fixture.componentRef.setInput('publicId', id);
+    await fixture.whenStable();
+    const gallery = fixture.nativeElement.querySelector('#finder-image') as HTMLInputElement;
+    const camera = fixture.nativeElement.querySelector('input[capture]') as HTMLInputElement;
+    const choose = async (input: HTMLInputElement, file: File) => {
+      Object.defineProperty(input, 'files', { value: [file], configurable: true });
+      input.dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+    };
+    await choose(gallery, new File(['image'], 'gallery.png', { type: 'image/png' }));
+    await choose(camera, new File(['photo'], 'camera.jpg', { type: 'image/jpeg' }));
+    expect(fixture.nativeElement.querySelector('[role=status]').textContent).toBe('camera.jpg');
+    const remove = [...fixture.nativeElement.querySelectorAll('button')].find(button => (button as HTMLButtonElement).textContent?.includes('Bild entfernen')) as HTMLButtonElement;
+    remove.click();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('[role=status]').textContent).toBe('');
+    const oversized = new File(['photo'], 'large.jpg', { type: 'image/jpeg' });
+    Object.defineProperty(oversized, 'size', { value: 5_000_001 });
+    await choose(camera, oversized);
+    expect(fixture.nativeElement.querySelector('[role=alert]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[role=status]').textContent).toBe('');
     fixture.destroy();
   });
 

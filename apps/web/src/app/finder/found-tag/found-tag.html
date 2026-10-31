@@ -15,7 +15,7 @@
         } @else {
           <form (submit)="send($event)">
             <label for="registration-email">{{ copy().email }}</label>
-            <input id="registration-email" type="email" autocomplete="email" [formField]="emailForm.email"
+            <input id="registration-email" type="email" autocomplete="email" inputmode="email" spellcheck="false" [formField]="emailForm.email"
               [attr.aria-invalid]="submitted() && emailForm.email().invalid()" aria-describedby="registration-email-hint">
             <p id="registration-email-hint">{{ ('common.emailHint' | transloco) }}</p>
             @if (submitted() && emailForm.email().invalid()) { <p role="alert">{{ ('common.emailInvalid' | transloco) }}</p> }

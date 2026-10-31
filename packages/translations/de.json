@@ -214,6 +214,8 @@
     "intro": "Hinterlasse dem Besitzer eine private Nachricht. Deine E-Mail-Adresse bleibt verborgen.",
     "message": "Nachricht",
     "image": "Bild (optional)",
+    "chooseImage": "Bild auswählen",
+    "takePhoto": "Foto aufnehmen",
     "imageHint": "JPEG oder PNG, maximal 5 MB und 2048 × 2048 Pixel. Beschreibe wichtige Bildinhalte im Text.",
     "send": "Senden",
     "sending": "Wird gesendet …",
