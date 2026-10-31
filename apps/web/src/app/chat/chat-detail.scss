@@ -6,3 +6,6 @@
 time { font-size: .85rem; color: #475550; }
 textarea { width: 100%; box-sizing: border-box; resize: vertical; font: inherit; padding: .75rem; }
 .close-case { margin-top: 1.5rem; }
+
+.report-message { background: transparent; color: var(--ink); text-decoration: underline; font-size: .85rem; padding: .25rem; }
+.report-form select { padding: .5rem; font: inherit; max-width: 100%; }

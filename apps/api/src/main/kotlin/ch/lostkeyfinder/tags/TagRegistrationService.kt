@@ -124,6 +124,7 @@ class TagRegistrationService(
         publicId: String,
         user: User,
     ): TagResponse {
+        ch.lostkeyfinder.users.requireActiveUser(ops, user.id)
         val tag =
             ops.findOne(query(where("publicId").`is`(publicId)), Tag::class.java)
                 ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")

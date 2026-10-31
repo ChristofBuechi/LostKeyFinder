@@ -20,10 +20,17 @@ class UserService(
     private val template: MongoTemplate,
     private val identity: FirebaseIdentity,
 ) {
-    fun currentUser(jwt: Jwt): User {
+    fun currentUser(jwt: Jwt): User =
+        profile(jwt).also {
+            if (!it.canAccess) throw ResponseStatusException(HttpStatus.FORBIDDEN, "Account unavailable")
+        }
+
+    fun profile(jwt: Jwt): User {
+        val deletion = template.findById(deletionKey(requireNotNull(jwt.subject)), AccountDeletion::class.java)
+        if (deletion?.completedAt != null) throw ResponseStatusException(HttpStatus.FORBIDDEN, "Account unavailable")
         val query = query(where("firebaseUserId").`is`(jwt.subject))
         val user = template.findOne(query, User::class.java) ?: provision(query, jwt)
-        if (!user.canAccess) throw ResponseStatusException(HttpStatus.FORBIDDEN, "Account unavailable")
+        if (user.status == UserStatus.DISABLED) throw ResponseStatusException(HttpStatus.FORBIDDEN, "Account unavailable")
         return user
     }
 

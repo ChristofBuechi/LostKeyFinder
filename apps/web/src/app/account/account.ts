@@ -15,6 +15,7 @@ import { Auth } from '../auth/auth';
 export class Account {
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
+  protected readonly deletionCopy = translateSection('deletion');
   protected readonly chatCopy = translateSection('chat');
   protected readonly tagCopy = translateSection('tags');
   protected readonly user = httpResource<CurrentUserResponse>(() => this.auth.signedIn() ? '/api/v1/me' : undefined);

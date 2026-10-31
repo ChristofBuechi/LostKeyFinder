@@ -24,6 +24,8 @@ import { chatControllerMessages } from '../fn/chat/chat-controller-messages';
 import { ChatControllerMessages$Params } from '../fn/chat/chat-controller-messages';
 import { chatControllerRead } from '../fn/chat/chat-controller-read';
 import { ChatControllerRead$Params } from '../fn/chat/chat-controller-read';
+import { chatControllerReport } from '../fn/chat/chat-controller-report';
+import { ChatControllerReport$Params } from '../fn/chat/chat-controller-report';
 import { chatControllerSend } from '../fn/chat/chat-controller-send';
 import { ChatControllerSend$Params } from '../fn/chat/chat-controller-send';
 import { chatControllerStart } from '../fn/chat/chat-controller-start';
@@ -199,6 +201,41 @@ export class ChatService extends BaseService {
     const resp = this.chatControllerSend$Response(params, context);
     return resp.pipe(
       map((r: StrictHttpResponse<ChatMessage>): ChatMessage => r.body)
+    );
+  }
+
+  /** Path part for operation `chatControllerReport()` */
+  static readonly ChatControllerReportPath = '/api/v1/chats/{chatId}/messages/{messageId}/reports';
+
+  /**
+   * Record a participant content report without hiding content.
+   *
+   *
+   *
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `chatControllerReport()` instead.
+   *
+   * This method sends `application/json` and handles request body of type `application/json`.
+   */
+  chatControllerReport$Response(params: ChatControllerReport$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+    const obs = chatControllerReport(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * Record a participant content report without hiding content.
+   *
+   *
+   *
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `chatControllerReport$Response()` instead.
+   *
+   * This method sends `application/json` and handles request body of type `application/json`.
+   */
+  chatControllerReport(params: ChatControllerReport$Params, context?: HttpContext): Observable<void> {
+    const resp = this.chatControllerReport$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<void>): void => r.body)
     );
   }
 

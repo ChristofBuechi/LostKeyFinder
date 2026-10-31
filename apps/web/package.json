@@ -25,6 +25,7 @@
     "@jsverse/transloco": "8.4.0",
     "@lost-key-finder/api-client": "*",
     "firebase": "13.1.0",
+    "pdf-lib": "1.17.1",
     "qr-scanner": "1.4.2",
     "qrcode": "1.5.4",
     "rxjs": "~7.8.0",

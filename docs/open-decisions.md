@@ -1,3 +1,5 @@
+> Aktueller Stand 31.10.2026: [Roadmap](roadmap.md) und [Besitzerfunktionen](owner-features.md) haben Vorrang vor überholten Fortschrittsangaben hier. Chats sind umgesetzt und bleiben kostenlos. Kontolöschung und Inhaltsmeldungen sind implementiert; Supportaktionen, Besitzerkorrekturen und Backup-Besitzer wurden zurückgestellt.
+
 # Offene Go-live-Entscheidungen
 
 Vor Produktivstart sind festzulegen oder zu bestätigen:

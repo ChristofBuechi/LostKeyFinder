@@ -38,6 +38,9 @@
     <p><a [routerLink]="['/f', tag.value().publicId]">{{ copy().publicLink }}</a></p>
     <div class="detail-actions">
       <a class="tag-action" [routerLink]="admin ? '/admin/tags' : '/tags'">{{ copy().back }}</a>
+      @if (!admin && tag.value().origin === 'SELF_CREATED' && !tag.value().deletedAt && (tag.value().status === 'ACTIVE' || tag.value().status === 'INACTIVE')) {
+        <a class="tag-action" routerLink="/tags/print" [queryParams]="{ tagId: tag.value().id }">{{ copy().print }}</a>
+      }
       <app-tag-removal [tag]="tag.value()" [admin]="admin" (removed)="removed()" />
     </div>
     <p><a routerLink="/chats" [queryParams]="{ tagId: tag.value().id }">{{ copy().chats }}</a></p>

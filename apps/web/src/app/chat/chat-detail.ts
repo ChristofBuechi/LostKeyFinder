@@ -36,6 +36,9 @@ export class ChatDetail {
   protected readonly loadingOlder = signal(false);
   protected readonly error = signal(false);
   protected readonly confirmingClose = linkedSignal({ source: () => this.id(), computation: () => false });
+  protected readonly reporting = signal<string | null>(null);
+  protected readonly reportReason = signal<'SPAM' | 'HARASSMENT' | 'OTHER'>('SPAM');
+  protected readonly reported = signal<string[]>([]);
   private image: File | null = null;
   private pending: { signature: string; key: string } | null = null;
   private readThrough = 0;
@@ -103,6 +106,17 @@ export class ChatDetail {
         this.chat.reload(); this.latest.reload();
       }
     } catch { if (!this.destroy.destroyed && id === this.id()) this.error.set(true); }
+    finally { if (!this.destroy.destroyed) this.busy.set(false); }
+  }
+  protected async report(): Promise<void> {
+    const messageId = this.reporting();
+    if (!messageId || this.busy()) return;
+    this.busy.set(true); this.error.set(false);
+    const id = this.id();
+    try {
+      await firstValueFrom(this.chats.chatControllerReport({ chatId: id, messageId, body: { reason: this.reportReason() } }));
+      if (!this.destroy.destroyed && id === this.id()) { this.reported.update(ids => [...ids, messageId]); this.reporting.set(null); }
+    } catch { if (!this.destroy.destroyed) this.error.set(true); }
     finally { if (!this.destroy.destroyed) this.busy.set(false); }
   }
   protected async close(): Promise<void> {

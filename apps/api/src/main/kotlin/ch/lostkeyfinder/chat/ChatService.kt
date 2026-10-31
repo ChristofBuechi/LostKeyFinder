@@ -91,6 +91,7 @@ class ChatService(
         limits.reserve("finder-complete", finder.id, 30)
         val chat =
             transactions.run { ops ->
+                ch.lostkeyfinder.users.requireActiveUser(ops, finder.id)
                 val draft = ops.findById(flowId.lowercase(), FinderDraft::class.java) ?: unavailable()
                 if (draft.completedUserId != null) {
                     if (draft.completedUserId != finder.id) unavailable()
@@ -100,6 +101,7 @@ class ChatService(
                 val tag = ops.findById(draft.tagId, Tag::class.java) ?: unavailable()
                 if (!reportable(tag) || tag.primaryOwnerUserId != draft.ownerUserId) conflict()
                 if (tag.primaryOwnerUserId == finder.id) bad("Cannot report your own tag")
+                ch.lostkeyfinder.users.requireActiveUser(ops, draft.ownerUserId)
                 // Serialize against release, deletion and parallel first reports on this tag.
                 ops.updateFirst(query(where("_id").`is`(tag.id)), Update().inc("chatVersion", 1), Tag::class.java)
                 val now = now()
@@ -227,6 +229,7 @@ class ChatService(
         val value = text.trim()
         validateText(value, image == null)
         return transactions.run { ops ->
+            ch.lostkeyfinder.users.requireActiveUser(ops, user.id)
             val chat = authorized(id, user, ops)
             if (user.id !in chat.participantIds) unavailable()
             val existing = ops.findById(key.lowercase(), ChatMessage::class.java)
@@ -278,6 +281,7 @@ class ChatService(
     ) {
         if (through < 0) bad("Invalid read position")
         transactions.run { ops ->
+            ch.lostkeyfinder.users.requireActiveUser(ops, user.id)
             val chat = authorized(id, user, ops)
             if (user.id !in chat.participantIds) unavailable()
             if (through > chat.sequence) bad("Invalid read position")
@@ -292,6 +296,7 @@ class ChatService(
         owner: User,
     ) {
         transactions.run { ops ->
+            ch.lostkeyfinder.users.requireActiveUser(ops, owner.id)
             val chat = authorized(id, owner, ops)
             if (chat.ownerUserId != owner.id) throw ResponseStatusException(HttpStatus.FORBIDDEN)
             val now = now()

@@ -13,6 +13,20 @@
             <strong>{{ message.senderUserId === me.value()?.id ? copy().you : copy().other }}</strong> · <time [attr.datetime]="message.createdAt">{{ message.createdAt | date:'yyyy-MM-dd HH:mm' }}</time>
             <p>{{ message.text }}</p>
             @if (message.imageId) { <app-chat-image [imageId]="message.imageId" /> }
+            @if (chat.value().participant) {
+              @if (reported().includes(message.id)) { <p role="status">{{ copy().reportReceived }}</p> }
+              @else if (reporting() === message.id) {
+                <div class="report-form">
+                  <label [attr.for]="'reason-' + message.id">{{ copy().reportReason }}</label>
+                  <select #reason [id]="'reason-' + message.id" [value]="reportReason()" (change)="reportReason.set($any(reason.value))" [disabled]="busy()">
+                    <option value="SPAM">{{ copy().SPAM }}</option><option value="HARASSMENT">{{ copy().HARASSMENT }}</option><option value="OTHER">{{ copy().OTHER }}</option>
+                  </select>
+                  <p>{{ copy().reportHint }}</p>
+                  <button type="button" (click)="report()" [disabled]="busy()">{{ copy().reportConfirm }}</button>
+                  <button type="button" (click)="reporting.set(null)" [disabled]="busy()">{{ copy().cancel }}</button>
+                </div>
+              } @else { <button class="report-message" type="button" (click)="reporting.set(message.id)" [disabled]="busy()">{{ copy().reportMessage }}</button> }
+            }
           </li>
         }
       </ol>

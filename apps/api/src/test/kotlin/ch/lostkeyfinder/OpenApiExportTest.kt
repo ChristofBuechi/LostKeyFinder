@@ -76,6 +76,7 @@ class OpenApiExportTest {
                 "/api/v1/chats",
                 "/api/v1/chats/{chatId}",
                 "/api/v1/chats/{chatId}/messages",
+                "/api/v1/chats/{chatId}/messages/{messageId}/reports",
                 "/api/v1/chats/{chatId}/read",
                 "/api/v1/chats/{chatId}/close",
                 "/api/v1/chat-images/{imageId}",

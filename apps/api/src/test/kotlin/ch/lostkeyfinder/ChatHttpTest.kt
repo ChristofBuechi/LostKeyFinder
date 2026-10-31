@@ -34,6 +34,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
@@ -82,6 +83,8 @@ class ChatHttpTest {
     @BeforeEach fun setup() {
         listOf(
             "users",
+            "accountDeletions",
+            "abuseReports",
             "tags",
             "auditLog",
             "rateLimits",
@@ -123,6 +126,123 @@ class ChatHttpTest {
             .also {
                 ImageIO.write(BufferedImage(4, 4, BufferedImage.TYPE_INT_ARGB), "png", it)
             }.toByteArray()
+
+    @Test fun `content reports require participation and match the message without hiding content`() {
+        val chatId = report()
+        val message = template.findOne(query(where("chatId").`is`(chatId)), ChatMessage::class.java)!!
+        val path = "/api/v1/chats/$chatId/messages/${message.id}/reports"
+        mvc
+            .post(path) {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"reason":"SPAM"}"""
+            }.andExpect { status { isUnauthorized() } }
+        for (token in listOf(stranger.first, login(true).first)) {
+            mvc
+                .post(path) {
+                    header("Authorization", "Bearer $token")
+                    contentType = MediaType.APPLICATION_JSON
+                    content =
+                        """{"reason":"SPAM"}"""
+                }.andExpect { status { isNotFound() } }
+        }
+        for (reason in listOf("SPAM", "OTHER")) {
+            mvc
+                .post(path) {
+                    header("Authorization", "Bearer ${owner.first}")
+                    contentType = MediaType.APPLICATION_JSON
+                    content =
+                        """{"reason":"$reason"}"""
+                }.andExpect { status { isOk() } }
+        }
+        mvc
+            .post("/api/v1/chats/${id()}/messages/${message.id}/reports") {
+                header("Authorization", "Bearer ${owner.first}")
+                contentType =
+                    MediaType.APPLICATION_JSON
+                content = """{"reason":"SPAM"}"""
+            }.andExpect { status { isNotFound() } }
+        mvc
+            .post(path) {
+                header("Authorization", "Bearer ${owner.first}")
+                contentType = MediaType.APPLICATION_JSON
+                content =
+                    """{"reason":"INVALID"}"""
+            }.andExpect { status { isBadRequest() } }
+        assertEquals(1, template.count(Query(), ch.lostkeyfinder.chat.ChatReport::class.java))
+        assertEquals(message, template.findById(message.id, ChatMessage::class.java))
+        assertTrue(chats.detail(chatId, owner.second).writable)
+    }
+
+    @Test fun `account deletion is resumable releases hardware retires own tags and preserves the other participant history`() {
+        val chatId = report()
+        val hardware =
+            tag.copy(
+                id = id(),
+                publicId = id(),
+                origin = ch.lostkeyfinder.tags.TagOrigin.PREPRODUCED,
+                batchId = id(),
+                inventoryStatus = ch.lostkeyfinder.tags.InventoryStatus.RELEASED,
+                creationKey = null,
+            )
+        template.insert(hardware)
+        val blocked = hardware.copy(id = id(), publicId = id(), status = TagStatus.BLOCKED)
+        template.insert(blocked)
+        identity.responseEmail = owner.second.email
+        identity.deleteStatus = 503
+        mvc.delete("/api/v1/me") { header("Authorization", "Bearer ${owner.first}") }.andExpect { status { isServiceUnavailable() } }
+        assertEquals(ch.lostkeyfinder.users.UserStatus.DELETING, template.findById(owner.second.id, User::class.java)!!.status)
+        mvc.get("/api/v1/tags") { header("Authorization", "Bearer ${owner.first}") }.andExpect { status { isForbidden() } }
+        mvc.get("/api/v1/me") { header("Authorization", "Bearer ${owner.first}") }.andExpect {
+            status { isOk() }
+            jsonPath("$.status") { value("DELETING") }
+        }
+        val retired = template.findById(tag.id, Tag::class.java)!!
+        assertEquals(TagStatus.RETIRED, retired.status)
+        assertNotNull(retired.deletedAt)
+        assertEquals(null, retired.primaryOwnerUserId)
+        assertEquals(null, template.findById(hardware.id, Tag::class.java)!!.primaryOwnerUserId)
+        assertEquals(TagStatus.ACTIVE, template.findById(hardware.id, Tag::class.java)!!.status)
+        assertEquals(TagStatus.BLOCKED, template.findById(blocked.id, Tag::class.java)!!.status)
+        assertFalse(chats.detail(chatId, finder.second).writable)
+        assertEquals(
+            "Found your keys",
+            chats
+                .messages(chatId, finder.second, null)
+                .items
+                .single()
+                .text,
+        )
+        val auditCount = template.count(Query(), TagAudit::class.java)
+        identity.deleteStatus = 200
+        mvc.delete("/api/v1/me") { header("Authorization", "Bearer ${owner.first}") }.andExpect {
+            status { isOk() }
+            jsonPath("$.completed") { value(true) }
+        }
+        mvc.delete("/api/v1/me") { header("Authorization", "Bearer ${owner.first}") }.andExpect { status { isOk() } }
+        assertEquals(auditCount, template.count(Query(), TagAudit::class.java))
+        assertEquals(null, template.findById(owner.second.id, User::class.java))
+        mvc.get("/api/v1/me") { header("Authorization", "Bearer ${owner.first}") }.andExpect { status { isForbidden() } }
+        identity.responseEmail = owner.second.email
+        val fresh = identity.token(email = owner.second.email)
+        mvc.get("/api/v1/me") { header("Authorization", "Bearer $fresh") }.andExpect {
+            status { isOk() }
+            jsonPath("$.id") { value(org.hamcrest.Matchers.not(owner.second.id)) }
+        }
+        mvc.get("/api/v1/chats/$chatId") { header("Authorization", "Bearer $fresh") }.andExpect { status { isNotFound() } }
+    }
+
+    @Test fun `deletion requires a fresh sign in before changing any data`() {
+        val token =
+            identity.token(
+                subject = owner.second.firebaseUserId,
+                email = owner.second.email,
+                authTime = Instant.now().minusSeconds(600).epochSecond,
+            )
+        mvc.delete("/api/v1/me") { header("Authorization", "Bearer $token") }.andExpect { status { isConflict() } }
+        assertEquals(ch.lostkeyfinder.users.UserStatus.ACTIVE, template.findById(owner.second.id, User::class.java)!!.status)
+        assertEquals(0, identity.deleteRequests.get())
+        mvc.delete("/api/v1/me").andExpect { status { isUnauthorized() } }
+    }
 
     @Test fun `public report requires verified matching identity and completes once with image and audit`() {
         val file = MockMultipartFile("image", "test.png", "image/png", png())

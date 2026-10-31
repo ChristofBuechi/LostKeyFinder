@@ -43,6 +43,11 @@ class TestIdentityProvider : AutoCloseable {
     var responseSubject: String? = null
     var responseEmail = "Owner@Example.com"
     var responseStatus = 200
+    var deleteStatus = 200
+    val deleteRequests = AtomicInteger()
+    private val deleted =
+        java.util.concurrent.ConcurrentHashMap
+            .newKeySet<String>()
     val userRequests = AtomicInteger()
 
     init {
@@ -65,7 +70,7 @@ class TestIdentityProvider : AutoCloseable {
                 if (exchange.requestURI.query == "key=test-publishable-key" &&
                     subject != null
                 ) {
-                    responseStatus
+                    if (subject in deleted) 400 else responseStatus
                 } else {
                     401
                 }
@@ -87,6 +92,21 @@ class TestIdentityProvider : AutoCloseable {
             exchange.responseHeaders.set("Content-Type", "application/json")
             exchange.sendResponseHeaders(status, body.size.toLong())
             exchange.responseBody.use { it.write(body) }
+        }
+        server.createContext("/v1/accounts:delete") { exchange ->
+            deleteRequests.incrementAndGet()
+            val token =
+                JsonMapper
+                    .builder()
+                    .build()
+                    .readTree(exchange.requestBody)["idToken"]
+                    .asString()
+            val subject = SignedJWT.parse(token).jwtClaimsSet.subject
+            if (deleteStatus == 200) deleted.add(subject)
+            val body = if (deleteStatus == 200) "{}" else """{"error":{"message":"UNAVAILABLE"}}"""
+            exchange.responseHeaders.set("Content-Type", "application/json")
+            exchange.sendResponseHeaders(deleteStatus, body.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
         }
         server.start()
     }
@@ -122,6 +142,9 @@ class TestIdentityProvider : AutoCloseable {
     }
 
     fun reset() {
+        deleteStatus = 200
+        deleteRequests.set(0)
+        deleted.clear()
         confirmed = true
         responseSubject = null
         responseEmail = "Owner@Example.com"

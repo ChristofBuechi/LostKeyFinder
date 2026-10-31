@@ -204,7 +204,8 @@
     "deleteConfirm": "Diesen selbst erstellten Tag löschen? Sein QR-Code wird deaktiviert. Die Daten bleiben für die Historie erhalten.",
     "releaseConfirm": "Die Besitzerzuordnung dieses Hardware-Tags lösen? Danach kann jemand anderes ihn registrieren. Deine private Bezeichnung wird entfernt.",
     "chat": "Chat öffnen",
-    "chats": "Chats"
+    "chats": "Chats",
+    "print": "Druckvorlagen"
   },
   "chat": {
     "title": "Nachrichten",
@@ -244,7 +245,15 @@
     "finder": "Finder",
     "completed": "Fundmeldung wird bestätigt …",
     "account": "Mein Konto",
-    "email": "E-Mail-Adresse"
+    "email": "E-Mail-Adresse",
+    "reportMessage": "Inhalt melden",
+    "reportReason": "Grund",
+    "reportHint": "Die Meldung wird gespeichert. Inhalte werden nicht automatisch ausgeblendet. Eine Support-Bearbeitung ist derzeit noch nicht verfügbar.",
+    "reportConfirm": "Meldung absenden",
+    "reportReceived": "Meldung gespeichert.",
+    "SPAM": "Spam",
+    "HARASSMENT": "Belästigung oder bedrohlicher Inhalt",
+    "OTHER": "Anderer problematischer Inhalt"
   },
   "emails": {
     "found": {
@@ -255,5 +264,34 @@
       "subject": "Lost Key Finder: Ungelesene Nachrichten",
       "body": "Du hast neue Nachrichten.\n\n{chatUrl}\n\nMelde dich mit deiner E-Mail-Adresse an."
     }
+  },
+  "print": {
+    "title": "Tag-Druckvorlagen",
+    "intro": "Wähle bis zu 25 eigene Tags. Die Auswahl bleibt beim Blättern erhalten. Private Bezeichnungen werden nicht mitgedruckt.",
+    "hint": "Drucke mit 100 % / tatsächlicher Grösse. Inaktive Tags müssen vor Verwendung aktiviert werden. Die Links gelten für diese Umgebung; Dev-Ausdrucke sind keine Produktionsdaten.",
+    "empty": "Auf dieser Seite gibt es keine druckbaren eigenen Tags.",
+    "selected": "Ausgewählt",
+    "format": "Papierformat",
+    "a4": "A4: bis zu 10 Karten pro Seite mit Schnittlinien",
+    "card": "Kreditkarte: 85,60 × 53,98 mm pro Seite",
+    "download": "PDF herunterladen",
+    "failed": "Das PDF konnte nicht erstellt werden. Bitte erneut versuchen.",
+    "instruction": "Gefunden?\nBitte QR-Code scannen."
+  },
+  "deletion": {
+    "title": "Konto löschen",
+    "consequences": "Deine eigenen Tags werden dauerhaft stillgelegt. Hardware-Tags werden von deinem Konto gelöst und können erneut registriert werden. Gesperrte oder stillgelegte Hardware bleibt gesperrt.",
+    "history": "Das Firebase-Konto und lokale Kontaktdaten werden entfernt. Gemeinsame Chattexte, Bilder und die Historie bleiben für andere berechtigte Teilnehmer erhalten; persönliche Angaben, die du darin selbst geteilt hast, werden nicht automatisch entfernt.",
+    "confirm": "Ich habe die Folgen verstanden und möchte mein Konto unwiderruflich löschen.",
+    "busy": "Konto wird gelöscht …",
+    "remove": "Konto endgültig löschen",
+    "recent": "Bitte melde dich erneut über einen frischen E-Mail-Link an und starte die Löschung nochmals.",
+    "failed": "Die Löschung ist noch nicht abgeschlossen. Du kannst sie erneut versuchen; ein bereits gesperrtes Konto bleibt gesperrt.",
+    "signInAgain": "Erneut anmelden",
+    "resume": "Eine begonnene Löschung kannst du nach erneuter Anmeldung auf dieser Seite fortsetzen.",
+    "back": "Zur Kontoseite",
+    "done": "Konto gelöscht",
+    "doneText": "Dein Konto wurde gelöscht. Frühere Tag- und Chatrechte werden durch eine erneute Anmeldung nicht wiederhergestellt.",
+    "home": "Zur Startseite"
   }
 }

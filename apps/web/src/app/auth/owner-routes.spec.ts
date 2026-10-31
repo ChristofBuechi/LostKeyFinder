@@ -177,7 +177,20 @@ describe('Owner route access and callback', () => {
     http.expectNone(request => request.method === 'POST');
     http.verify();
   });
-  it.each(['/tags', '/tags/550e8400-e29b-41d4-a716-446655440000', '/admin/tags',
+  it('allows a deleting account only into its deletion continuation', async () => {
+    signedIn.set(true);
+    const harness = await RouterTestingHarness.create();
+    const navigation = harness.navigateByUrl('/tags');
+    const http = TestBed.inject(HttpTestingController);
+    (await vi.waitFor(() => http.expectOne('/api/v1/me'))).flush({ ...owner, status: 'DELETING' });
+    (await vi.waitFor(() => http.expectOne('/api/v1/me'))).flush({ ...owner, status: 'DELETING' });
+    await navigation;
+    expect(TestBed.inject(Router).url).toBe('/account/deletion');
+    expect(harness.routeNativeElement?.textContent).toContain('Konto endgültig löschen');
+    http.expectNone('/api/v1/tags'); http.verify();
+  });
+
+  it.each(['/tags/print', '/account/deletion', '/tags', '/tags/550e8400-e29b-41d4-a716-446655440000', '/admin/tags',
     '/admin/tags/550e8400-e29b-41d4-a716-446655440000', '/admin/tag-batches', '/chats',
     '/chats/550e8400-e29b-41d4-a716-446655440000', '/tag-registrations/550e8400-e29b-41d4-a716-446655440000',
     '/finder-reports/550e8400-e29b-41d4-a716-446655440000'])('blocks anonymous direct link %s without private API requests', async url => {

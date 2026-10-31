@@ -1,33 +1,28 @@
 # Roadmap
 
-> Aktualisierung 26.10.2026: Für Fundmeldungen und Chats gilt [Chat-Umsetzung](chat-implementation.md). Kostenloses Schreiben mit Text/Bildern, feste Teilnehmerrechte, keine automatische 30-Tage-Schreibfrist; frühere widersprechende Zahlungs-/Fristenregeln sind für diesen Ausbau überholt. SMTP und Scheduler benötigen vor echtem Versand ihre Umgebungskonfiguration.
-## Reihenfolge
+Stand: 31. Oktober 2026. Dieser Status ersetzt frühere Fortschrittsangaben der ursprünglichen Phasenpläne. Aktuelle Detailregeln: [Chat](chat-implementation.md), [Besitzerfunktionen](owner-features.md), [Tag-Historie](tag-history.md).
 
-1. **Fundament:** Angular, Kotlin/Spring Boot, Firebase Authentication, Firestore-Anbindung, OpenAPI und getrennte `dev`/`prod`-Umgebungen.
-2. **Tag und Identität:** Magic-Link-Login, eigene kostenlose UUID-v4-Tags mit sofortiger Zuordnung, Admin-Produktionsserien, Registrierung vorproduzierter Tags, gemeinsame QR-Route, globale Admin-Tagübersicht und Backup-Einladungen. Adminrechte werden manuell im lokalen Benutzerkonto gesetzt. Umsetzungsreihenfolge und Abnahmen: [Tag-Plan](tag-produktion-und-registrierung-plan.md).
-3. **Fund und Chat:** Finder-Draft, geräteübergreifende Bestätigung, private Text-Chats, optionale bereinigte Bilder und Benachrichtigungen.
-4. **Payment:** CHF 10.00 über die im Mollie-Live-Profil freigeschalteten Zahlungsarten, Reconciliation und Access Grant.
-5. **Betrieb:** Archivierung, synchrone Account-Löschung, täglicher Wartungsaufruf, minimale Supportoberfläche, Support-Audit, Backups, Monitoring und Runbooks.
+## Umgesetzt
 
-Aktuell wird Punkt 2 ohne den späteren Finder-/Kontaktprozess vorbereitet; Backup-Einladungen folgen ebenfalls der weiteren Roadmap. Serienfreigabe erfolgt explizit nach Produktionskontrolle vor Verkauf. Domain und finales Herstellerformat werden später entschieden; vor Herstellung der Verkaufstags muss die dauerhafte Domain bestehen. [Fehlregistrierungen](fehlregistrierung-support-ansatz.md) sind als Support-Vorschlag ausgearbeitet und noch abzustimmen.
+- Firebase-E-Mail-Anmeldung, bestätigte Identität, serverseitige Besitzer-/Teilnehmer-/Adminrechte und geschützte Direktlinks.
+- Eigene Tags, Hardware-Produktionsserien, CSV, Freigabe und Registrierung über dieselbe Scanroute, Soft Delete, Historie, nummerierte Pagination und Inline-Bezeichnungen.
+- Private kostenlose Chats mit Text/Bildern, Kameraaufnahme bei Fundmeldung, Fallabschluss und wiederholte Fundzyklen; Mailversand bei konfiguriertem SMTP und separate Scheduler-Schnittstelle.
+- Gemeinsame DE-/EN-Kataloge mit Transloco und lokalisierten Backend-E-Mails.
+- PDF-Druckvorlagen für eigene Tags: Kreditkartengrösse und A4-Sammelbogen.
+- Wiederaufnehmbare Kontolöschung mit Tag-Bereinigung und Erhalt gemeinsamer Historie.
+- Inhaltsmeldungen erfassen; noch keine Supportbearbeitung.
 
-## Abnahme
+## Vor Produktivstart klären und prüfen
 
-- Selbsterstellung und Registrierung vorproduzierter Tags bestehen nebeneinander; unbekannte IDs erzeugen beim Scan keinen Tag.
-- Parallele Registrierung kann nur einen Besitzer zuordnen; Wiederholungen erzeugen weder zweite Tags noch zweite Serien.
-- Manuell berechtigte Admins sehen nach normaler Anmeldung alle Tags mit Filtern und Pagination; Rollenentzug wirkt beim nächsten Admin-Request.
+- Dauerhafte QR-Domain vor Herstellung von Verkaufstags und endgültiges Herstellerformat.
+- Aufbewahrung/Löschung von Chatinhalten, Bildern, Meldungen und Löschledger; Nutzerinformationen und Anbieterangaben.
+- SMTP-/Absenderdomain, Scheduler, Zustellung, Backups/Restore mit Löschledger, Monitoring und Kostenalarme tatsächlich abnehmen. Implementierter Code allein bestätigt keine Cloud-Konfiguration.
+- Vorgehen für liegengebliebene Löschaufträge sowie manueller Supportkanal; keine automatische Neuzuordnung aufgrund einer Meldung oder eines Fristablaufs.
+- Reale Geräte-/Browserabnahme einschliesslich Kamera, E-Mail-Browserwechsel und PDF-Druckmassstab.
 
-- Parallele Finder erzeugen getrennte Chats, aber höchstens einen aktiven Fall.
-- Wiederholungen erzeugen weder doppelte Chats noch doppelte Zahlungen oder interne Benachrichtigungen.
-- Falsche Identität, `flowId`, Statustoken oder Ressourcenzuordnung legt keine Daten offen.
-- Lesen wird anhand der im Chat gespeicherten Owner-/Teilnehmerreferenzen oder Adminrechten autorisiert, auch nach einem Tag-Besitzerwechsel. Der frühere Grant-basierte Lesevorbehalt wird vor Chat-Umsetzung entsprechend angepasst.
-- Entfernte Backup Owner verlieren sofort Zugriff; erneutes Einladen stellt alte Archive nicht wieder her.
-- Bilder werden begrenzt und bereinigt, Listen laden keine Base64-Daten.
-- Deutsche und englische Kernabläufe erfüllen WCAG 2.2 AA und funktionieren per Tastatur und Screenreader.
-- Logs enthalten keine Tokens, E-Mails, Chattexte, Bilder oder Checkout-URLs.
-- Persistenztests laufen gegen eine echte Firestore-Dev-Datenbank.
-- Account-Löschung kann nach Fehlern fortgesetzt werden und entzieht Zugriff sofort.
+## Bewusst zurückgestellt
 
-## Später
-
-Formatierte PDF-Druckvorlagen für bestehende eigene Tags, zunächst beispielsweise im Kreditkartenformat, folgen als Ausbau. Nachdruck verändert keine Tag-ID und erzeugt keinen neuen Tag. Weitere Länder, Sprachen, Währungen, Versand-/Shopabwicklung, eine erweiterte Supportoberfläche, Infrastructure as Code und Finderlohn-Verarbeitung folgen nur nach validiertem Bedarf. Eine Finderlohn-Verarbeitung benötigt zusätzlich eine neue rechtliche und paymenttechnische Prüfung.
+- Supportaktionen und Besitzerkorrekturen: [Vorschlag für Fehlregistrierungen](fehlregistrierung-support-ansatz.md), noch keine implementierte Funktion.
+- Backup-Besitzer und Einladungen.
+- Zahlungen; Chats bleiben kostenlos.
+- Shop/Versand, native Apps und weitere Formate erst bei konkretem Bedarf.

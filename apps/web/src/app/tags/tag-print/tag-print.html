@@ -1,0 +1,26 @@
+<section class="auth-panel" aria-labelledby="print-title">
+  <h1 id="print-title">{{ copy().title }}</h1>
+  <p>{{ copy().intro }}</p><p>{{ copy().hint }}</p>
+  @if (loading()) { <p role="status">{{ tagsCopy().loading }}</p> }
+  @if (loadFailed()) { <p role="alert">{{ tagsCopy().unavailable }}</p><button type="button" (click)="page.reload(); single.reload()">{{ tagsCopy().retry }}</button> }
+  @for (tag of available(); track tag.id) {
+    <label class="tag-choice"><input type="checkbox" [checked]="checked(tag)" (change)="toggle(tag)" [disabled]="busy() || (!checked(tag) && selected().length >= 25)">
+      <span>{{ tag.label || tag.publicId }} @if (tag.status === 'INACTIVE') { ({{ tagsCopy().INACTIVE }}) }</span></label>
+  }
+  @if (!loading() && !available().length && !loadFailed()) { <p>{{ copy().empty }}</p> }
+  @if (page.hasValue() && page.value().totalPages > 1) {
+    <nav [attr.aria-label]="tagsCopy().pagination">
+      <button type="button" [disabled]="page.value().page === 1 || busy()" (click)="pageNumber.set(page.value().page - 1)">{{ tagsCopy().previous }}</button>
+      {{ tagsCopy().page }} {{ page.value().page }} {{ tagsCopy().of }} {{ page.value().totalPages }}
+      <button type="button" [disabled]="page.value().page === page.value().totalPages || busy()" (click)="pageNumber.set(page.value().page + 1)">{{ tagsCopy().next }}</button>
+    </nav>
+  }
+  <p role="status">{{ copy().selected }}: {{ selected().length }} / 25</p>
+  <fieldset [disabled]="busy()"><legend>{{ copy().format }}</legend>
+    <label><input type="radio" name="layout" [checked]="sheet()" (change)="sheet.set(true)"> {{ copy().a4 }}</label>
+    <label><input type="radio" name="layout" [checked]="!sheet()" (change)="sheet.set(false)"> {{ copy().card }}</label>
+  </fieldset>
+  <button type="button" (click)="download()" [disabled]="busy() || !selected().length">{{ busy() ? tagsCopy().loading : copy().download }}</button>
+  @if (failed()) { <p role="alert">{{ copy().failed }}</p> }
+  <p><a routerLink="/tags">{{ tagsCopy().back }}</a></p>
+</section>
