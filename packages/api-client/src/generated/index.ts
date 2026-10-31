@@ -6,6 +6,7 @@ export { RequestBuilder } from './request-builder';
 export type { StrictHttpResponse } from './strict-http-response';
 export { Api } from './api';
 
+export type { AccountDeletionResponse } from './models/account-deletion-response';
 export type { ChangeLanguageRequest } from './models/change-language-request';
 export type { ChangeTagLabelRequest } from './models/change-tag-label-request';
 export type { ChangeTagStatusRequest } from './models/change-tag-status-request';
@@ -13,6 +14,7 @@ export type { ChatMessage } from './models/chat-message';
 export type { ChatMessageRequest } from './models/chat-message-request';
 export type { ChatPage } from './models/chat-page';
 export type { ChatReadRequest } from './models/chat-read-request';
+export type { ChatReportRequest } from './models/chat-report-request';
 export type { ChatView } from './models/chat-view';
 export type { CreateTagBatchRequest } from './models/create-tag-batch-request';
 export type { CreateTagRequest } from './models/create-tag-request';
@@ -78,6 +80,8 @@ export type { ChatControllerMessages$Params as ChatControllerMessages$Params } f
 export { chatControllerMessages as chatControllerMessages } from './fn/chat/chat-controller-messages';
 export type { ChatControllerSend$Params as ChatControllerSend$Params } from './fn/chat/chat-controller-send';
 export { chatControllerSend as chatControllerSend } from './fn/chat/chat-controller-send';
+export type { ChatControllerReport$Params as ChatControllerReport$Params } from './fn/chat/chat-controller-report';
+export { chatControllerReport as chatControllerReport } from './fn/chat/chat-controller-report';
 export type { ChatControllerRead$Params as ChatControllerRead$Params } from './fn/chat/chat-controller-read';
 export { chatControllerRead as chatControllerRead } from './fn/chat/chat-controller-read';
 export type { ChatControllerComplete$Params as ChatControllerComplete$Params } from './fn/chat/chat-controller-complete';
@@ -90,6 +94,8 @@ export type { HealthControllerReady$Params as HealthControllerReady$Params } fro
 export { healthControllerReady as healthControllerReady } from './fn/health/health-controller-ready';
 export type { UserControllerMe$Params as UserControllerMe$Params } from './fn/users/user-controller-me';
 export { userControllerMe as userControllerMe } from './fn/users/user-controller-me';
+export type { UserControllerDelete$Params as UserControllerDelete$Params } from './fn/users/user-controller-delete';
+export { userControllerDelete as userControllerDelete } from './fn/users/user-controller-delete';
 export type { UserControllerChangeLanguage$Params as UserControllerChangeLanguage$Params } from './fn/users/user-controller-change-language';
 export { userControllerChangeLanguage as userControllerChangeLanguage } from './fn/users/user-controller-change-language';
 export type { TagRegistrationControllerResolve$Params as TagRegistrationControllerResolve$Params } from './fn/tag-registration/tag-registration-controller-resolve';

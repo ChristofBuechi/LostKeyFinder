@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.MediaType
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -22,15 +23,22 @@ import java.time.Instant
 @SecurityRequirement(name = "bearerAuth")
 class UserController(
     private val users: UserService,
+    private val deletions: AccountDeletionService,
 ) {
     @GetMapping("/api/v1/me", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(operationId = "UserController_me", summary = "Return the authenticated local user")
     fun me(
         @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
     ): CurrentUserResponse {
-        val user = users.currentUser(jwt)
+        val user = users.profile(jwt)
         return response(user)
     }
+
+    @DeleteMapping("/api/v1/me", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @Operation(operationId = "UserController_delete", summary = "Delete the authenticated account, resumable in bounded steps")
+    fun delete(
+        @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
+    ): AccountDeletionResponse = AccountDeletionResponse(deletions.delete(jwt))
 
     @PatchMapping("/api/v1/me/language", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(operationId = "UserController_changeLanguage", summary = "Set the authenticated user's preferred language")
@@ -56,4 +64,9 @@ data class CurrentUserResponse(
     @get:com.fasterxml.jackson.annotation.JsonProperty("isAdmin")
     @get:Schema(requiredMode = Schema.RequiredMode.REQUIRED) val isAdmin: Boolean,
     @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = ["de", "en"]) val language: String,
+)
+
+@Schema(requiredProperties = ["completed"])
+data class AccountDeletionResponse(
+    val completed: Boolean,
 )

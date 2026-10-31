@@ -204,7 +204,8 @@
     "deleteConfirm": "Delete this self-created tag? Its QR code will be deactivated. The data is retained for history.",
     "releaseConfirm": "Release ownership of this hardware tag? Someone else can then register it. Your private label will be removed.",
     "chat": "Open chat",
-    "chats": "Chats"
+    "chats": "Chats",
+    "print": "Print templates"
   },
   "chat": {
     "title": "Messages",
@@ -244,7 +245,15 @@
     "finder": "Finder",
     "completed": "Confirming report …",
     "account": "My account",
-    "email": "Email address"
+    "email": "Email address",
+    "reportMessage": "Report content",
+    "reportReason": "Reason",
+    "reportHint": "The report will be stored. Content is not hidden automatically. Support processing is not available yet.",
+    "reportConfirm": "Submit report",
+    "reportReceived": "Report stored.",
+    "SPAM": "Spam",
+    "HARASSMENT": "Harassment or threatening content",
+    "OTHER": "Other problematic content"
   },
   "emails": {
     "found": {
@@ -255,5 +264,34 @@
       "subject": "Lost Key Finder: Unread messages",
       "body": "You have new messages.\n\n{chatUrl}\n\nSign in with your email address."
     }
+  },
+  "print": {
+    "title": "Tag print templates",
+    "intro": "Select up to 25 self-created tags. Selection is preserved across pages. Private labels are not printed.",
+    "hint": "Print at 100% / actual size. Activate inactive tags before use. Links point to this environment; dev printouts are not production files.",
+    "empty": "No printable self-created tags on this page.",
+    "selected": "Selected",
+    "format": "Paper format",
+    "a4": "A4: up to 10 cards per page with cutting lines",
+    "card": "Credit card: 85.60 × 53.98 mm per page",
+    "download": "Download PDF",
+    "failed": "Could not create the PDF. Please try again.",
+    "instruction": "Found this?\nPlease scan the QR code."
+  },
+  "deletion": {
+    "title": "Delete account",
+    "consequences": "Your self-created tags will be permanently retired. Hardware tags will be released for registration by another owner. Blocked or retired hardware remains blocked.",
+    "history": "Your Firebase account and local contact details will be removed. Shared chat text, images and history remain available to other authorized participants; personal details you shared in this content are not automatically removed.",
+    "confirm": "I understand the consequences and want to permanently delete my account.",
+    "busy": "Deleting account …",
+    "remove": "Permanently delete account",
+    "recent": "Please sign in using a fresh email link, then start deletion again.",
+    "failed": "Deletion is not complete. You can retry; an account already blocked for deletion remains blocked.",
+    "signInAgain": "Sign in again",
+    "resume": "You can resume a started deletion on this page after signing in again.",
+    "back": "Back to account",
+    "done": "Account deleted",
+    "doneText": "Your account has been deleted. Signing in again will not restore previous tag or chat rights.",
+    "home": "Home"
   }
 }

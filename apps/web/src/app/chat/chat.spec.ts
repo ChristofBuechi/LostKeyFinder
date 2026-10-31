@@ -91,6 +91,25 @@ describe('Finder reports and private chat', () => {
     fixture.destroy();
   });
 
+  it('records a content report without removing the message', async () => {
+    signedIn.set(true);
+    const fixture = TestBed.createComponent(ChatDetail);
+    await respond(`/api/v1/chats/${id}`, { id, sequence: 1, participant: true, writable: false });
+    await respond('/api/v1/me', { id: 'owner', isAdmin: false });
+    await respond(`/api/v1/chats/${id}/messages`, { items: [message], before: null });
+    await respond(`/api/v1/chats/${id}/read`, {});
+    await fixture.whenStable();
+    (fixture.nativeElement.querySelector('.report-message') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    (fixture.nativeElement.querySelector('.report-form button') as HTMLButtonElement).click();
+    const report = await respond(`/api/v1/chats/${id}/messages/${message.id}/reports`, {});
+    expect(report.request.body).toEqual({ reason: 'SPAM' });
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('Meldung gespeichert.');
+    expect(fixture.nativeElement.textContent).toContain('Found your keys');
+    fixture.destroy();
+  });
+
   it('opens the current conversation even when an old link contains a message reference', async () => {
     signedIn.set(true);
     Object.defineProperty(TestBed.inject(ActivatedRoute), 'queryParamMap', { value: of(convertToParamMap({ messageId: id })) });

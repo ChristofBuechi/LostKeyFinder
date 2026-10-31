@@ -69,6 +69,7 @@ class FirestoreHardwareIntegrationTest {
             val flowId = UUID.randomUUID().toString()
             val key = UUID.randomUUID().toString()
             try {
+                template.insert(owners + admin, User::class.java)
                 val ids =
                     Executors.newFixedThreadPool(4).use { pool ->
                         (1..4)
@@ -215,6 +216,7 @@ class FirestoreHardwareIntegrationTest {
                 )
                 assertEquals(null, batches.detail(badBatch.id).releasedAt)
             } finally {
+                template.remove(query(where("_id").`in`((owners + admin).map { it.id })), User::class.java)
                 // Include a committed series even if a response was lost before its ID was recorded.
                 batchIds += template.find(query(where("createdByUserId").`is`(admin.id)), TagBatch::class.java).map { it.id }
                 template.remove(query(where("batchId").`in`(batchIds)), Tag::class.java)

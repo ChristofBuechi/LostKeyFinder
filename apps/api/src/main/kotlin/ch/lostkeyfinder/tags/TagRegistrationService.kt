@@ -2,6 +2,7 @@ package ch.lostkeyfinder.tags
 
 import ch.lostkeyfinder.identity.normalizeEmail
 import ch.lostkeyfinder.users.User
+import ch.lostkeyfinder.users.lockActiveUser
 import org.springframework.data.mongodb.core.MongoOperations
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria.where
@@ -124,6 +125,7 @@ class TagRegistrationService(
         publicId: String,
         user: User,
     ): TagResponse {
+        ops.lockActiveUser(user.id)
         val tag =
             ops.findOne(query(where("publicId").`is`(publicId)), Tag::class.java)
                 ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Tag unavailable")

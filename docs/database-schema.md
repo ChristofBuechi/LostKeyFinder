@@ -1,7 +1,7 @@
 # Vereinfachtes Datenbankschema
 
 > Aktualisierung 26.10.2026: Für Fundmeldungen und Chats gilt [Chat-Umsetzung](chat-implementation.md). Kostenloses Schreiben mit Text/Bildern, feste Teilnehmerrechte, keine automatische 30-Tage-Schreibfrist; frühere widersprechende Zahlungs-/Fristenregeln sind für diesen Ausbau überholt. SMTP und Scheduler benötigen vor echtem Versand ihre Umgebungskonfiguration.
-Stand: 25. Oktober 2026. Die Anwendung verwendet sechs Collections:
+Stand: 25. Oktober 2026. Die ursprüngliche Tag-Umsetzung verwendet die folgenden sechs Collections; Chats ergänzen die in [Chat-Umsetzung](chat-implementation.md) beschriebenen Collections. Der Ausbau vom 31.10.2026 ergänzt `accountDeletions` (minimales Löschledger) und `abuseReports` (Inhaltsmeldungen), siehe [Besitzerfunktionen](owner-features.md):
 
 | Collection | Inhalt und Grund für die eigenständige Ablage |
 | --- | --- |
@@ -18,7 +18,9 @@ Das persönliche Limit bleibt bei 100 Erstellungsversuchen pro UTC-Tag. Die bedi
 
 Der HMAC-Schlüssel liegt ausschliesslich in Secret Manager (`public-rate-limit-hmac`, fest referenzierte Version `1`). Cloud Run erhält ihn als `PUBLIC_RATE_LIMIT_HMAC_KEY`. Der Runtime-Service-Account benötigt `roles/secretmanager.secretAccessor` nur auf diesem Secret. Ohne Schlüssel lehnen öffentliche Quotenprüfungen mit HTTP 503 ab; ungültige oder zu kurze Schlüssel verhindern den Start. Ein Schlüsselwechsel benötigt eine eigene Planung, da sich sonst laufende Quoten zurücksetzen.
 
-## Neustart der Dev-Datenbank
+## Historischer Neustart der Dev-Datenbank
+
+Die folgenden Schritte dokumentieren den damaligen Schemawechsel. Für diesen Ausbau ist kein Datenreset erforderlich oder vorgesehen.
 
 **Ponytail:** Es gibt noch keine zu erhaltenden Daten; deshalb keine Schema-Migration, Importmarker oder Kompatibilität mit dem alten Schema.
 

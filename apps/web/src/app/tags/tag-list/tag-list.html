@@ -8,6 +8,7 @@
   <p>{{ copy().note }}</p>
   @if (auth.signedIn()) {
     @if (!admin) {
+      <p><a routerLink="/tags/print">{{ copy().print }}</a></p>
       <form (submit)="create($event)">
         <label for="tag-label">{{ copy().label }}</label>
         <input id="tag-label" [formField]="tagForm.label">

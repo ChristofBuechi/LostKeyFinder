@@ -16,5 +16,6 @@
     <button type="button" (click)="user.reload()" [disabled]="user.isLoading()">{{ ('common.retry' | transloco) }}</button>
   }
   @if (error() === 'sessionExpired') { <a routerLink="/" fragment="owner">{{ ('common.backToLogin' | transloco) }}</a> }
+  <p><a routerLink="/account/deletion">{{ deletionCopy().title }}</a></p>
   <button type="button" (click)="logout()" [disabled]="signingOut()">{{ ('common.logout' | transloco) }}</button>
 </section>

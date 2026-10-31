@@ -18,6 +18,9 @@ export const authGuard: CanActivateFn = async route => {
   const identity = auth.firebaseUserId();
   try {
     const user = await firstValueFrom(users.userControllerMe());
+    if (auth.signedIn() && identity === auth.firebaseUserId() && user.status === 'DELETING') {
+      return route.data['deletion'] === true ? true : router.createUrlTree(['/account/deletion']);
+    }
     return auth.signedIn() && identity === auth.firebaseUserId() && user.status === 'ACTIVE' && (!route.data['admin'] || user.isAdmin) ? true : login;
   } catch { return login; }
 };

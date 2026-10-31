@@ -181,7 +181,15 @@ class UserHttpTest {
         mvc.get("/api/v1/me") { header("Authorization", "Bearer $token") }.andExpect { status { isOk() } }
         for (status in listOf(UserStatus.DISABLED, UserStatus.DELETING)) {
             template.updateFirst(Query(), Update.update("status", status), User::class.java)
-            mvc.get("/api/v1/me") { header("Authorization", "Bearer $token") }.andExpect { status { isForbidden() } }
+            if (status == UserStatus.DISABLED) {
+                mvc.get("/api/v1/me") { header("Authorization", "Bearer $token") }.andExpect { status { isForbidden() } }
+            } else {
+                mvc.get("/api/v1/me") { header("Authorization", "Bearer $token") }.andExpect {
+                    status { isOk() }
+                    jsonPath("$.status") { value("DELETING") }
+                }
+                mvc.get("/api/v1/tags") { header("Authorization", "Bearer $token") }.andExpect { status { isForbidden() } }
+            }
         }
         assertEquals(1, identity.userRequests.get())
     }

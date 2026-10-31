@@ -45,6 +45,7 @@ data class ChatMessageRequest(
 @Tag(name = "chat")
 class ChatController(
     private val chats: ChatService,
+    private val reports: ChatReports,
     private val images: ChatImages,
     private val users: UserService,
     private val identity: FirebaseIdentity,
@@ -110,6 +111,16 @@ class ChatController(
         return chats.send(chatId.lowercase(), user, body.text, images.sanitize(body.image), key)
     }
 
+    @PostMapping("/chats/{chatId}/messages/{messageId}/reports")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(operationId = "ChatController_report", summary = "Record a participant content report without hiding content")
+    fun report(
+        @PathVariable chatId: String,
+        @PathVariable messageId: String,
+        @RequestBody body: ChatReportRequest,
+        @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
+    ) = reports.report(users.currentUser(jwt), chatId, messageId, body.reason)
+
     @PostMapping("/chats/{chatId}/read")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(operationId = "ChatController_read")
@@ -156,3 +167,8 @@ class ChatController(
             .header("X-Content-Type-Options", "nosniff")
             .body(chats.image(imageId.lowercase(), users.currentUser(jwt)))
 }
+
+@io.swagger.v3.oas.annotations.media.Schema(requiredProperties = ["reason"])
+data class ChatReportRequest(
+    val reason: ReportReason,
+)

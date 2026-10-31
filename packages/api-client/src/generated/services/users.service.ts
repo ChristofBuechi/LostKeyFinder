@@ -10,9 +10,12 @@ import { BaseService } from '../base-service';
 import { ApiConfiguration } from '../api-configuration';
 import { StrictHttpResponse } from '../strict-http-response';
 
+import { AccountDeletionResponse } from '../models/account-deletion-response';
 import { CurrentUserResponse } from '../models/current-user-response';
 import { userControllerChangeLanguage } from '../fn/users/user-controller-change-language';
 import { UserControllerChangeLanguage$Params } from '../fn/users/user-controller-change-language';
+import { userControllerDelete } from '../fn/users/user-controller-delete';
+import { UserControllerDelete$Params } from '../fn/users/user-controller-delete';
 import { userControllerMe } from '../fn/users/user-controller-me';
 import { UserControllerMe$Params } from '../fn/users/user-controller-me';
 
@@ -54,6 +57,41 @@ export class UsersService extends BaseService {
     const resp = this.userControllerMe$Response(params, context);
     return resp.pipe(
       map((r: StrictHttpResponse<CurrentUserResponse>): CurrentUserResponse => r.body)
+    );
+  }
+
+  /** Path part for operation `userControllerDelete()` */
+  static readonly UserControllerDeletePath = '/api/v1/me';
+
+  /**
+   * Delete the authenticated account, resumable in bounded steps.
+   *
+   *
+   *
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `userControllerDelete()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  userControllerDelete$Response(params?: UserControllerDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<AccountDeletionResponse>> {
+    const obs = userControllerDelete(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * Delete the authenticated account, resumable in bounded steps.
+   *
+   *
+   *
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `userControllerDelete$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  userControllerDelete(params?: UserControllerDelete$Params, context?: HttpContext): Observable<AccountDeletionResponse> {
+    const resp = this.userControllerDelete$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<AccountDeletionResponse>): AccountDeletionResponse => r.body)
     );
   }
 
