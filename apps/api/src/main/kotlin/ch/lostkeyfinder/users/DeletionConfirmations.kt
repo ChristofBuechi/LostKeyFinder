@@ -4,6 +4,9 @@ import ch.lostkeyfinder.mail.MailSender
 import ch.lostkeyfinder.tags.PublicRequestLimits
 import ch.lostkeyfinder.tags.TagProperties
 import ch.lostkeyfinder.translations.Translations
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.core.env.Environment
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria.where
 import org.springframework.data.mongodb.core.query.Query.query
@@ -30,14 +33,17 @@ class DeletionConfirmations(
     private val translations: Translations,
     private val urls: TagProperties,
     private val limits: PublicRequestLimits,
+    environment: Environment,
+    @param:Value("\${account-deletion.log-confirmation-link:false}") logConfirmationLink: Boolean = false,
 ) {
     private val random = SecureRandom()
+    private val logFallback = logConfirmationLink && environment.matchesProfiles("dev & !prod")
 
     fun send(
         user: User,
         email: String,
     ) {
-        if (!mail.configured ||
+        if ((!mail.configured && !logFallback) ||
             urls.publicBaseUrl.isBlank()
         ) {
             throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Confirmation delivery unavailable")
@@ -61,6 +67,10 @@ class DeletionConfirmations(
         if (changed.matchedCount != 1L) throw ResponseStatusException(HttpStatus.FORBIDDEN, "Account unavailable")
         try {
             val link = "${urls.publicBaseUrl.trimEnd('/')}/account/deletion-confirm#$token"
+            if (!mail.configured) {
+                logger.warn("LOCAL DEVELOPMENT ONLY - account deletion confirmation: {}", link)
+                return
+            }
             mail.send(
                 email,
                 translations.text(user.language, "emails.accountDeletion.subject"),
@@ -102,6 +112,10 @@ class DeletionConfirmations(
         first: String,
         second: String,
     ) = MessageDigest.isEqual(first.toByteArray(), second.toByteArray())
+
+    private companion object {
+        val logger = LoggerFactory.getLogger(DeletionConfirmations::class.java)
+    }
 
     private fun unavailable(): Nothing = throw ResponseStatusException(HttpStatus.NOT_FOUND, "Confirmation unavailable")
 }

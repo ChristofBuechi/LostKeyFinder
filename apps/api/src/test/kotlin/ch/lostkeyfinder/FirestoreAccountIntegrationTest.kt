@@ -78,6 +78,7 @@ class FirestoreAccountIntegrationTest {
                         Translations(),
                         TagProperties("https://example.test"),
                         PublicRequestLimits(template, requireNotNull(System.getenv("PUBLIC_RATE_LIMIT_HMAC_KEY"))),
+                        MockEnvironment(),
                     )
                 val deletions =
                     AccountDeletionService(

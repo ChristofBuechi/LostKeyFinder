@@ -66,3 +66,6 @@ chat-notification-job:
 account-deletion-job:
   audience: ${ACCOUNT_DELETION_JOB_AUDIENCE:}
   service-account: ${ACCOUNT_DELETION_JOB_SERVICE_ACCOUNT:}
+
+account-deletion:
+  log-confirmation-link: ${ACCOUNT_DELETION_LOG_CONFIRMATION_LINK:false}
