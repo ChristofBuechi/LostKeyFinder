@@ -31,8 +31,7 @@ const result = spawnSync('./gradlew', argumentsForTask, {
   stdio: 'inherit',
   env: {
     ...process.env,
-    SPRING_PROFILES_ACTIVE: 'dev',
-    ACCOUNT_DELETION_LOG_CONFIRMATION_LINK: process.env.ACCOUNT_DELETION_LOG_CONFIRMATION_LINK ?? String(mode === 'start'),
+    SPRING_PROFILES_ACTIVE: mode === 'start' ? 'dev,local' : 'dev',
     FIRESTORE_MONGODB_URI: uri.toString(),
     PUBLIC_RATE_LIMIT_HMAC_KEY: rateLimitKey,
   },

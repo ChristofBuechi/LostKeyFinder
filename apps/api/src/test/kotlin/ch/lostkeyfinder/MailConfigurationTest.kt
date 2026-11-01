@@ -36,16 +36,17 @@ class MailConfigurationTest {
         }
     }
 
-    @Test fun `SMTP environment variables bind the Boot transport without a chat module`() {
+    @Test fun `standard Spring mail properties bind the Boot transport without a chat module`() {
         runner
             .withInitializer(ConfigDataApplicationContextInitializer())
             .withPropertyValues(
-                "SMTP_HOST=smtp.example.test",
-                "SMTP_PORT=2525",
-                "SMTP_USERNAME=test-user",
-                "SMTP_PASSWORD=test-password",
-                "MAIL_FROM=notify@example.test",
-                "SMTP_START_TLS=false",
+                "spring.mail.host=smtp.example.test",
+                "spring.mail.port=2525",
+                "spring.mail.username=test-user",
+                "spring.mail.password=test-password",
+                "mail.from=notify@example.test",
+                "spring.mail.properties[mail.smtp.starttls.enable]=false",
+                "spring.mail.properties[mail.smtp.starttls.required]=false",
             ).run { context ->
                 val sender = context.getBean(JavaMailSenderImpl::class.java)
                 assertEquals("smtp.example.test", sender.host)
@@ -64,8 +65,11 @@ class MailConfigurationTest {
     @Test fun `SMTP defaults retain strict TLS finite timeouts and unauthenticated relay support`() {
         runner
             .withInitializer(ConfigDataApplicationContextInitializer())
-            .withPropertyValues("SMTP_HOST=smtp.example.test", "MAIL_FROM=notify@example.test")
-            .run { context ->
+            .withPropertyValues(
+                "spring.mail.host=smtp.example.test",
+                "mail.from=notify@example.test",
+                "spring.mail.properties[mail.smtp.auth]=false",
+            ).run { context ->
                 val sender = context.getBean(JavaMailSenderImpl::class.java)
                 assertEquals(587, sender.port)
                 assertTrue(context.getBean(MailSender::class.java).configured)

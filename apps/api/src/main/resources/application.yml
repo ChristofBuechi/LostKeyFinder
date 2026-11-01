@@ -4,13 +4,11 @@ spring:
   application:
     name: lost-key-finder-api
   mail:
-    host: ${SMTP_HOST:}
-    port: ${SMTP_PORT:587}
-    username: ${SMTP_USERNAME:}
-    password: ${SMTP_PASSWORD:}
+    port: 587
     properties:
-      "[mail.smtp.starttls.enable]": ${SMTP_START_TLS:true}
-      "[mail.smtp.starttls.required]": ${SMTP_START_TLS:true}
+      "[mail.smtp.auth]": true
+      "[mail.smtp.starttls.enable]": true
+      "[mail.smtp.starttls.required]": true
       "[mail.smtp.connectiontimeout]": 5000
       "[mail.smtp.timeout]": 5000
       "[mail.smtp.writetimeout]": 5000
@@ -56,9 +54,6 @@ tags:
 rate-limits:
   hmac-key: ${PUBLIC_RATE_LIMIT_HMAC_KEY:}
 
-mail:
-  from: ${MAIL_FROM:}
-
 chat-notification-job:
   audience: ${CHAT_NOTIFICATION_JOB_AUDIENCE:}
   service-account: ${CHAT_NOTIFICATION_JOB_SERVICE_ACCOUNT:}
@@ -66,6 +61,3 @@ chat-notification-job:
 account-deletion-job:
   audience: ${ACCOUNT_DELETION_JOB_AUDIENCE:}
   service-account: ${ACCOUNT_DELETION_JOB_SERVICE_ACCOUNT:}
-
-account-deletion:
-  log-confirmation-link: ${ACCOUNT_DELETION_LOG_CONFIRMATION_LINK:false}

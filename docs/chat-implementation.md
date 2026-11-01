@@ -48,8 +48,8 @@ Der allgemeine Mailversand liegt im Modul `mail`: `spring.mail.*` nutzt Spring B
 
 Benötigte Umgebungsvariablen:
 
-- `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `MAIL_FROM`.
-- `SMTP_START_TLS=true` im Betrieb; `false` ausschliesslich für den lokalen Testserver.
+- `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT` (587), `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD`, `MAIL_FROM`.
+- SMTP-Authentifizierung, STARTTLS und endliche Timeouts werden über `spring.mail.properties` konfiguriert. Standardmässig sind Authentifizierung und STARTTLS aktiv; für einen lokalen Testserver lassen sie sich ausdrücklich deaktivieren. Keine Anpassung der Transport-Properties im Kotlin-Code.
 - `TAG_PUBLIC_BASE_URL`: kanonische HTTPS-Origin für die Chatlinks.
 - `CHAT_NOTIFICATION_JOB_AUDIENCE`: exakte konfigurierte Audience des Scheduler-Tokens.
 - `CHAT_NOTIFICATION_JOB_SERVICE_ACCOUNT`: ausschliesslich dafür verwendetes Servicekonto.
@@ -80,7 +80,7 @@ gcloud scheduler jobs create http lost-key-finder-chat-notifications \
   --oidc-token-audience="$CHAT_API_URL"
 ```
 
-Zuvor Cloud Scheduler aktivieren und das dedizierte Servicekonto anlegen. Die erstellende Identität benötigt `iam.serviceAccounts.actAs`, der Scheduler-Service-Agent muss Tokens dafür ausstellen dürfen. `CHAT_NOTIFICATION_JOB_AUDIENCE` auf dieselbe `CHAT_API_URL` und `CHAT_NOTIFICATION_JOB_SERVICE_ACCOUNT` auf dasselbe Konto setzen. Die Deployment-Pipeline übernimmt beide Variablen sowie SMTP-Einstellungen aus den GitHub-Environment-Variablen. `SMTP_PASSWORD_SECRET` enthält eine Secret-Manager-Referenz inklusive Version, beispielsweise `smtp-password:1`; der Runtime-Serviceaccount benötigt Lesezugriff darauf. Die Pipeline erstellt weder Anbieterzugänge noch den Scheduler-Job.
+Zuvor Cloud Scheduler aktivieren und das dedizierte Servicekonto anlegen. Die erstellende Identität benötigt `iam.serviceAccounts.actAs`, der Scheduler-Service-Agent muss Tokens dafür ausstellen dürfen. `CHAT_NOTIFICATION_JOB_AUDIENCE` auf dieselbe `CHAT_API_URL` und `CHAT_NOTIFICATION_JOB_SERVICE_ACCOUNT` auf dasselbe Konto setzen. Die Deployment-Pipeline übernimmt beide Variablen sowie SMTP-Einstellungen aus den GitHub-Environment-Variablen. `SPRING_MAIL_PASSWORD_SECRET` enthält eine Secret-Manager-Referenz inklusive Version, beispielsweise `smtp-password:1`; der Runtime-Serviceaccount benötigt Lesezugriff darauf. Die Pipeline erstellt weder Anbieterzugänge noch den Scheduler-Job. GitHub-Variablen und Cloud-Run-Umgebungsvariablen verwenden dieselben `SPRING_MAIL_*`-Namen; `MAIL_FROM` bleibt die eigene Absenderkonfiguration, da Spring Boot dafür kein entsprechendes Feld bereitstellt.
 
 ## Direktlinks und Sitzungsgrenzen
 

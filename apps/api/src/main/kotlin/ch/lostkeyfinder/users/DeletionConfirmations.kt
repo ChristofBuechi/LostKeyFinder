@@ -5,7 +5,6 @@ import ch.lostkeyfinder.tags.PublicRequestLimits
 import ch.lostkeyfinder.tags.TagProperties
 import ch.lostkeyfinder.translations.Translations
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.env.Environment
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria.where
@@ -34,10 +33,9 @@ class DeletionConfirmations(
     private val urls: TagProperties,
     private val limits: PublicRequestLimits,
     environment: Environment,
-    @param:Value("\${account-deletion.log-confirmation-link:false}") logConfirmationLink: Boolean = false,
 ) {
     private val random = SecureRandom()
-    private val logFallback = logConfirmationLink && environment.matchesProfiles("dev & !prod")
+    private val logFallback = environment.matchesProfiles("local & !prod")
 
     fun send(
         user: User,

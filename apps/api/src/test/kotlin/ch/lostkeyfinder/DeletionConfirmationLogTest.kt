@@ -47,7 +47,6 @@ class DeletionConfirmationLogTest {
 
     private fun confirmations(
         mail: MailSender,
-        enabled: Boolean,
         vararg profiles: String,
     ) = DeletionConfirmations(
         template,
@@ -56,13 +55,12 @@ class DeletionConfirmationLogTest {
         TagProperties("https://example.test"),
         limits,
         MockEnvironment().withProperty("spring.profiles.active", profiles.joinToString(",")),
-        enabled,
     )
 
-    @Test fun `explicit development fallback logs a usable expiring token but stores only hashes`(output: CapturedOutput) {
+    @Test fun `local profile fallback logs a usable expiring token but stores only hashes`(output: CapturedOutput) {
         val mail = Mockito.mock(MailSender::class.java)
         val user = user()
-        val confirmations = confirmations(mail, true, "dev")
+        val confirmations = confirmations(mail, "local")
         confirmations.send(user, user.email)
         val token = Regex("https://example.test/account/deletion-confirm#([A-Za-z0-9_-]{43})").find(output.all)!!.groupValues[1]
         val stored = template.findById(user.id, User::class.java)!!
@@ -76,14 +74,13 @@ class DeletionConfirmationLogTest {
     }
 
     @ParameterizedTest
-    @CsvSource("dev,false", "prod,true", "ci,true", "dev+prod,true")
-    fun `fallback cannot silently activate outside an explicit non-production dev setting`(
+    @CsvSource("dev", "prod", "ci", "local+prod")
+    fun `fallback cannot silently activate outside the local profile or alongside production`(
         profiles: String,
-        enabled: Boolean,
         output: CapturedOutput,
     ) {
         val user = user()
-        val confirmations = confirmations(Mockito.mock(MailSender::class.java), enabled, *profiles.split('+').toTypedArray())
+        val confirmations = confirmations(Mockito.mock(MailSender::class.java), *profiles.split('+').toTypedArray())
         assertEquals(503, assertFailsWith<ResponseStatusException> { confirmations.send(user, user.email) }.statusCode.value())
         assertEquals(null, template.findById(user.id, User::class.java)!!.deletionConfirmation)
         assertFalse(output.all.contains("account/deletion-confirm#"))
@@ -93,7 +90,7 @@ class DeletionConfirmationLogTest {
         val mail = Mockito.mock(MailSender::class.java)
         Mockito.`when`(mail.configured).thenReturn(true)
         val user = user()
-        confirmations(mail, true, "dev").send(user, user.email)
+        confirmations(mail, "local").send(user, user.email)
         Mockito.verify(mail).send(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())
         assertNotNull(template.findById(user.id, User::class.java)!!.deletionConfirmation)
         assertFalse(output.all.contains("account/deletion-confirm#"))
