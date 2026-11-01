@@ -3,8 +3,10 @@ import { appConfig } from './app/app.config';
 import { App } from './app/app';
 import { AUTH_CALLBACK, AUTH_CONFIGURATION } from './app/auth/auth';
 import { consumeAuthCallback } from './app/auth/auth-callback';
+import { consumeDeletionConfirmation, DELETION_CONFIRMATION_TOKEN } from './app/core/deletion-confirmation';
 import { loadAuthConfiguration } from './app/auth/auth-configuration';
 
+const deletionConfirmation = consumeDeletionConfirmation(location, history);
 const callback = consumeAuthCallback(location, history);
 
 async function start(): Promise<void> {
@@ -12,7 +14,8 @@ async function start(): Promise<void> {
   await bootstrapApplication(App, {
     providers: [...appConfig.providers,
       { provide: AUTH_CONFIGURATION, useValue: configuration },
-      { provide: AUTH_CALLBACK, useValue: callback }],
+      { provide: AUTH_CALLBACK, useValue: callback },
+      { provide: DELETION_CONFIRMATION_TOKEN, useValue: deletionConfirmation }],
   });
 }
 

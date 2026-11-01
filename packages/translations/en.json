@@ -263,6 +263,10 @@
     "unreadMessages": {
       "subject": "Lost Key Finder: Unread messages",
       "body": "You have new messages.\n\n{chatUrl}\n\nSign in with your email address."
+    },
+    "accountDeletion": {
+      "subject": "Confirm deletion of your Lost Key Finder account",
+      "body": "You requested deletion of your Lost Key Finder account.\n\nDo you really want to permanently delete your account? Clicking this one-time link confirms deletion without another confirmation. The link is valid for 15 minutes; you must be signed in to the same account:\n{confirmationUrl}\n\nYour self-created tags will be retired and hardware tags released. Blocked hardware remains blocked. Your Firebase account and local contact details will be removed. Shared chat text, images and history remain available to other authorized participants; personal details you shared in that content are not automatically removed.\n\nIf you did not request this, ignore this email. Nothing will be deleted without confirmation."
     }
   },
   "print": {
@@ -283,15 +287,24 @@
     "consequences": "Your self-created tags will be permanently retired. Hardware tags will be released for registration by another owner. Blocked or retired hardware remains blocked.",
     "history": "Your Firebase account and local contact details will be removed. Shared chat text, images and history remain available to other authorized participants; personal details you shared in this content are not automatically removed.",
     "confirm": "I understand the consequences and want to permanently delete my account.",
-    "busy": "Deleting account …",
+    "busy": "Processing …",
     "remove": "Permanently delete account",
-    "recent": "Please sign in using a fresh email link, then start deletion again.",
-    "failed": "Deletion is not complete. You can retry; an account already blocked for deletion remains blocked.",
+    "recent": "Please sign in with a fresh email link and confirm deletion again.",
+    "failed": "We could not confirm acceptance. Please try again. Requests already accepted continue in the background.",
     "signInAgain": "Sign in again",
-    "resume": "You can resume a started deletion on this page after signing in again.",
+    "resume": "You will receive a confirmation email. Clicking its link authorizes permanent deletion without another confirmation.",
     "back": "Back to account",
-    "done": "Account deleted",
-    "doneText": "Your account has been deleted. Signing in again will not restore previous tag or chat rights.",
-    "home": "Home"
+    "done": "Account deletion requested",
+    "doneText": "Your request was accepted. Your account is blocked; data cleanup and Firebase account deletion continue in the background. You can close this page.",
+    "home": "Home",
+    "sendConfirmation": "Request confirmation email",
+    "confirmTitle": "Processing deletion confirmation",
+    "emailSent": "Confirmation link requested",
+    "emailSentText": "Check your email, including spam. The link is valid for 15 minutes; a new link replaces the previous one. Your account and tags remain unchanged until you confirm.",
+    "openEmail": "Please reopen the complete link in the confirmation email. After a reload, the secret is no longer stored on this page for security reasons.",
+    "signedInAs": "Signed in as",
+    "loginRequired": "Sign in with exactly the account for which you requested deletion. Then return here or reopen the email link. Confirmation will be processed automatically.",
+    "loginOtherTab": "Open sign-in in a new tab",
+    "invalidConfirmation": "This link is invalid, expired or belongs to another account. Request a new confirmation link if needed."
   }
 }

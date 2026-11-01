@@ -14,10 +14,6 @@ class MailSender(
         sender != null && !sender.host.isNullOrBlank() && from.isNotBlank() &&
             (sender.username.isNullOrBlank() == sender.password.isNullOrBlank())
 
-    init {
-        sender?.let { it.javaMailProperties["mail.smtp.auth"] = (!it.username.isNullOrBlank()).toString() }
-    }
-
     fun send(
         to: String,
         subject: String,

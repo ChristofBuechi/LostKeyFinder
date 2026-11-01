@@ -7,13 +7,16 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.security.SecurityScheme
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import java.time.Instant
 
@@ -34,11 +37,23 @@ class UserController(
         return response(user)
     }
 
-    @DeleteMapping("/api/v1/me", produces = [MediaType.APPLICATION_JSON_VALUE])
-    @Operation(operationId = "UserController_delete", summary = "Delete the authenticated account, resumable in bounded steps")
+    @PostMapping("/api/v1/me/deletion-confirmations", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(
+        operationId = "UserController_requestDeletionEmail",
+        summary = "Send a one-time deletion confirmation to the current verified account email",
+    )
+    fun requestDeletionEmail(
+        @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
+    ): DeletionEmailResponse = DeletionEmailResponse(deletions.sendConfirmation(jwt))
+
+    @DeleteMapping("/api/v1/me")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(operationId = "UserController_delete", summary = "Accept an authenticated account deletion for background processing")
     fun delete(
         @Parameter(hidden = true) @AuthenticationPrincipal jwt: Jwt,
-    ): AccountDeletionResponse = AccountDeletionResponse(deletions.delete(jwt))
+        @RequestBody body: ConfirmDeletionRequest,
+    ) = deletions.request(jwt, body.token)
 
     @PatchMapping("/api/v1/me/language", produces = [MediaType.APPLICATION_JSON_VALUE])
     @Operation(operationId = "UserController_changeLanguage", summary = "Set the authenticated user's preferred language")
@@ -66,7 +81,12 @@ data class CurrentUserResponse(
     @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = ["de", "en"]) val language: String,
 )
 
-@Schema(requiredProperties = ["completed"])
-data class AccountDeletionResponse(
-    val completed: Boolean,
+@Schema(requiredProperties = ["token"])
+data class ConfirmDeletionRequest(
+    @field:Schema(minLength = 43, maxLength = 43) val token: String,
+)
+
+@Schema(requiredProperties = ["confirmationRequired"])
+data class DeletionEmailResponse(
+    val confirmationRequired: Boolean,
 )

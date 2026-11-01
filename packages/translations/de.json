@@ -263,6 +263,10 @@
     "unreadMessages": {
       "subject": "Lost Key Finder: Ungelesene Nachrichten",
       "body": "Du hast neue Nachrichten.\n\n{chatUrl}\n\nMelde dich mit deiner E-Mail-Adresse an."
+    },
+    "accountDeletion": {
+      "subject": "Bestätige die Löschung deines Lost Key Finder Kontos",
+      "body": "Du hast die Löschung deines Lost Key Finder Kontos angefordert.\n\nMöchtest du dein Konto wirklich endgültig löschen? Mit dem Klick auf diesen Einmallink bestätigst du die Löschung ohne weitere Rückfrage. Der Link ist 15 Minuten gültig; du musst mit demselben Konto angemeldet sein:\n{confirmationUrl}\n\nDeine eigenen Tags werden stillgelegt, Hardware-Tags werden freigegeben. Gesperrte Hardware bleibt gesperrt. Dein Firebase-Konto und lokale Kontaktdaten werden entfernt. Gemeinsame Chattexte, Bilder und Historien bleiben für andere Berechtigte erhalten; selbst darin mitgeteilte persönliche Angaben werden nicht automatisch entfernt.\n\nWenn du dies nicht angefordert hast, ignoriere diese E-Mail. Ohne Bestätigung wird nichts gelöscht."
     }
   },
   "print": {
@@ -283,15 +287,24 @@
     "consequences": "Deine eigenen Tags werden dauerhaft stillgelegt. Hardware-Tags werden von deinem Konto gelöst und können erneut registriert werden. Gesperrte oder stillgelegte Hardware bleibt gesperrt.",
     "history": "Das Firebase-Konto und lokale Kontaktdaten werden entfernt. Gemeinsame Chattexte, Bilder und die Historie bleiben für andere berechtigte Teilnehmer erhalten; persönliche Angaben, die du darin selbst geteilt hast, werden nicht automatisch entfernt.",
     "confirm": "Ich habe die Folgen verstanden und möchte mein Konto unwiderruflich löschen.",
-    "busy": "Konto wird gelöscht …",
+    "busy": "Wird verarbeitet …",
     "remove": "Konto endgültig löschen",
-    "recent": "Bitte melde dich erneut über einen frischen E-Mail-Link an und starte die Löschung nochmals.",
-    "failed": "Die Löschung ist noch nicht abgeschlossen. Du kannst sie erneut versuchen; ein bereits gesperrtes Konto bleibt gesperrt.",
+    "recent": "Bitte melde dich über einen frischen E-Mail-Link an und bestätige die Löschung nochmals.",
+    "failed": "Die Annahme konnte nicht bestätigt werden. Bitte versuche es erneut. Bereits angenommene Aufträge laufen im Hintergrund weiter.",
     "signInAgain": "Erneut anmelden",
-    "resume": "Eine begonnene Löschung kannst du nach erneuter Anmeldung auf dieser Seite fortsetzen.",
+    "resume": "Du erhältst eine Bestätigungsmail. Erst der Klick auf den Link gibt die endgültige Löschung frei – ohne weitere Rückfrage.",
     "back": "Zur Kontoseite",
-    "done": "Konto gelöscht",
-    "doneText": "Dein Konto wurde gelöscht. Frühere Tag- und Chatrechte werden durch eine erneute Anmeldung nicht wiederhergestellt.",
-    "home": "Zur Startseite"
+    "done": "Kontolöschung beauftragt",
+    "doneText": "Deine Anfrage wurde angenommen. Dein Konto ist gesperrt; die Datenbereinigung und die Löschung des Firebase-Kontos laufen im Hintergrund weiter. Du kannst diese Seite schliessen.",
+    "home": "Zur Startseite",
+    "sendConfirmation": "Bestätigungslink per E-Mail anfordern",
+    "confirmTitle": "Löschbestätigung wird verarbeitet",
+    "emailSent": "Bestätigungslink angefordert",
+    "emailSentText": "Prüfe deine E-Mails, auch den Spam-Ordner. Der Link ist 15 Minuten gültig; ein neuer Link ersetzt den bisherigen. Bis zur Bestätigung bleiben dein Konto und deine Tags unverändert.",
+    "openEmail": "Bitte öffne den vollständigen Link aus der Bestätigungs-E-Mail erneut. Nach einem Neuladen ist der Link aus Sicherheitsgründen nicht mehr auf dieser Seite gespeichert.",
+    "signedInAs": "Angemeldet als",
+    "loginRequired": "Melde dich mit genau dem Konto an, für das du den Löschlink angefordert hast. Kehre danach hierher zurück oder öffne den E-Mail-Link erneut. Die Bestätigung wird dann automatisch verarbeitet.",
+    "loginOtherTab": "Anmeldung in neuem Tab öffnen",
+    "invalidConfirmation": "Dieser Link ist ungültig, abgelaufen oder gehört zu einem anderen Konto. Fordere bei Bedarf einen neuen Bestätigungslink an."
   }
 }

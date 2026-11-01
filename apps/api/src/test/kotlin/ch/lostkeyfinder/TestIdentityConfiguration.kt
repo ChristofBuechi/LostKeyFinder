@@ -1,5 +1,7 @@
 package ch.lostkeyfinder
 
+import com.google.auth.oauth2.AccessToken
+import com.google.auth.oauth2.GoogleCredentials
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.crypto.RSASSASigner
@@ -11,6 +13,7 @@ import com.nimbusds.jwt.SignedJWT
 import com.sun.net.httpserver.HttpServer
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Primary
 import org.springframework.test.context.DynamicPropertyRegistrar
 import tools.jackson.databind.json.JsonMapper
 import java.net.InetSocketAddress
@@ -18,9 +21,17 @@ import java.time.Instant
 import java.util.Date
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.Supplier
 
 @TestConfiguration(proxyBeanMethods = false)
 class TestIdentityConfiguration {
+    @Bean
+    @Primary
+    fun testAdminCredentials(): Supplier<GoogleCredentials> =
+        Supplier {
+            GoogleCredentials.create(AccessToken("test-admin-token", Date.from(Instant.now().plusSeconds(3600))))
+        }
+
     @Bean(destroyMethod = "close")
     fun testIdentity() = TestIdentityProvider()
 
@@ -31,6 +42,8 @@ class TestIdentityConfiguration {
             registry.add("identity.accounts-url") { identity.origin }
             registry.add("identity.project-id") { "test-project" }
             registry.add("identity.api-key") { "test-publishable-key" }
+            registry.add("account-deletion-job.audience") { "https://example.test/account-deletions" }
+            registry.add("account-deletion-job.service-account") { "deletions@example.iam.gserviceaccount.com" }
         }
 }
 
@@ -43,6 +56,7 @@ class TestIdentityProvider : AutoCloseable {
     var responseSubject: String? = null
     var responseEmail = "Owner@Example.com"
     var responseStatus = 200
+    var beforeDelete: (() -> Unit)? = null
     var deleteStatus = 200
     val deleteRequests = AtomicInteger()
     private val deleted =
@@ -93,19 +107,23 @@ class TestIdentityProvider : AutoCloseable {
             exchange.sendResponseHeaders(status, body.size.toLong())
             exchange.responseBody.use { it.write(body) }
         }
-        server.createContext("/v1/accounts:delete") { exchange ->
+        server.createContext("/v1/projects/test-project/accounts:delete") { exchange ->
             deleteRequests.incrementAndGet()
-            val token =
-                JsonMapper
-                    .builder()
-                    .build()
-                    .readTree(exchange.requestBody)["idToken"]
-                    .asString()
-            val subject = SignedJWT.parse(token).jwtClaimsSet.subject
-            if (deleteStatus == 200) deleted.add(subject)
-            val body = if (deleteStatus == 200) "{}" else """{"error":{"message":"UNAVAILABLE"}}"""
+            beforeDelete?.invoke()
+            val data = JsonMapper.builder().build().readTree(exchange.requestBody)
+            val subject = data["localId"].asString()
+            val status =
+                if (exchange.requestHeaders.getFirst("Authorization") != "Bearer test-admin-token" || data.has("idToken") ||
+                    exchange.requestURI.query != null
+                ) {
+                    403
+                } else {
+                    deleteStatus
+                }
+            if (status == 200) deleted.add(subject)
+            val body = if (status == 200) "{}" else """{"error":{"message":"${if (status == 400) "USER_NOT_FOUND" else "UNAVAILABLE"}"}}"""
             exchange.responseHeaders.set("Content-Type", "application/json")
-            exchange.sendResponseHeaders(deleteStatus, body.toByteArray().size.toLong())
+            exchange.sendResponseHeaders(status, body.toByteArray().size.toLong())
             exchange.responseBody.use { it.write(body.toByteArray()) }
         }
         server.start()
@@ -142,6 +160,7 @@ class TestIdentityProvider : AutoCloseable {
     }
 
     fun reset() {
+        beforeDelete = null
         deleteStatus = 200
         deleteRequests.set(0)
         deleted.clear()

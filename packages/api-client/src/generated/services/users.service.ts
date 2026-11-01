@@ -10,14 +10,16 @@ import { BaseService } from '../base-service';
 import { ApiConfiguration } from '../api-configuration';
 import { StrictHttpResponse } from '../strict-http-response';
 
-import { AccountDeletionResponse } from '../models/account-deletion-response';
 import { CurrentUserResponse } from '../models/current-user-response';
+import { DeletionEmailResponse } from '../models/deletion-email-response';
 import { userControllerChangeLanguage } from '../fn/users/user-controller-change-language';
 import { UserControllerChangeLanguage$Params } from '../fn/users/user-controller-change-language';
 import { userControllerDelete } from '../fn/users/user-controller-delete';
 import { UserControllerDelete$Params } from '../fn/users/user-controller-delete';
 import { userControllerMe } from '../fn/users/user-controller-me';
 import { UserControllerMe$Params } from '../fn/users/user-controller-me';
+import { userControllerRequestDeletionEmail } from '../fn/users/user-controller-request-deletion-email';
+import { UserControllerRequestDeletionEmail$Params } from '../fn/users/user-controller-request-deletion-email';
 
 @Injectable({ providedIn: 'root' })
 export class UsersService extends BaseService {
@@ -64,34 +66,69 @@ export class UsersService extends BaseService {
   static readonly UserControllerDeletePath = '/api/v1/me';
 
   /**
-   * Delete the authenticated account, resumable in bounded steps.
+   * Accept an authenticated account deletion for background processing.
    *
    *
    *
    * This method provides access to the full `HttpResponse`, allowing access to response headers.
    * To access only the response body, use `userControllerDelete()` instead.
    *
-   * This method doesn't expect any request body.
+   * This method sends `application/json` and handles request body of type `application/json`.
    */
-  userControllerDelete$Response(params?: UserControllerDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<AccountDeletionResponse>> {
+  userControllerDelete$Response(params: UserControllerDelete$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
     const obs = userControllerDelete(this.http, this.rootUrl, params, context);
     return obs;
   }
 
   /**
-   * Delete the authenticated account, resumable in bounded steps.
+   * Accept an authenticated account deletion for background processing.
    *
    *
    *
    * This method provides access only to the response body.
    * To access the full response (for headers, for example), `userControllerDelete$Response()` instead.
    *
-   * This method doesn't expect any request body.
+   * This method sends `application/json` and handles request body of type `application/json`.
    */
-  userControllerDelete(params?: UserControllerDelete$Params, context?: HttpContext): Observable<AccountDeletionResponse> {
+  userControllerDelete(params: UserControllerDelete$Params, context?: HttpContext): Observable<void> {
     const resp = this.userControllerDelete$Response(params, context);
     return resp.pipe(
-      map((r: StrictHttpResponse<AccountDeletionResponse>): AccountDeletionResponse => r.body)
+      map((r: StrictHttpResponse<void>): void => r.body)
+    );
+  }
+
+  /** Path part for operation `userControllerRequestDeletionEmail()` */
+  static readonly UserControllerRequestDeletionEmailPath = '/api/v1/me/deletion-confirmations';
+
+  /**
+   * Send a one-time deletion confirmation to the current verified account email.
+   *
+   *
+   *
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `userControllerRequestDeletionEmail()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  userControllerRequestDeletionEmail$Response(params?: UserControllerRequestDeletionEmail$Params, context?: HttpContext): Observable<StrictHttpResponse<DeletionEmailResponse>> {
+    const obs = userControllerRequestDeletionEmail(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * Send a one-time deletion confirmation to the current verified account email.
+   *
+   *
+   *
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `userControllerRequestDeletionEmail$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  userControllerRequestDeletionEmail(params?: UserControllerRequestDeletionEmail$Params, context?: HttpContext): Observable<DeletionEmailResponse> {
+    const resp = this.userControllerRequestDeletionEmail$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<DeletionEmailResponse>): DeletionEmailResponse => r.body)
     );
   }
 

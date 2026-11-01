@@ -39,6 +39,9 @@ class OpenApiExportTest {
         assertEquals("UserController_me", me["operationId"].asString())
         assertTrue(me["security"][0].has("bearerAuth"))
         assertFalse(me.has("parameters"))
+        val deletion = document["paths"]["/api/v1/me"]["delete"]
+        assertTrue(deletion["responses"].has("202"))
+        assertFalse(deletion["responses"]["202"].has("content"))
         assertEquals<Set<String>>(
             setOf("id", "email", "status", "createdAt", "updatedAt", "isAdmin", "language"),
             document["components"]["schemas"]["CurrentUserResponse"]["required"].values().map { it.asString() }.toSet(),
@@ -50,6 +53,7 @@ class OpenApiExportTest {
                 "/api/v1/version",
                 "/api/v1/me",
                 "/api/v1/me/language",
+                "/api/v1/me/deletion-confirmations",
                 "/api/v1/tags",
                 "/api/v1/tags/{tagId}",
                 "/api/v1/tags/{tagId}/status",

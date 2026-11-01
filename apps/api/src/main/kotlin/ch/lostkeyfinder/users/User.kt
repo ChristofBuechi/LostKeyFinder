@@ -25,6 +25,7 @@ data class User(
     val isAdmin: Boolean = false,
     val language: String = "de",
     val tagCreationLimit: TagCreationWindow? = null,
+    val deletionConfirmation: DeletionConfirmation? = null,
 ) {
     init {
         require(UUID.fromString(id).version() == 4 && firebaseUserId.isNotBlank() && firebaseUserId.length <= 128)
