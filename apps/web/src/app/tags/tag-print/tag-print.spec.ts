@@ -34,6 +34,22 @@ describe('Tag print selection', () => {
     expect(fixture.nativeElement.textContent).toContain('2 / 25');
     fixture.destroy();
   });
+  it.each([true, false])('fixes the only printable tag without a checkbox (direct link: %s)', async direct => {
+    if (direct) {
+      TestBed.overrideProvider(ActivatedRoute, { useValue: { snapshot: { queryParamMap: convertToParamMap({ tagId: id }) } } });
+    }
+    const fixture = TestBed.createComponent(TagPrint);
+    const http = TestBed.inject(HttpTestingController);
+    const request = await vi.waitFor(() => http.expectOne(direct ? `/api/v1/tags/${id}` : '/api/v1/tags?page=1'));
+    request.flush(direct ? tag : { items: [tag], page: 1, totalPages: 1 });
+    await fixture.whenStable();
+    const element: HTMLElement = fixture.nativeElement;
+    expect(element.textContent).toContain('Keys');
+    expect(element.querySelector('input[type=checkbox]')).toBeNull();
+    expect(element.querySelectorAll('input[type=radio]')).toHaveLength(2);
+    expect(element.querySelector('button')?.disabled).toBe(false);
+    fixture.destroy();
+  });
   it('uses the protected owner endpoint for a detail link and shows access errors', async () => {
     TestBed.overrideProvider(ActivatedRoute, { useValue: { snapshot: { queryParamMap: convertToParamMap({ tagId: id }) } } });
     const fixture = TestBed.createComponent(TagPrint);
