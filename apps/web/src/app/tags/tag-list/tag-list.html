@@ -56,7 +56,10 @@
                     <td>{{ tag.primaryOwnerUserId || copy().free }}</td><td>{{ tag.batchId || '—' }}</td><td>{{ tag.inventoryStatus ? copy()[tag.inventoryStatus] : '—' }}</td>
                     <td class="admin-actions"><app-tag-removal [tag]="tag" [admin]="true" (removed)="page.reload(); summary.reload()" /></td>
                   } @else {
-                    <td class="actions"><button type="button" (click)="download(tag)" [disabled]="busy()">{{ copy().qr }}</button>
+                    <td class="actions">
+                    @if (isPrintableTag(tag)) {
+                      <a class="tag-action" routerLink="/tags/print" [queryParams]="{ tagId: tag.id }">{{ copy().print }}</a>
+                    }
                     @if (tag.status === 'ACTIVE' || tag.status === 'INACTIVE') { <button type="button" (click)="toggle(tag)" [disabled]="busy()">{{ tag.status === 'ACTIVE' ? copy().deactivate : copy().activate }}</button> }
                     <app-tag-removal [tag]="tag" (removed)="page.reload()" /></td>
                   }

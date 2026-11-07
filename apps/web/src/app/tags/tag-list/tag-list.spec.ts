@@ -6,7 +6,7 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Auth } from '../../auth/auth';
 import { LanguageService } from '../../core/language.service';
-import { QR_ENCODER, TagList } from './tag-list';
+import { TagList } from './tag-list';
 
 const id = '550e8400-e29b-41d4-a716-446655440000';
 const tag = { id, publicId: id, origin: 'SELF_CREATED', status: 'ACTIVE', label: 'Keys',
@@ -14,14 +14,11 @@ const tag = { id, publicId: id, origin: 'SELF_CREATED', status: 'ACTIVE', label:
 
 describe('Tag management', () => {
   const signedIn = signal(true);
-  const encode = vi.fn(async () => 'data:image/png;base64,AAAA');
   beforeEach(() => {
     localStorage.clear();
     signedIn.set(true);
-    encode.mockClear();
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(),
       provideRouter([]), { provide: ActivatedRoute, useValue: { snapshot: { data: {} } } },
-      { provide: QR_ENCODER, useValue: async () => ({ toDataURL: encode }) },
       { provide: Auth, useValue: { signedIn } }] });
   });
 
@@ -57,18 +54,13 @@ describe('Tag management', () => {
     TestBed.inject(HttpTestingController).verify();
   });
 
-  it('deactivates an owned tag and downloads a QR for the canonical public link', async () => {
+  it('links to the fixed tag print page and deactivates an owned tag', async () => {
     const fixture = TestBed.createComponent(TagList);
     await response('/api/v1/tags', { items: [tag], page: 1, pageSize: 25, totalItems: 1, totalPages: 1 });
     await fixture.whenStable();
-    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
-    const buttons = fixture.nativeElement.querySelectorAll('td.actions button') as NodeListOf<HTMLButtonElement>;
-    buttons[0].click();
-    await fixture.whenStable();
-    expect(encode).toHaveBeenCalledWith(`${location.origin}/f/${id}`, expect.objectContaining({ margin: 4 }));
-    expect(click).toHaveBeenCalledOnce();
-    click.mockRestore();
-    buttons[1].click();
+    const print = fixture.nativeElement.querySelector('td.actions a') as HTMLAnchorElement;
+    expect(print.getAttribute('href')).toBe(`/tags/print?tagId=${id}`);
+    (fixture.nativeElement.querySelector('td.actions button') as HTMLButtonElement).click();
     const mutation = await response(`/api/v1/tags/${id}/status`, { ...tag, status: 'INACTIVE' });
     expect(mutation.request.body).toEqual({ status: 'INACTIVE' });
     await response('/api/v1/tags', { items: [{ ...tag, status: 'INACTIVE' }], page: 1, pageSize: 25, totalItems: 1, totalPages: 1 });
