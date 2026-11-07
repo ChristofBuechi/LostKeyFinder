@@ -6,6 +6,7 @@ import { TagPage, TagResponse } from '@lost-key-finder/api-client';
 import { Auth } from '../../auth/auth';
 import { translateSection } from '../../core/translations';
 import { isUuidV4 } from '../../core/uuid';
+import { isPrintableTag } from '../is-printable-tag';
 
 @Component({
   selector: 'app-tag-print', imports: [RouterLink],
@@ -22,7 +23,7 @@ export class TagPrint {
   protected readonly page = httpResource<TagPage>(() => this.auth.signedIn() && !this.id ? `/api/v1/tags?page=${this.pageNumber()}` : undefined);
   protected readonly single = httpResource<TagResponse>(() => this.auth.signedIn() && this.id && isUuidV4(this.id) ? `/api/v1/tags/${this.id}` : undefined);
   protected readonly available = computed(() => (this.single.hasValue() ? [this.single.value()] : this.page.hasValue() ? this.page.value().items : [])
-    .filter(tag => tag.origin === 'SELF_CREATED' && !tag.deletedAt && ['ACTIVE', 'INACTIVE'].includes(tag.status)));
+    .filter(isPrintableTag));
   protected readonly fixedTag = computed(() => {
     const tags = this.available();
     const singlePage = this.page.hasValue() && this.page.value().totalPages === 1;

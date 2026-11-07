@@ -10,6 +10,7 @@ import { firstValueFrom } from 'rxjs';
 import { Auth } from '../../auth/auth';
 import { tagError } from '../tag-error';
 import { TagRemoval } from '../tag-removal/tag-removal';
+import { isPrintableTag } from '../is-printable-tag';
 
 @Component({
   selector: 'app-tag-list',
@@ -18,6 +19,7 @@ import { TagRemoval } from '../tag-removal/tag-removal';
   styleUrl: './tag-list.scss',
 })
 export class TagList {
+  protected readonly isPrintableTag = isPrintableTag;
   protected readonly auth = inject(Auth);
   protected readonly copy = translateSection('tags');
   private readonly route = inject(ActivatedRoute);

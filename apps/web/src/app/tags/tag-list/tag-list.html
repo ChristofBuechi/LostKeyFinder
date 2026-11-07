@@ -57,7 +57,7 @@
                     <td class="admin-actions"><app-tag-removal [tag]="tag" [admin]="true" (removed)="page.reload(); summary.reload()" /></td>
                   } @else {
                     <td class="actions">
-                    @if (tag.origin === 'SELF_CREATED' && !tag.deletedAt && (tag.status === 'ACTIVE' || tag.status === 'INACTIVE')) {
+                    @if (isPrintableTag(tag)) {
                       <a class="tag-action" routerLink="/tags/print" [queryParams]="{ tagId: tag.id }">{{ copy().print }}</a>
                     }
                     @if (tag.status === 'ACTIVE' || tag.status === 'INACTIVE') { <button type="button" (click)="toggle(tag)" [disabled]="busy()">{{ tag.status === 'ACTIVE' ? copy().deactivate : copy().activate }}</button> }
