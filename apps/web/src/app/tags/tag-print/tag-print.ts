@@ -6,6 +6,7 @@ import { TagPage, TagResponse } from '@lost-key-finder/api-client';
 import { Auth } from '../../auth/auth';
 import { translateSection } from '../../core/translations';
 import { isUuidV4 } from '../../core/uuid';
+import { isPrintableTag } from '../is-printable-tag';
 
 @Component({
   selector: 'app-tag-print', imports: [RouterLink],
@@ -22,8 +23,17 @@ export class TagPrint {
   protected readonly page = httpResource<TagPage>(() => this.auth.signedIn() && !this.id ? `/api/v1/tags?page=${this.pageNumber()}` : undefined);
   protected readonly single = httpResource<TagResponse>(() => this.auth.signedIn() && this.id && isUuidV4(this.id) ? `/api/v1/tags/${this.id}` : undefined);
   protected readonly available = computed(() => (this.single.hasValue() ? [this.single.value()] : this.page.hasValue() ? this.page.value().items : [])
-    .filter(tag => tag.origin === 'SELF_CREATED' && !tag.deletedAt && ['ACTIVE', 'INACTIVE'].includes(tag.status)));
-  protected readonly selected = signal<TagResponse[]>([]);
+    .filter(isPrintableTag));
+  protected readonly fixedTag = computed(() => {
+    const tags = this.available();
+    const singlePage = this.page.hasValue() && this.page.value().totalPages === 1;
+    return tags.length === 1 && (this.id || singlePage) ? tags[0] : undefined;
+  });
+  private readonly selection = signal<TagResponse[]>([]);
+  protected readonly selected = computed(() => {
+    const tag = this.fixedTag();
+    return tag ? [tag] : this.selection();
+  });
   protected readonly sheet = signal(true);
   protected readonly busy = signal(false);
   protected readonly failed = signal(false);
@@ -32,7 +42,7 @@ export class TagPrint {
 
   protected checked(tag: TagResponse): boolean { return this.selected().some(item => item.id === tag.id); }
   protected toggle(tag: TagResponse): void {
-    this.selected.update(items => this.checked(tag) ? items.filter(item => item.id !== tag.id) : items.length < 25 ? [...items, tag] : items);
+    this.selection.update(items => this.checked(tag) ? items.filter(item => item.id !== tag.id) : items.length < 25 ? [...items, tag] : items);
   }
   protected async download(): Promise<void> {
     if (this.busy() || !this.selected().length) return;

@@ -19,11 +19,13 @@ export async function tagPdf(publicIds: string[], origin: string, sheet: boolean
     const x = sheet ? (17 + (slot % 2) * 90.6) * mm : 0;
     const y = sheet ? (297 - 8 - (Math.floor(slot / 2) + 1) * 53.98 - Math.floor(slot / 2) * 2) * mm : 0;
     if (sheet) page.drawRectangle({ x, y, width, height, borderWidth: .3, borderColor: rgb(.65, .65, .65) });
-    const qr = await pdf.embedPng(await toDataURL(`${origin}/f/${publicIds[index]}`, { width: 768, margin: 4, errorCorrectionLevel: 'M' }));
+    const url = `${origin}/f/${publicIds[index]}`;
+    const qr = await pdf.embedPng(await toDataURL(url, { width: 768, margin: 4, errorCorrectionLevel: 'M' }));
     page.drawImage(qr, { x: x + 4 * mm, y: y + 9 * mm, width: 34 * mm, height: 34 * mm });
     page.drawText('Lost Key Finder', { x: x + 40 * mm, y: y + 38 * mm, font, size: 12 });
     page.drawText(instruction, { x: x + 40 * mm, y: y + 28 * mm, font, size: 9, maxWidth: 40 * mm, lineHeight: 12 });
-    page.drawText(publicIds[index], { x: x + 5 * mm, y: y + 5 * mm, font, size: 7 });
+    const urlSize = Math.min(7, (width - 10 * mm) / font.widthOfTextAtSize(url, 1));
+    page.drawText(url, { x: x + 5 * mm, y: y + 5 * mm, font, size: urlSize });
   }
   return pdf.save();
 }

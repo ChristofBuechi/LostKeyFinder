@@ -1,8 +1,8 @@
 import { isUuidV4 } from '../../core/uuid';
 import { translateSection } from '../../core/translations';
-import { DOCUMENT, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
-import { Component, DestroyRef, InjectionToken, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { FormField, disabled, form, maxLength } from '@angular/forms/signals';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TagPage, TagResponse, TagSummary, TagsService } from '@lost-key-finder/api-client';
@@ -10,10 +10,7 @@ import { firstValueFrom } from 'rxjs';
 import { Auth } from '../../auth/auth';
 import { tagError } from '../tag-error';
 import { TagRemoval } from '../tag-removal/tag-removal';
-
-export const QR_ENCODER = new InjectionToken('QR encoder loader', {
-  providedIn: 'root', factory: () => () => import('qrcode'),
-});
+import { isPrintableTag } from '../is-printable-tag';
 
 @Component({
   selector: 'app-tag-list',
@@ -22,14 +19,13 @@ export const QR_ENCODER = new InjectionToken('QR encoder loader', {
   styleUrl: './tag-list.scss',
 })
 export class TagList {
+  protected readonly isPrintableTag = isPrintableTag;
   protected readonly auth = inject(Auth);
   protected readonly copy = translateSection('tags');
   private readonly route = inject(ActivatedRoute);
   protected readonly admin = this.route.snapshot.data['admin'] === true;
   private readonly tags = inject(TagsService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly document = inject(DOCUMENT);
-  private readonly encoder = inject(QR_ENCODER);
   private readonly initialBatchId = this.admin ? this.route.snapshot.queryParamMap?.get('batchId') ?? '' : '';
   private readonly query = signal(this.initialBatchId ? `?batchId=${encodeURIComponent(this.initialBatchId)}` : '');
   private appliedFilters = this.query().slice(1);
@@ -110,29 +106,6 @@ export class TagList {
     try {
       await firstValueFrom(this.tags.tagControllerChangeStatus({ tagId: tag.id, body: { status: tag.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' } }));
       if (!this.destroyRef.destroyed) this.page.reload();
-    } catch (error) {
-      if (!this.destroyRef.destroyed) this.actionError.set(error);
-    } finally {
-      if (!this.destroyRef.destroyed) this.busy.set(false);
-    }
-  }
-
-  protected publicUrl(tag: TagResponse): string {
-    return `${location.origin}/f/${tag.publicId}`;
-  }
-
-  protected async download(tag: TagResponse): Promise<void> {
-    if (this.busy()) return;
-    this.busy.set(true);
-    this.actionError.set(null);
-    try {
-      const qr = await this.encoder();
-      const url = await qr.toDataURL(this.publicUrl(tag), { width: 768, margin: 4, errorCorrectionLevel: 'M' });
-      if (this.destroyRef.destroyed) return;
-      const anchor = this.document.createElement('a');
-      anchor.href = url;
-      anchor.download = `lost-key-finder-${tag.publicId}.png`;
-      anchor.click();
     } catch (error) {
       if (!this.destroyRef.destroyed) this.actionError.set(error);
     } finally {

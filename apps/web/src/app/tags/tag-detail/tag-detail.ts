@@ -8,6 +8,7 @@ import { AdminTagsService, TagHistoryPage, TagResponse, TagsService } from '@los
 import { firstValueFrom } from 'rxjs';
 import { tagError } from '../tag-error';
 import { TagRemoval } from '../tag-removal/tag-removal';
+import { isPrintableTag } from '../is-printable-tag';
 import { Auth } from '../../auth/auth';
 
 @Component({
@@ -17,6 +18,7 @@ import { Auth } from '../../auth/auth';
   styleUrl: './tag-detail.scss',
 })
 export class TagDetail {
+  protected readonly isPrintableTag = isPrintableTag;
   protected readonly copy = translateSection('tags');
   private readonly auth = inject(Auth);
   protected readonly router = inject(Router);
