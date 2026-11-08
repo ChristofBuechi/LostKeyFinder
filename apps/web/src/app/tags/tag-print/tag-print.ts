@@ -1,12 +1,20 @@
 import { DOCUMENT } from '@angular/common';
 import { httpResource } from '@angular/common/http';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, InjectionToken, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TagPage, TagResponse } from '@lost-key-finder/api-client';
 import { Auth } from '../../auth/auth';
 import { translateSection } from '../../core/translations';
 import { isUuidV4 } from '../../core/uuid';
 import { isPrintableTag } from '../is-printable-tag';
+
+export const TAG_PDF = new InjectionToken<typeof import('./tag-pdf').tagPdf>('TAG_PDF', {
+  providedIn: 'root',
+  factory: () => async (...args) => {
+    const { tagPdf } = await import('./tag-pdf');
+    return tagPdf(...args);
+  },
+});
 
 @Component({
   selector: 'app-tag-print', imports: [RouterLink],
@@ -18,6 +26,7 @@ export class TagPrint {
   private readonly auth = inject(Auth);
   private readonly document = inject(DOCUMENT);
   private readonly destroy = inject(DestroyRef);
+  private readonly tagPdf = inject(TAG_PDF);
   private readonly id = inject(ActivatedRoute).snapshot.queryParamMap.get('tagId');
   protected readonly pageNumber = signal(1);
   protected readonly page = httpResource<TagPage>(() => this.auth.signedIn() && !this.id ? `/api/v1/tags?page=${this.pageNumber()}` : undefined);
@@ -49,8 +58,7 @@ export class TagPrint {
     const identity = this.auth.firebaseUserId();
     this.busy.set(true); this.failed.set(false);
     try {
-      const { tagPdf } = await import('./tag-pdf');
-      const bytes = await tagPdf(this.selected().map(tag => tag.publicId), this.document.location.origin, this.sheet(), this.copy().instruction);
+      const bytes = await this.tagPdf(this.selected().map(tag => tag.publicId), this.document.location.origin, this.sheet(), this.copy().instruction);
       if (this.destroy.destroyed || !this.auth.signedIn() || this.auth.firebaseUserId() !== identity) return;
       const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: 'application/pdf' }));
       const link = this.document.createElement('a');

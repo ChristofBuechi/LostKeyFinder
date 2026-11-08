@@ -5,16 +5,16 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { Auth } from '../../auth/auth';
-import { TagPrint } from './tag-print';
-import { toDataURL } from 'qrcode';
-vi.mock('qrcode', () => ({ toDataURL: vi.fn() }));
+import { TAG_PDF, TagPrint } from './tag-print';
 const id = '550e8400-e29b-41d4-a716-446655440000';
 const tag = { id, publicId: id, label: 'Keys', origin: 'SELF_CREATED', status: 'ACTIVE' };
 describe('Tag print selection', () => {
+  const tagPdf = vi.fn<typeof import('./tag-pdf').tagPdf>();
   beforeEach(() => {
-    vi.mocked(toDataURL).mockReset();
+    tagPdf.mockReset();
     localStorage.clear();
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), provideRouter([]),
+      { provide: TAG_PDF, useValue: tagPdf },
       { provide: Auth, useValue: { signedIn: signal(true), firebaseUserId: signal('user') } },
       { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({}) } } }] });
   });
@@ -101,13 +101,15 @@ describe('Tag print selection', () => {
   });
   it('exports the automatically selected public identity and reports PDF failures', async () => {
     TestBed.overrideProvider(ActivatedRoute, { useValue: { snapshot: { queryParamMap: convertToParamMap({ tagId: id }) } } });
-    vi.mocked(toDataURL).mockRejectedValueOnce(new Error('QR generation failed'));
+    tagPdf.mockRejectedValueOnce(new Error('PDF generation failed'));
     const fixture = TestBed.createComponent(TagPrint);
     const publicId = '650e8400-e29b-41d4-a716-446655440000';
     (await vi.waitFor(() => TestBed.inject(HttpTestingController).expectOne(`/api/v1/tags/${id}`))).flush({ ...tag, publicId });
     await fixture.whenStable();
     (fixture.nativeElement.querySelector('button') as HTMLButtonElement).click();
-    await vi.waitFor(() => expect(toDataURL).toHaveBeenCalledWith(`${location.origin}/f/${publicId}`, expect.anything()));
+    await vi.waitFor(() => expect(tagPdf).toHaveBeenCalledExactlyOnceWith(
+      [publicId], location.origin, true, 'Gefunden?\nBitte QR-Code scannen.'
+    ));
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('[role=alert]')).not.toBeNull();
     expect((fixture.nativeElement.querySelector('button') as HTMLButtonElement).disabled).toBe(false);
